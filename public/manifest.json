@@ -1,9 +1,9 @@
 {
-  "name": "Initiative Tracker",
+  "name": "Initiative Tracker 4D",
   "version": "1.0.0",
   "manifest_version": 1,
   "action": {
-    "title": "Initiative Tracker",
+    "title": "Initiative Tracker 4D",
     "icon": "/icon.svg",
     "popover": "/",
     "height": 600,

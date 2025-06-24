@@ -4,8 +4,8 @@
   "manifest_version": 1,
   "action": {
     "title": "Initiative Tracker 4D",
-    "icon": "/icon.svg",
-    "popover": "/",
+    "icon": "obr-initiative-tracker-4d/icon.svg",
+    "popover": "obr-initiative-tracker-4d/",
     "height": 600,
     "width": 400
   }

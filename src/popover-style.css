@@ -12,6 +12,7 @@ body {
 
 .avatar-container {
     display: flex;
+    width: fit-content;
     height: 100%;
     align-items: center;
     gap: 10px;

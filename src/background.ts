@@ -4,8 +4,8 @@ OBR.onReady(() => {
   OBR.popover.open({
     id: "popover",
     url: "/obr-initiative-tracker-4d/popover.html",
-    width: 200,
-    height: window.innerHeight - 100,
+    width: 0,
+    height: 0,
     anchorOrigin: { horizontal: "LEFT", vertical: "CENTER" },
     transformOrigin: { horizontal: "LEFT", vertical: "CENTER" },
     disableClickAway: true,

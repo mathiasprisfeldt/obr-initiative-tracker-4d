@@ -8,5 +8,6 @@
     "popover": "/obr-initiative-tracker-4d/",
     "height": 600,
     "width": 400
-  }
+  },
+  "background_url": "/obr-initiative-tracker-4d/background.html"
 }

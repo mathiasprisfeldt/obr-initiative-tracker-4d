@@ -1,13 +1,14 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { use } from "react";
+import { useState } from "react";
 
 export function Admin() {
-  const isPlayer = use(OBR.player.getRole());
-  if (isPlayer) return null;
+  const [count, setCount] = useState(0);
 
   return (
     <div>
       <h1>Admin Panel</h1>
+      <button onClick={() => setCount((previousCount) => previousCount + 1)}>
+        {count}
+      </button>
     </div>
   );
 }

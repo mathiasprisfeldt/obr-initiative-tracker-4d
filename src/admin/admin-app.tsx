@@ -1,10 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Admin } from "./admin";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <div>
-      <h1>Owlbear Rodeo Initiative Tracker</h1>
-    </div>
+    <Admin />
   </StrictMode>
 );

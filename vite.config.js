@@ -8,9 +8,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
-        popover: resolve(__dirname, "popover.html"),
-        background: resolve(__dirname, "background.html"),
+        admin: resolve(__dirname, "src/admin/index.html"),
+        tracker: resolve(__dirname, "src/tracker/index.html"),
+        background: resolve(__dirname, "src/background/index.html"),
       },
     },
   },

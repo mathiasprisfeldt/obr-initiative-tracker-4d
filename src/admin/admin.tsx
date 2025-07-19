@@ -1,7 +1,14 @@
-import { useState } from "react";
+import OBR from "@owlbear-rodeo/sdk";
+import { useEffect, useState } from "react";
 
 export function Admin() {
   const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    OBR.broadcast.sendMessage("state", {
+      count,
+    });
+  }, [count]);
 
   return (
     <div>

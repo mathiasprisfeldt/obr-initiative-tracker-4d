@@ -1,21 +1,39 @@
 import OBR from "@owlbear-rodeo/sdk";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useTrackerStore } from "../store/tracker-store";
 
-export function Admin() {
-  const [count, setCount] = useState(0);
+export default function Admin() {
+  const { state, addCharacter, nextTurn } = useTrackerStore();
 
   useEffect(() => {
+    if (!OBR.isReady) return;
+
     OBR.broadcast.sendMessage("state", {
-      count,
+      state,
     });
-  }, [count]);
+  }, [state]);
 
   return (
     <div>
       <h1>Admin Panel</h1>
-      <button onClick={() => setCount((previousCount) => previousCount + 1)}>
-        {count}
+      <ul>
+        {state.characters.map((character, index) => (
+          <li key={index}>
+            {character.name} - {character.initiative}
+          </li>
+        ))}
+      </ul>
+      <button
+        onClick={() =>
+          addCharacter({
+            name: `Character ${state.characters.length + 1}`,
+            initiative: Math.floor(Math.random() * 20) + 1,
+          })
+        }
+      >
+        Add Character
       </button>
+      <button onClick={nextTurn}>Next Turn</button>
     </div>
   );
 }

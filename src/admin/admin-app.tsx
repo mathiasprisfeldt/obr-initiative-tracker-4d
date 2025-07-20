@@ -1,9 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { Admin } from "./admin";
+import { TrackerStoreProvider } from "../store/tracker-store";
+import Admin from "./Admin";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Admin />
+    <TrackerStoreProvider>
+      <Admin />
+    </TrackerStoreProvider>
   </StrictMode>
 );

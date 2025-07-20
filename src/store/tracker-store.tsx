@@ -1,19 +1,34 @@
-import { createContext, useContext, useState } from "react";
+import OBR from "@owlbear-rodeo/sdk";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+
+const metadataKey = "obr-initiative-tracker-4d-state-metadata";
 
 export interface Character {
+  id: string;
+  properties: CharacterProperties;
+}
+
+export interface CharacterProperties {
   name: string;
-  initiative: number;
+  initiative?: number;
+  health?: number;
+  maxHealth?: number;
 }
 
 export interface TrackerState {
   characters: Character[];
-  currentTurnIndex: number;
+  currentCharacter?: Character;
   round: number;
 }
 
 export interface TrackerStore {
   state: TrackerState;
-  addCharacter(character: Character): void;
+
+  isStartEncounterDisplayed: boolean;
+  canStartEncounter: boolean;
+
+  updateCharacter(id: string, properties: CharacterProperties): void;
+  sortCharacters(): void;
   previousTurn(): void;
   nextTurn(): void;
 }
@@ -21,11 +36,14 @@ export interface TrackerStore {
 const context = createContext<TrackerStore>({
   state: {
     characters: [],
-    currentTurnIndex: 0,
     round: 1,
   },
 
-  addCharacter: () => {},
+  isStartEncounterDisplayed: true,
+  canStartEncounter: false,
+
+  updateCharacter: () => {},
+  sortCharacters: () => {},
   previousTurn: () => {},
   nextTurn: () => {},
 });
@@ -34,39 +52,132 @@ export function useTrackerStore(): TrackerStore {
   return useContext(context);
 }
 
+export function useTrackerState(): TrackerState | undefined {
+  const [state, setState] = useState<TrackerState>();
+
+  useEffect(() => {
+    OBR.scene.onMetadataChange((metadata) => {
+      setState(metadata[metadataKey] as TrackerState);
+    });
+  }, []);
+
+  return state;
+}
+
 export function TrackerStoreProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const [state, setState] = useState<TrackerState>({
-    characters: [],
-    currentTurnIndex: 0,
+    characters: [
+      {
+        id: crypto.randomUUID(),
+        properties: { name: "" },
+      },
+    ],
     round: 1,
   });
+
+  const canStartEncounter = useMemo(() => {
+    return state.characters.length > 1;
+  }, [state.characters.length]);
+
+  const isStartEncounterDisplayed = useMemo(() => {
+    return !state.currentCharacter;
+  }, [state.currentCharacter]);
+
+  useEffect(() => {
+    if (!OBR.isReady) return;
+
+    OBR.scene.setMetadata({
+      metadataKey: state,
+    });
+  }, [state]);
 
   return (
     <context.Provider
       value={{
         state,
 
-        addCharacter: (character: Character) => {
+        canStartEncounter: canStartEncounter,
+        isStartEncounterDisplayed: isStartEncounterDisplayed,
+
+        updateCharacter: (id: string, properties: CharacterProperties) => {
+          setState((prevState) => {
+            const updatedCharacters = prevState.characters.map((c) =>
+              c.id === id ? { id, properties } : c
+            );
+
+            // Add new placeholder character if this one is new
+            if (
+              !prevState.characters.find((c) => c.id === id)?.properties.name
+            ) {
+              updatedCharacters.push({
+                id: crypto.randomUUID(),
+                properties: {
+                  name: "",
+                },
+              });
+            }
+
+            // Remove character if name is cleared
+            if (properties.name.trim() === "") {
+              // Advance turn if the current character is being removed
+              if (prevState.currentCharacter?.id === id) {
+                return {
+                  ...nextTurn(prevState),
+                  characters: updatedCharacters.filter((c) => c.id !== id),
+                };
+              }
+
+              return {
+                ...prevState,
+                characters: updatedCharacters.filter((c) => c.id !== id),
+              };
+            }
+
+            return {
+              ...prevState,
+              characters: updatedCharacters,
+            };
+          });
+        },
+
+        sortCharacters: () => {
           setState((prevState) => ({
             ...prevState,
-            characters: [...prevState.characters, character],
+            characters: prevState.characters.sort((a, b) => {
+              if (!b.properties.name) return -1; // Ensure draft characters are sorted last
+
+              return (
+                (a.properties.initiative || 0) - (b.properties.initiative || 0)
+              );
+            }),
           }));
         },
 
         previousTurn: () => {
           setState((prevState) => {
-            const previousTurnIndex =
-              (prevState.currentTurnIndex - 1) % prevState.characters.length;
+            const currentCharacterIndex = prevState.characters.findIndex(
+              (c) => c.id === prevState.currentCharacter?.id
+            );
+            let previousTurnIndex = currentCharacterIndex - 1;
+
+            // Go back to previous round if at the start of the current round
+            if (previousTurnIndex < 0) {
+              if (prevState.round === 1) {
+                return prevState; // No previous turn if already at round 1
+              }
+
+              previousTurnIndex = prevState.characters.length - 2;
+            }
 
             return {
               ...prevState,
-              currentTurnIndex: previousTurnIndex,
+              currentCharacter: prevState.characters[previousTurnIndex],
               round:
-                previousTurnIndex === prevState.characters.length - 1
+                previousTurnIndex === prevState.characters.length - 2
                   ? prevState.round - 1
                   : prevState.round,
             };
@@ -74,21 +185,31 @@ export function TrackerStoreProvider({
         },
 
         nextTurn: () => {
-          setState((prevState) => {
-            const nextTurnIndex =
-              (prevState.currentTurnIndex + 1) % prevState.characters.length;
-
-            return {
-              ...prevState,
-              currentTurnIndex: nextTurnIndex,
-              round:
-                nextTurnIndex === 0 ? prevState.round + 1 : prevState.round,
-            };
-          });
+          setState((prevState) => nextTurn(prevState));
         },
       }}
     >
       {children}
     </context.Provider>
   );
+
+  function nextTurn(state: TrackerState): TrackerState {
+    if (state.currentCharacter === undefined) {
+      return {
+        ...state,
+        currentCharacter: state.characters[0],
+      };
+    }
+
+    const nextTurnIndex =
+      (state.characters.findIndex((c) => c.id === state.currentCharacter?.id) +
+        1) %
+      (state.characters.length - 1);
+
+    return {
+      ...state,
+      currentCharacter: state.characters[nextTurnIndex],
+      round: nextTurnIndex === 0 ? state.round + 1 : state.round,
+    };
+  }
 }

@@ -15,10 +15,11 @@
   },
   "dependencies": {
     "@owlbear-rodeo/sdk": "^3.1.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.7.0"
+    "@vitejs/plugin-react": "^4.7.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "styled-components": "^6.1.19"
   }
 }

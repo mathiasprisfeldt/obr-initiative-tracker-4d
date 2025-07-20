@@ -57,7 +57,6 @@ export function useTrackerState(): TrackerState | undefined {
 
   useEffect(() => {
     OBR.scene.onMetadataChange((metadata) => {
-      console.log("Received metadata:", metadata);
       setState(metadata[metadataKey] as TrackerState);
     });
   }, []);
@@ -92,10 +91,8 @@ export function TrackerStoreProvider({
     if (!OBR.isReady) return;
 
     OBR.scene.setMetadata({
-      metadataKey: state,
+      [metadataKey]: state,
     });
-
-    console.log("Updated metadata:", { metadataKey: state });
   }, [state]);
 
   return (

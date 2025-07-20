@@ -1,39 +1,78 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { useEffect } from "react";
 import { useTrackerStore } from "../store/tracker-store";
+import CharacterRow from "./components/CharacterRow";
+import styled from "styled-components";
 
 export default function Admin() {
-  const { state, addCharacter, nextTurn } = useTrackerStore();
-
-  useEffect(() => {
-    if (!OBR.isReady) return;
-
-    OBR.broadcast.sendMessage("state", {
-      state,
-    });
-  }, [state]);
+  const {
+    state,
+    isStartEncounterDisplayed,
+    canStartEncounter,
+    updateCharacter,
+    sortCharacters,
+    previousTurn,
+    nextTurn,
+  } = useTrackerStore();
 
   return (
     <div>
       <h1>Admin Panel</h1>
-      <ul>
-        {state.characters.map((character, index) => (
-          <li key={index}>
-            {character.name} - {character.initiative}
-          </li>
+      <h2>Round: {state.round}</h2>
+
+      <CharacterTable>
+        {state.characters.map((character) => (
+          <CharacterRow
+            key={character.id}
+            hasTurn={character.id === state.currentCharacter?.id}
+            character={character}
+            onNameChange={(name) => {
+              updateCharacter(character.id, { ...character.properties, name });
+            }}
+            onInitiativeChange={(initiative) => {
+              updateCharacter(character.id, {
+                ...character.properties,
+                initiative,
+              });
+            }}
+            onInitiativeSubmit={() => {
+              sortCharacters();
+            }}
+            onHealthChange={(health) => {
+              updateCharacter(character.id, {
+                ...character.properties,
+                health,
+              });
+            }}
+            onMaxHealthChange={(maxHealth) => {
+              updateCharacter(character.id, {
+                ...character.properties,
+                maxHealth,
+              });
+            }}
+          />
         ))}
-      </ul>
-      <button
-        onClick={() =>
-          addCharacter({
-            name: `Character ${state.characters.length + 1}`,
-            initiative: Math.floor(Math.random() * 20) + 1,
-          })
-        }
-      >
-        Add Character
-      </button>
-      <button onClick={nextTurn}>Next Turn</button>
+      </CharacterTable>
+
+      {(isStartEncounterDisplayed && (
+        <button
+          disabled={!canStartEncounter}
+          onClick={() => {
+            nextTurn();
+          }}
+        >
+          Start Encounter
+        </button>
+      )) || (
+        <>
+          <button onClick={previousTurn}>Previous Turn</button>
+          <button onClick={nextTurn}>Next Turn</button>
+        </>
+      )}
     </div>
   );
 }
+
+const CharacterTable = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;

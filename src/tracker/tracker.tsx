@@ -1,22 +1,13 @@
-import OBR from "@owlbear-rodeo/sdk";
 import "./tracker.css";
-import { useEffect, useState } from "react";
+import { useTrackerState } from "../store/tracker-store";
 
 export function Tracker() {
-  const [data, setData] = useState<unknown>();
-
-  useEffect(() => {
-    OBR.onReady(async () => {
-      OBR.broadcast.onMessage("state", ({ data }) => {
-        setData(data);
-      });
-    });
-  }, []);
+  const state = useTrackerState();
 
   return (
     <div>
       <h1>Tracker</h1>
-      {JSON.stringify(data)}
+      {JSON.stringify(state, null, 2)}
     </div>
   );
 }

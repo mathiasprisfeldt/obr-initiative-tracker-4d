@@ -1,8 +1,9 @@
 import { Character } from "../../store/tracker-store";
+import HealthInput from "./HealthInput";
 
 interface Props {
   hasTurn: boolean;
-  character?: Character;
+  character: Character;
   onNameChange?: (name: string) => void;
   onInitiativeChange?: (initiative: number) => void;
   onInitiativeSubmit?: () => void;
@@ -19,7 +20,7 @@ export default function CharacterRow({
   onHealthChange,
   onMaxHealthChange,
 }: Props) {
-  const isDraft = !character?.properties.name;
+  const isDraft = character.properties.name === "";
 
   return (
     <div>
@@ -43,20 +44,12 @@ export default function CharacterRow({
         }}
         min={1}
       />
-      <input
-        type="number"
-        placeholder="Health"
+      <HealthInput
         disabled={isDraft}
-        value={character?.properties.health}
-        onChange={(e) => onHealthChange?.(Number(e.target.value))}
-      />
-      /
-      <input
-        type="number"
-        placeholder="Max Health"
-        disabled={isDraft}
-        value={character?.properties.maxHealth}
-        onChange={(e) => onMaxHealthChange?.(Number(e.target.value))}
+        health={character?.properties.health}
+        maxHealth={character?.properties.maxHealth}
+        onHealthChange={onHealthChange}
+        onMaxHealthChange={onMaxHealthChange}
       />
       {hasTurn && !isDraft && <span>🟢</span>}
     </div>

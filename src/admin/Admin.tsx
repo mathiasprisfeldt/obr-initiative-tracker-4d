@@ -11,6 +11,9 @@ export default function Admin() {
 function Content({
   trackerStore: {
     state,
+    isLoading,
+    startEncounter,
+    endEncounter,
     canStartEncounter,
     updateCharacter,
     sortCharacters,
@@ -20,6 +23,8 @@ function Content({
 }: {
   trackerStore: TrackerStore;
 }) {
+  if (isLoading) return <div>Loading...</div>;
+
   return (
     <div>
       <h1>Admin Panel</h1>
@@ -70,10 +75,14 @@ function Content({
       <br />
 
       {!state.hasEncounterStarted && (
-        <button disabled={!canStartEncounter}>Start Encounter</button>
+        <button disabled={!canStartEncounter} onClick={startEncounter}>
+          Start Encounter
+        </button>
       )}
 
-      {state.hasEncounterStarted && <button>End Encounter</button>}
+      {state.hasEncounterStarted && (
+        <button onClick={endEncounter}>End Encounter</button>
+      )}
     </div>
   );
 }
@@ -105,6 +114,7 @@ function Preview() {
       round: 1,
       hasEncounterStarted: false,
     },
+    isLoading: false,
     canStartEncounter: true,
     updateCharacter: () => {},
     sortCharacters: () => {},

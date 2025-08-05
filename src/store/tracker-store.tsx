@@ -25,7 +25,7 @@ export interface TrackerState {
 
 export interface TrackerStore {
   state: TrackerState;
-
+  isLoading: boolean;
   canStartEncounter: boolean;
 
   updateCharacter(id: string, properties: CharacterProperties): void;
@@ -43,7 +43,7 @@ const context = createContext<TrackerStore>({
     round: 1,
     hasEncounterStarted: false,
   },
-
+  isLoading: true,
   canStartEncounter: false,
 
   updateCharacter: () => {},
@@ -87,6 +87,8 @@ export function TrackerStoreProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const [isLoading, setIsLoading] = useState(true);
+
   const [state, setState] = useState<TrackerState>({
     characters: [
       {
@@ -103,7 +105,7 @@ export function TrackerStoreProvider({
   }, [state.characters.length]);
 
   useEffect(() => {
-    if (!OBR.isReady) return;
+    if (isLoading) return;
 
     OBR.scene.setMetadata({
       [metadataKey]: state,
@@ -118,6 +120,8 @@ export function TrackerStoreProvider({
       if (trackerState) {
         setState(trackerState);
       }
+
+      setIsLoading(false);
     });
   }, []);
 
@@ -125,7 +129,7 @@ export function TrackerStoreProvider({
     <context.Provider
       value={{
         state,
-
+        isLoading: isLoading,
         canStartEncounter: canStartEncounter,
 
         updateCharacter: (id: string, properties: CharacterProperties) => {

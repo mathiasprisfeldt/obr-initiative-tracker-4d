@@ -15,6 +15,8 @@ export function Tracker() {
 }
 
 function Content({ state }: { state: TrackerState | undefined }) {
+  if (!state?.hasEncounterStarted) return;
+
   return (
     <Container>
       {state && (
@@ -47,7 +49,7 @@ const RoundText = styled.h2`
   writing-mode: sideways-lr;
 `;
 
-function Preview() {
+function Preview({ endEncounter }: { endEncounter: boolean }) {
   const characters: Character[] = [
     {
       id: "1",
@@ -91,6 +93,7 @@ function Preview() {
     characters: characters,
     currentCharacter: characters[0],
     round: 1,
+    hasEncounterStarted: !endEncounter,
   };
 
   return (

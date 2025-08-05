@@ -1,18 +1,25 @@
-import { useTrackerStore } from "../store/tracker-store";
+import { TrackerStore, useTrackerStore } from "../store/tracker-store";
 import CharacterRow from "./components/CharacterRow";
 import styled from "styled-components";
 
 export default function Admin() {
-  const {
+  const trackerStore = useTrackerStore();
+
+  return <Content trackerStore={trackerStore} />;
+}
+
+function Content({
+  trackerStore: {
     state,
-    isStartEncounterDisplayed,
     canStartEncounter,
     updateCharacter,
     sortCharacters,
     previousTurn,
     nextTurn,
-  } = useTrackerStore();
-
+  },
+}: {
+  trackerStore: TrackerStore;
+}) {
   return (
     <div>
       <h1>Admin Panel</h1>
@@ -52,23 +59,62 @@ export default function Admin() {
         ))}
       </CharacterTable>
 
-      {(isStartEncounterDisplayed && (
-        <button
-          disabled={!canStartEncounter}
-          onClick={() => {
-            nextTurn();
-          }}
-        >
-          Start Encounter
-        </button>
-      )) || (
-        <>
-          <button onClick={previousTurn}>Previous Turn</button>
-          <button onClick={nextTurn}>Next Turn</button>
-        </>
+      <button disabled={!state.hasEncounterStarted} onClick={previousTurn}>
+        Previous Turn
+      </button>
+      <button disabled={!state.hasEncounterStarted} onClick={nextTurn}>
+        Next Turn
+      </button>
+
+      <br />
+      <br />
+
+      {!state.hasEncounterStarted && (
+        <button disabled={!canStartEncounter}>Start Encounter</button>
       )}
+
+      {state.hasEncounterStarted && <button>End Encounter</button>}
     </div>
   );
+}
+
+function Preview() {
+  const trackerStore: TrackerStore = {
+    state: {
+      characters: [
+        {
+          id: "1",
+          properties: {
+            name: "Character 1",
+            initiative: 10,
+            health: 100,
+            maxHealth: 100,
+          },
+        },
+        {
+          id: "2",
+          properties: {
+            name: "Character 2",
+            initiative: 15,
+            health: 80,
+            maxHealth: 80,
+          },
+        },
+      ],
+      currentCharacter: undefined,
+      round: 1,
+      hasEncounterStarted: false,
+    },
+    canStartEncounter: true,
+    updateCharacter: () => {},
+    sortCharacters: () => {},
+    previousTurn: () => {},
+    nextTurn: () => {},
+    startEncounter: () => {},
+    endEncounter: () => {},
+  };
+
+  return <Content trackerStore={trackerStore} />;
 }
 
 const CharacterTable = styled.div`

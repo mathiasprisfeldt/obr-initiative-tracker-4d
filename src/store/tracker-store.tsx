@@ -20,33 +20,40 @@ export interface TrackerState {
   characters: Character[];
   currentCharacter?: Character;
   round: number;
+  hasEncounterStarted: boolean;
 }
 
 export interface TrackerStore {
   state: TrackerState;
 
-  isStartEncounterDisplayed: boolean;
   canStartEncounter: boolean;
 
   updateCharacter(id: string, properties: CharacterProperties): void;
   sortCharacters(): void;
   previousTurn(): void;
   nextTurn(): void;
+
+  startEncounter(): void;
+  endEncounter(): void;
 }
 
 const context = createContext<TrackerStore>({
   state: {
     characters: [],
     round: 1,
+    hasEncounterStarted: false,
   },
 
-  isStartEncounterDisplayed: true,
   canStartEncounter: false,
 
   updateCharacter: () => {},
   sortCharacters: () => {},
+
   previousTurn: () => {},
   nextTurn: () => {},
+
+  startEncounter: () => {},
+  endEncounter: () => {},
 });
 
 export function useTrackerStore(): TrackerStore {
@@ -88,15 +95,12 @@ export function TrackerStoreProvider({
       },
     ],
     round: 1,
+    hasEncounterStarted: false,
   });
 
   const canStartEncounter = useMemo(() => {
     return state.characters.length > 1;
   }, [state.characters.length]);
-
-  const isStartEncounterDisplayed = useMemo(() => {
-    return !state.currentCharacter;
-  }, [state.currentCharacter]);
 
   useEffect(() => {
     if (!OBR.isReady) return;
@@ -106,13 +110,23 @@ export function TrackerStoreProvider({
     });
   }, [state]);
 
+  useEffect(() => {
+    OBR.onReady(async () => {
+      const metadata = await OBR.scene.getMetadata();
+      const trackerState = metadata[metadataKey] as TrackerState;
+
+      if (trackerState) {
+        setState(trackerState);
+      }
+    });
+  }, []);
+
   return (
     <context.Provider
       value={{
         state,
 
         canStartEncounter: canStartEncounter,
-        isStartEncounterDisplayed: isStartEncounterDisplayed,
 
         updateCharacter: (id: string, properties: CharacterProperties) => {
           setState((prevState) => {
@@ -199,6 +213,24 @@ export function TrackerStoreProvider({
 
         nextTurn: () => {
           setState((prevState) => nextTurn(prevState));
+        },
+
+        startEncounter: () => {
+          setState((prevState) => ({
+            ...prevState,
+            hasEncounterStarted: true,
+            currentCharacter: prevState.characters[0],
+            round: 1,
+          }));
+        },
+
+        endEncounter: () => {
+          setState((prevState) => ({
+            ...prevState,
+            hasEncounterStarted: false,
+            currentCharacter: undefined,
+            round: 1,
+          }));
         },
       }}
     >

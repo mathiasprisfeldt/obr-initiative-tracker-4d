@@ -31,7 +31,7 @@ const StyledCharacterAvatar = styled(CharacterAvatar)`
 
 const Container = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 16px;
 `;
 

@@ -64,6 +64,8 @@ function Content({
         ))}
       </CharacterTable>
 
+      <br />
+
       <button disabled={!state.hasEncounterStarted} onClick={previousTurn}>
         Previous Turn
       </button>

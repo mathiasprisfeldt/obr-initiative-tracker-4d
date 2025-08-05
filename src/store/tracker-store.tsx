@@ -103,7 +103,7 @@ export function TrackerStoreProvider({
   }, [state.characters.length]);
 
   useEffect(() => {
-    if (!OBR.isReady) return;
+    if (!OBR.scene.isReady) return;
 
     OBR.scene.setMetadata({
       [metadataKey]: state,
@@ -111,7 +111,7 @@ export function TrackerStoreProvider({
   }, [state]);
 
   useEffect(() => {
-    OBR.onReady(async () => {
+    OBR.scene.onReadyChange(async () => {
       const metadata = await OBR.scene.getMetadata();
       const trackerState = metadata[metadataKey] as TrackerState;
 

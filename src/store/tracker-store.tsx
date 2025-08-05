@@ -58,7 +58,17 @@ export function useTrackerState(): TrackerState | undefined {
 
   useEffect(() => {
     OBR.scene.onMetadataChange((metadata) => {
-      setState(metadata[metadataKey] as TrackerState);
+      let trackerState = metadata[metadataKey] as TrackerState;
+
+      // clean up state before giving it to consumers, for instance removing draft characters
+      trackerState = {
+        ...trackerState,
+        characters: trackerState.characters.filter(
+          (c) => c.properties.name.trim() !== ""
+        ),
+      };
+
+      setState(trackerState);
     });
   }, []);
 

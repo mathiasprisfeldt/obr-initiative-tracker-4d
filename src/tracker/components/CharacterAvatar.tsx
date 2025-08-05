@@ -3,6 +3,7 @@ import { Character } from "../../store/tracker-store";
 
 export interface Props {
   character: Character;
+  hasTurn: boolean;
 }
 
 export default function CharacterAvatar({ character, ...rest }: Props) {
@@ -18,14 +19,13 @@ const Background = styled.div<Props>`
   align-items: center;
   justify-content: center;
 
-  width: fit-content;
-  min-width: 200px;
-
   box-shadow: 0px -10px 60px black inset;
   background-color: #f0f0f0;
   border-radius: 100%;
   aspect-ratio: 1 / 1;
   padding: 16px;
+
+  border: ${(props) => (props.hasTurn ? "6px solid #007bff" : "none")};
 
   background-image: url(${(props) => props.character.properties.imageUrl});
   background-size: cover;

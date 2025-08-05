@@ -103,7 +103,7 @@ export function TrackerStoreProvider({
   }, [state.characters.length]);
 
   useEffect(() => {
-    if (!OBR.scene.isReady) return;
+    if (!OBR.isReady) return;
 
     OBR.scene.setMetadata({
       [metadataKey]: state,

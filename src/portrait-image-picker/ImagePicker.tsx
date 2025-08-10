@@ -1,41 +1,47 @@
 import styled from "@emotion/styled";
-import {
-  usePortraitImagePickerStore,
-  PortraitImage,
-} from "./portrait-image-picker-store";
 import { Autocomplete, InputAdornment, TextField } from "@mui/material";
+import {
+  PortraitImage,
+  usePortraitImagePickerStore,
+} from "./portrait-image-picker-store";
 
 export interface Props {
-  value?: PortraitImage;
-  onChange?: (image: PortraitImage | undefined) => void;
+  disabled: boolean;
+  value: PortraitImage | null;
+  onChange?: (image: PortraitImage | null) => void;
 }
 
-export function ImagePicker({ value, onChange }: Props) {
+export function ImagePicker({ disabled, value, onChange }: Props) {
   const {
     state: { images },
   } = usePortraitImagePickerStore();
 
   return (
     <Autocomplete
+      disabled={disabled}
       disablePortal
       options={images}
       sx={{ width: 300 }}
       value={value}
       onChange={(_, newValue) => {
-        onChange?.(newValue ?? undefined);
+        onChange?.(newValue);
       }}
       getOptionKey={(option) => option.url.toString()}
       getOptionLabel={(option) => option.displayName}
       getOptionDisabled={(option) => !option.url}
-      renderInput={(params) => (
+      renderInput={({ InputProps, ...rest }) => (
         <TextField
-          {...params}
+          {...rest}
           label="Portrait"
           slotProps={{
             input: {
+              ...InputProps,
               startAdornment: (
                 <InputAdornment position="start">
-                  <ImagePortait />
+                  <ImagePortait
+                    src={value?.url.toString()}
+                    alt={value?.displayName}
+                  />
                 </InputAdornment>
               ),
             },

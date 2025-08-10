@@ -14,7 +14,7 @@ export interface CharacterProperties {
   initiative?: number;
   health: number;
   maxHealth: number;
-  portraitImage?: PortraitImage;
+  portraitImage: PortraitImage | null;
 }
 
 export interface TrackerState {
@@ -95,7 +95,7 @@ export function TrackerStoreProvider({
     characters: [
       {
         id: crypto.randomUUID(),
-        properties: { name: "", health: 0, maxHealth: 0 },
+        properties: { name: "", health: 0, maxHealth: 0, portraitImage: null },
       },
     ],
     round: 1,
@@ -155,6 +155,7 @@ export function TrackerStoreProvider({
                   name: "",
                   health: 0,
                   maxHealth: 0,
+                  portraitImage: null,
                 },
               });
             }

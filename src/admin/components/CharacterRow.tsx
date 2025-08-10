@@ -10,7 +10,7 @@ interface Props {
   onInitiativeSubmit?: () => void;
   onHealthChange?: (health: number) => void;
   onMaxHealthChange?: (maxHealth: number) => void;
-  onPortraitImageChange?: (image: PortraitImage | undefined) => void;
+  onPortraitImageChange?: (image: PortraitImage | null) => void;
 }
 
 export default function CharacterRow({
@@ -59,6 +59,7 @@ export default function CharacterRow({
         onMaxHealthChange={onMaxHealthChange}
       />
       <ImagePicker
+        disabled={isDraft}
         value={character?.properties.portraitImage}
         onChange={onPortraitImageChange}
       />

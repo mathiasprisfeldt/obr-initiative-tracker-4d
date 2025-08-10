@@ -105,6 +105,7 @@ function Preview() {
             initiative: 10,
             health: 100,
             maxHealth: 100,
+            portraitImage: null,
           },
         },
         {
@@ -114,6 +115,7 @@ function Preview() {
             initiative: 15,
             health: 80,
             maxHealth: 80,
+            portraitImage: null,
           },
         },
       ],

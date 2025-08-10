@@ -7,15 +7,11 @@ import { Settings } from "./settings";
 export default function Admin() {
   const [value, setValue] = useState("1");
 
-  const handleChange = (event: React.SyntheticEvent, newValue: string) => {
-    setValue(newValue);
-  };
-
   return (
     <Box sx={{ width: "100%", typography: "body1" }}>
       <TabContext value={value}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <TabList onChange={handleChange}>
+          <TabList onChange={(_event, newValue) => setValue(newValue)}>
             <Tab label="Home" value="1" />
             <Tab label="Settings" value="2" />
           </TabList>

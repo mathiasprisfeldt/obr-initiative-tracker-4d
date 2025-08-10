@@ -1,5 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { PortraitImage } from "../portrait-image-picker";
 
 const metadataKey = "obr-initiative-tracker-4d-state-metadata";
 
@@ -13,7 +14,7 @@ export interface CharacterProperties {
   initiative?: number;
   health: number;
   maxHealth: number;
-  imageUrl?: string;
+  portraitImage?: PortraitImage;
 }
 
 export interface TrackerState {
@@ -21,7 +22,6 @@ export interface TrackerState {
   currentCharacter?: Character;
   round: number;
   hasEncounterStarted: boolean;
-  imageStoreUrl?: string;
 }
 
 export interface TrackerStore {
@@ -37,8 +37,6 @@ export interface TrackerStore {
 
   startEncounter(): void;
   endEncounter(): void;
-
-  setImageStoreUrl(url: string): void;
 }
 
 const context = createContext<TrackerStore>({
@@ -58,8 +56,6 @@ const context = createContext<TrackerStore>({
 
   startEncounter: () => {},
   endEncounter: () => {},
-
-  setImageStoreUrl: (url: string) => {},
 });
 
 export function useTrackerStore(): TrackerStore {
@@ -111,7 +107,7 @@ export function TrackerStoreProvider({
   }, [state.characters.length]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !OBR.isAvailable) return;
 
     OBR.scene.setMetadata({
       [metadataKey]: state,
@@ -119,7 +115,10 @@ export function TrackerStoreProvider({
   }, [state]);
 
   useEffect(() => {
-    if (!OBR.isAvailable) return;
+    if (!OBR.isAvailable) {
+      setIsLoading(false);
+      return;
+    }
 
     OBR.scene.onReadyChange(async () => {
       const metadata = await OBR.scene.getMetadata();
@@ -242,13 +241,6 @@ export function TrackerStoreProvider({
             hasEncounterStarted: false,
             currentCharacter: undefined,
             round: 1,
-          }));
-        },
-
-        setImageStoreUrl: (url: string) => {
-          setState((prevState) => ({
-            ...prevState,
-            imageStoreUrl: url,
           }));
         },
       }}

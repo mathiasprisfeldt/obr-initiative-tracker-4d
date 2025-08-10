@@ -27,7 +27,6 @@ function Content({
 
   return (
     <div>
-      <h1>Admin Panel</h1>
       <h2>Round: {state.round}</h2>
 
       <CharacterTable>
@@ -58,6 +57,12 @@ function Content({
               updateCharacter(character.id, {
                 ...character.properties,
                 maxHealth,
+              });
+            }}
+            onPortraitImageChange={(image) => {
+              updateCharacter(character.id, {
+                ...character.properties,
+                portraitImage: image,
               });
             }}
           />
@@ -124,7 +129,6 @@ function Preview() {
     nextTurn: () => {},
     startEncounter: () => {},
     endEncounter: () => {},
-    setImageStoreUrl: () => {},
   };
 
   return <Content trackerStore={trackerStore} />;

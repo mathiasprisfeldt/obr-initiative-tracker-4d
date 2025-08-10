@@ -1,3 +1,4 @@
+import { PortraitImage, ImagePicker } from "../../portrait-image-picker";
 import { Character } from "../../store/tracker-store";
 import HealthInput from "./HealthInput";
 
@@ -9,6 +10,7 @@ interface Props {
   onInitiativeSubmit?: () => void;
   onHealthChange?: (health: number) => void;
   onMaxHealthChange?: (maxHealth: number) => void;
+  onPortraitImageChange?: (image: PortraitImage | undefined) => void;
 }
 
 export default function CharacterRow({
@@ -19,11 +21,16 @@ export default function CharacterRow({
   onInitiativeSubmit,
   onHealthChange,
   onMaxHealthChange,
+  onPortraitImageChange,
 }: Props) {
   const isDraft = character.properties.name === "";
 
   return (
     <div>
+      {hasTurn && !isDraft && <span>🟢</span>}
+      {hasTurn && isDraft && <span>🟡</span>}
+      {!hasTurn && <span>⚪️</span>}
+
       <input
         type="text"
         placeholder="Name"
@@ -51,7 +58,10 @@ export default function CharacterRow({
         onHealthChange={onHealthChange}
         onMaxHealthChange={onMaxHealthChange}
       />
-      {hasTurn && !isDraft && <span>🟢</span>}
+      <ImagePicker
+        value={character?.properties.portraitImage}
+        onChange={onPortraitImageChange}
+      />
     </div>
   );
 }

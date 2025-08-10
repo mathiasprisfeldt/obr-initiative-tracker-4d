@@ -21,6 +21,7 @@ export interface TrackerState {
   currentCharacter?: Character;
   round: number;
   hasEncounterStarted: boolean;
+  imageStoreUrl?: string;
 }
 
 export interface TrackerStore {
@@ -30,11 +31,14 @@ export interface TrackerStore {
 
   updateCharacter(id: string, properties: CharacterProperties): void;
   sortCharacters(): void;
+
   previousTurn(): void;
   nextTurn(): void;
 
   startEncounter(): void;
   endEncounter(): void;
+
+  setImageStoreUrl(url: string): void;
 }
 
 const context = createContext<TrackerStore>({
@@ -54,6 +58,8 @@ const context = createContext<TrackerStore>({
 
   startEncounter: () => {},
   endEncounter: () => {},
+
+  setImageStoreUrl: (url: string) => {},
 });
 
 export function useTrackerStore(): TrackerStore {
@@ -113,6 +119,8 @@ export function TrackerStoreProvider({
   }, [state]);
 
   useEffect(() => {
+    if (!OBR.isAvailable) return;
+
     OBR.scene.onReadyChange(async () => {
       const metadata = await OBR.scene.getMetadata();
       const trackerState = metadata[metadataKey] as TrackerState;
@@ -234,6 +242,13 @@ export function TrackerStoreProvider({
             hasEncounterStarted: false,
             currentCharacter: undefined,
             round: 1,
+          }));
+        },
+
+        setImageStoreUrl: (url: string) => {
+          setState((prevState) => ({
+            ...prevState,
+            imageStoreUrl: url,
           }));
         },
       }}

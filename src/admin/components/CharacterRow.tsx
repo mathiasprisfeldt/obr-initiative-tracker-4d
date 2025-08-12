@@ -1,4 +1,5 @@
 import { PortraitImage, ImagePicker } from "../../portrait-image-picker";
+import { TextField } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import HealthInput from "./HealthInput";
 
@@ -31,15 +32,17 @@ export default function CharacterRow({
       {hasTurn && isDraft && <span>🟡</span>}
       {!hasTurn && <span>⚪️</span>}
 
-      <input
-        type="text"
-        placeholder="Name"
+      <TextField
+        label="Name"
+        size="small"
         value={character?.properties.name}
         onChange={(e) => onNameChange?.(e.target.value)}
+        sx={{ mr: 1, width: 200 }}
       />
-      <input
+      <TextField
+        label="Initiative"
         type="number"
-        placeholder="Initiative"
+        size="small"
         disabled={isDraft}
         value={character?.properties.initiative}
         onChange={(e) => onInitiativeChange?.(Number(e.target.value))}
@@ -49,7 +52,8 @@ export default function CharacterRow({
             onInitiativeSubmit?.();
           }
         }}
-        min={1}
+        inputProps={{ min: 1 }}
+        sx={{ mr: 1, width: 130 }}
       />
       <HealthInput
         disabled={isDraft}

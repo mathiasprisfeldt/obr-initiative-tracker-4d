@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { TextField } from "@mui/material";
 
 export interface Props {
   disabled: boolean;
@@ -26,20 +27,26 @@ export default function HealthInput({
 
   return (
     <Container color={color}>
-      <input
+      <TextField
+        label="HP"
         type="number"
-        placeholder="Health"
+        size="small"
         disabled={disabled}
         value={health}
         onChange={(e) => onHealthChange?.(Number(e.target.value))}
+        inputProps={{ min: 0 }}
+        sx={{ width: 110, mr: 1 }}
       />
       /
-      <input
+      <TextField
+        label="Max HP"
         type="number"
-        placeholder="Max Health"
+        size="small"
         disabled={disabled}
         value={maxHealth}
         onChange={(e) => onMaxHealthChange?.(Number(e.target.value))}
+        inputProps={{ min: 0 }}
+        sx={{ width: 110, ml: 1 }}
       />
     </Container>
   );

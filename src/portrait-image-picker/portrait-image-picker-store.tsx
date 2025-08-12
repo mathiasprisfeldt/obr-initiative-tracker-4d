@@ -6,7 +6,7 @@ const metadataKey =
 
 export interface PortraitImage {
   displayName: string;
-  url: URL;
+  url: string;
 }
 
 export interface PortraitImagePickerState {
@@ -114,7 +114,7 @@ export function PortraitImagePickerStoreProvider({
               ...prev.images,
               {
                 displayName: displayName,
-                url: fullUrl,
+                url: fullUrl.toString(),
               },
             ],
           }));

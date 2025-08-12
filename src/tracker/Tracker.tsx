@@ -59,7 +59,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
         maxHealth: 0,
         portraitImage: {
           displayName: "Daggert Skyggestikker",
-          url: new URL("https://dnd.mathiasprisfeldt.me/img/Peter.png"),
+          url: "https://dnd.mathiasprisfeldt.me/img/Peter.png",
         },
       },
     },
@@ -71,7 +71,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
         maxHealth: 0,
         portraitImage: {
           displayName: "Alaeya",
-          url: new URL("https://dnd.mathiasprisfeldt.me/img/Vanessa.png"),
+          url: "https://dnd.mathiasprisfeldt.me/img/Vanessa.png",
         },
       },
     },
@@ -83,7 +83,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
         maxHealth: 0,
         portraitImage: {
           displayName: "Nadarr",
-          url: new URL("https://dnd.mathiasprisfeldt.me/img/Nicholai.png"),
+          url: "https://dnd.mathiasprisfeldt.me/img/Nicholai.png",
         },
       },
     },
@@ -95,7 +95,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
         maxHealth: 0,
         portraitImage: {
           displayName: "Wolf",
-          url: new URL("https://dnd.mathiasprisfeldt.me/img/Wolf.png"),
+          url: "https://dnd.mathiasprisfeldt.me/img/Wolf.png",
         },
       },
     },

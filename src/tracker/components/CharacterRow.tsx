@@ -36,14 +36,17 @@ const Container = styled.div`
 `;
 
 function Preview() {
-  const characters = [
+  const characters: Character[] = [
     {
       id: "1",
       properties: {
         name: "Daggert Skyggestikker",
         health: 0,
         maxHealth: 0,
-        imageUrl: "https://dnd.mathiasprisfeldt.me/img/Peter.png",
+        portraitImage: {
+          displayName: "Daggert Skyggestikker",
+          url: "https://dnd.mathiasprisfeldt.me/img/Peter.png",
+        },
       },
     },
     {
@@ -52,7 +55,10 @@ function Preview() {
         name: "Alaeya",
         health: 0,
         maxHealth: 0,
-        imageUrl: "https://dnd.mathiasprisfeldt.me/img/Vanessa.png",
+        portraitImage: {
+          displayName: "Alaeya",
+          url: "https://dnd.mathiasprisfeldt.me/img/Vanessa.png",
+        },
       },
     },
     {
@@ -61,7 +67,10 @@ function Preview() {
         name: "Nadarr",
         health: 0,
         maxHealth: 0,
-        imageUrl: "https://dnd.mathiasprisfeldt.me/img/Nicholai.png",
+        portraitImage: {
+          displayName: "Nadarr",
+          url: "https://dnd.mathiasprisfeldt.me/img/Nicholai.png",
+        },
       },
     },
     {
@@ -70,7 +79,10 @@ function Preview() {
         name: "Wolf",
         health: 0,
         maxHealth: 0,
-        imageUrl: "https://dnd.mathiasprisfeldt.me/img/Wolf.png",
+        portraitImage: {
+          displayName: "Wolf",
+          url: "https://dnd.mathiasprisfeldt.me/img/Wolf.png",
+        },
       },
     },
   ];

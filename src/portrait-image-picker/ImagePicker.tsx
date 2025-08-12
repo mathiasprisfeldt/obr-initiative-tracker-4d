@@ -1,9 +1,15 @@
-import styled from "@emotion/styled";
-import { Autocomplete, InputAdornment, TextField } from "@mui/material";
+import {
+  Autocomplete,
+  InputAdornment,
+  styled,
+  TextField,
+  Typography,
+} from "@mui/material";
 import {
   PortraitImage,
   usePortraitImagePickerStore,
 } from "./portrait-image-picker-store";
+const AvatarPlaceholder = "/public/avatar-placeholder.png";
 
 export interface Props {
   disabled: boolean;
@@ -39,8 +45,9 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
               startAdornment: (
                 <InputAdornment position="start">
                   <ImagePortait
-                    src={value?.url.toString()}
+                    src={value?.url.toString() || AvatarPlaceholder}
                     alt={value?.displayName}
+                    sx={{ width: 32 }}
                   />
                 </InputAdornment>
               ),
@@ -52,10 +59,19 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
         return (
           <li key={key} {...rest}>
             <ImagePortait
-              src={option.url.toString()}
+              src={option.url.toString() || AvatarPlaceholder}
               alt={option.displayName}
+              sx={{ mr: 1, width: 52 }}
             />
-            {option.displayName}
+            <Typography
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {option.displayName}
+            </Typography>
           </li>
         );
       }}
@@ -63,11 +79,8 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
   );
 }
 
-const ImagePortait = styled.img`
-  width: 50px;
-  height: 50px;
+const ImagePortait = styled("img")`
   aspect-ratio: 1 / 1;
-  margin-right: 10px;
   border-radius: 50%;
   object-fit: cover;
   object-position: center;

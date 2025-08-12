@@ -1,4 +1,3 @@
-import styled from "styled-components";
 import { TextField } from "@mui/material";
 
 export interface Props {
@@ -16,42 +15,33 @@ export default function HealthInput({
   onHealthChange,
   onMaxHealthChange,
 }: Props) {
-  const healthPercentage = maxHealth > 0 ? (health / maxHealth) * 100 : 0;
-  let color = "white";
-  if (healthPercentage < 50) {
-    color = "yellow";
-  }
-  if (healthPercentage < 25) {
-    color = "red";
-  }
-
   return (
-    <Container color={color}>
+    <div>
       <TextField
         label="HP"
-        type="number"
         size="small"
         disabled={disabled}
         value={health}
-        onChange={(e) => onHealthChange?.(Number(e.target.value))}
-        inputProps={{ min: 0 }}
-        sx={{ width: 110, mr: 1 }}
+        onChange={(e) => {
+          const newValue = Number(e.target.value);
+          if (isNaN(newValue)) return;
+          return onHealthChange?.(newValue);
+        }}
+        sx={{ width: 75, mr: 1 }}
       />
       /
       <TextField
         label="Max HP"
-        type="number"
         size="small"
         disabled={disabled}
         value={maxHealth}
-        onChange={(e) => onMaxHealthChange?.(Number(e.target.value))}
-        inputProps={{ min: 0 }}
-        sx={{ width: 110, ml: 1 }}
+        onChange={(e) => {
+          const newValue = Number(e.target.value);
+          if (isNaN(newValue)) return;
+          return onMaxHealthChange?.(newValue);
+        }}
+        sx={{ width: 75, ml: 1 }}
       />
-    </Container>
+    </div>
   );
 }
-
-const Container = styled.div<{ color?: string }>`
-  color: var(--text-color);
-`;

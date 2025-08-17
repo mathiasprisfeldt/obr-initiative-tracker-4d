@@ -7,7 +7,7 @@
     "icon": "/obr-initiative-tracker-4d/icon.svg",
     "popover": "/obr-initiative-tracker-4d/src/admin/index.html",
     "height": 600,
-    "width": 400
+    "width": 600
   },
   "background_url": "/obr-initiative-tracker-4d/src/background/index.html"
 }

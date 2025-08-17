@@ -16,6 +16,7 @@ export interface PortraitImagePickerState {
 
 export interface PortraitImagePickerStore {
   state: PortraitImagePickerState;
+  isLoading: boolean;
 
   setImageStoreUrl(url: string): void;
 }
@@ -25,6 +26,7 @@ const context = createContext<PortraitImagePickerStore>({
     imageStoreUrl: "",
     images: [],
   },
+  isLoading: true,
 
   setImageStoreUrl: () => {},
 });
@@ -77,8 +79,8 @@ export function PortraitImagePickerStoreProvider({
       return;
     }
 
-    OBR.scene.onReadyChange(async () => {
-      const metadata = await OBR.scene.getMetadata();
+    OBR.onReady(async () => {
+      const metadata = await OBR.room.getMetadata();
       const state = metadata[metadataKey] as PortraitImagePickerState;
 
       if (state) {
@@ -127,6 +129,7 @@ export function PortraitImagePickerStoreProvider({
     <context.Provider
       value={{
         state,
+        isLoading,
 
         setImageStoreUrl: (url: string) => {
           setState((prev) => ({ ...prev, imageStoreUrl: url }));

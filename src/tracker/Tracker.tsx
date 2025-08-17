@@ -15,6 +15,8 @@ export function Tracker() {
 }
 
 function Content({ state }: { state: TrackerState | undefined }) {
+  console.log(`Loaded state: ${JSON.stringify(state)}`);
+
   if (!state?.hasEncounterStarted) return;
 
   return (

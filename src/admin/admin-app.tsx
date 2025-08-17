@@ -13,7 +13,6 @@ const initializeRoot = () => {
       <PluginThemeProvider>
         <PortraitImagePickerStoreProvider>
           <TrackerStoreProvider>
-            <CssBaseline />
             <Admin />
           </TrackerStoreProvider>
         </PortraitImagePickerStoreProvider>

@@ -8,7 +8,7 @@ export default function Admin() {
   const [value, setValue] = useState("1");
 
   return (
-    <Box sx={{ width: "100%", typography: "body1" }}>
+    <Box sx={{ width: "100%", typography: "body1", color: "white" }}>
       <TabContext value={value}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <TabList onChange={(_event, newValue) => setValue(newValue)}>

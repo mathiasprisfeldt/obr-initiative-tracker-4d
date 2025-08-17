@@ -28,7 +28,9 @@ function Content({
 
   return (
     <div>
-      <Typography variant="h5">Round: {state.round}</Typography>
+      <Typography variant="h5" gutterBottom>
+        Round: {state.round}
+      </Typography>
 
       <CharacterTable>
         {state.characters.map((character) => (

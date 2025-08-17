@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
-import { Typography } from "@mui/material";
+import { Typography, Button, Stack } from "@mui/material";
 
 export default function Tracker() {
   const trackerStore = useTrackerStore();
@@ -24,11 +24,11 @@ function Content({
 }: {
   trackerStore: TrackerStore;
 }) {
-  if (isLoading) return <Typography variant="h1">Loading...</Typography>;
+  if (isLoading) return <Typography variant="h5">Loading...</Typography>;
 
   return (
     <div>
-      <Typography variant="h2">Round: {state.round}</Typography>
+      <Typography variant="h5">Round: {state.round}</Typography>
 
       <CharacterTable>
         {state.characters.map((character) => (
@@ -72,24 +72,48 @@ function Content({
 
       <br />
 
-      <button disabled={!state.hasEncounterStarted} onClick={previousTurn}>
-        Previous Turn
-      </button>
-      <button disabled={!state.hasEncounterStarted} onClick={nextTurn}>
-        Next Turn
-      </button>
+      <Stack direction="row" spacing={1}>
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={!state.hasEncounterStarted}
+          onClick={previousTurn}
+        >
+          Previous Turn
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={!state.hasEncounterStarted}
+          onClick={nextTurn}
+        >
+          Next Turn
+        </Button>
+      </Stack>
 
       <br />
       <br />
 
       {!state.hasEncounterStarted && (
-        <button disabled={!canStartEncounter} onClick={startEncounter}>
+        <Button
+          variant="contained"
+          size="small"
+          disabled={!canStartEncounter}
+          onClick={startEncounter}
+        >
           Start Encounter
-        </button>
+        </Button>
       )}
 
       {state.hasEncounterStarted && (
-        <button onClick={endEncounter}>End Encounter</button>
+        <Button
+          variant="contained"
+          color="error"
+          size="small"
+          onClick={endEncounter}
+        >
+          End Encounter
+        </Button>
       )}
     </div>
   );

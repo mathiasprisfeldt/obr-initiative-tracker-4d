@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
-import { Typography, Button, Stack } from "@mui/material";
+import { Typography, Button, Stack, LinearProgress } from "@mui/material";
 
 export default function Tracker() {
   const trackerStore = useTrackerStore();
@@ -24,7 +24,7 @@ function Content({
 }: {
   trackerStore: TrackerStore;
 }) {
-  if (isLoading) return <Typography variant="h5">Loading...</Typography>;
+  if (isLoading) return <LinearProgress />;
 
   return (
     <div>

@@ -1,5 +1,5 @@
 import { PortraitImage, ImagePicker } from "../../portrait-image-picker";
-import { TextField } from "@mui/material";
+import { Stack, TextField } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import HealthInput from "./HealthInput";
 
@@ -27,7 +27,7 @@ export default function CharacterRow({
   const isDraft = character.properties.name === "";
 
   return (
-    <div>
+    <Stack direction="row" alignItems="center" spacing={1}>
       {hasTurn && !isDraft && <span>🟢</span>}
       {hasTurn && isDraft && <span>🟡</span>}
       {!hasTurn && <span>⚪️</span>}
@@ -67,6 +67,6 @@ export default function CharacterRow({
         value={character?.properties.portraitImage}
         onChange={onPortraitImageChange}
       />
-    </div>
+    </Stack>
   );
 }

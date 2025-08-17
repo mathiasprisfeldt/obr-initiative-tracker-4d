@@ -39,6 +39,7 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
         <TextField
           {...rest}
           label="Portrait"
+          size="small"
           slotProps={{
             input: {
               ...InputProps,
@@ -47,7 +48,7 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
                   <ImagePortait
                     src={value?.url.toString() || AvatarPlaceholder}
                     alt={value?.displayName}
-                    sx={{ width: 32 }}
+                    sx={{ width: 24 }}
                   />
                 </InputAdornment>
               ),

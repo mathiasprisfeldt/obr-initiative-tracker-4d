@@ -15,8 +15,6 @@ export function Tracker() {
 }
 
 function Content({ state }: { state: TrackerState | undefined }) {
-  console.log(`Loaded state: ${JSON.stringify(state)}`);
-
   if (!state?.hasEncounterStarted) return;
 
   return (
@@ -50,6 +48,22 @@ const RoundText = styled.h2`
   padding: 8px;
   writing-mode: sideways-lr;
 `;
+
+export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";
+
+export function OpenTracker() {
+  OBR.popover.open({
+    id: PopoverId,
+    url: "/obr-initiative-tracker-4d/src/tracker/index.html",
+    width: 200,
+    height: 999999,
+    anchorOrigin: { horizontal: "LEFT", vertical: "CENTER" },
+    transformOrigin: { horizontal: "LEFT", vertical: "CENTER" },
+    disableClickAway: true,
+    hidePaper: true,
+    marginThreshold: 0,
+  });
+}
 
 function Preview({ endEncounter }: { endEncounter: boolean }) {
   const characters: Character[] = [
@@ -115,20 +129,4 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
       <Content state={state} />
     </div>
   );
-}
-
-export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";
-
-export function OpenTracker() {
-  OBR.popover.open({
-    id: PopoverId,
-    url: "/obr-initiative-tracker-4d/src/tracker/index.html",
-    width: 200,
-    height: 999999,
-    anchorOrigin: { horizontal: "LEFT", vertical: "CENTER" },
-    transformOrigin: { horizontal: "LEFT", vertical: "CENTER" },
-    disableClickAway: true,
-    hidePaper: true,
-    marginThreshold: 0,
-  });
 }

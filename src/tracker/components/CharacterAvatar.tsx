@@ -6,9 +6,14 @@ export interface Props {
   hasTurn: boolean;
 }
 
-export default function CharacterAvatar({ character, hasTurn }: Props) {
+export default function CharacterAvatar({
+  character,
+  hasTurn,
+  ...rest
+}: Props) {
   return (
     <Background
+      {...rest}
       hasTurn={hasTurn}
       imageUrl={character.properties.portraitImage?.url.toString()}
     >

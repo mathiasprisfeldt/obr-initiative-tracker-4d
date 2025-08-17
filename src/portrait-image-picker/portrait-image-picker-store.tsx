@@ -98,9 +98,14 @@ export function PortraitImagePickerStoreProvider({
       const response = await fetch(state.imageStoreUrl);
 
       const domParser = new DOMParser();
-      const doc = domParser.parseFromString(await response.text(), "text/html");
+      const document = domParser.parseFromString(
+        await response.text(),
+        "text/html"
+      );
 
-      doc.querySelectorAll("a").forEach((img) => {
+      let newImages: PortraitImage[] = [];
+
+      document.querySelectorAll("a").forEach((img) => {
         const imageUrl = img.getAttribute("href");
 
         if (imageUrl === "/") return; // skip parent directory link
@@ -110,18 +115,17 @@ export function PortraitImagePickerStoreProvider({
           const imageUrlWithoutFileType = imageUrl.replace(/\.\w+$/, "");
           const displayName = decodeURI(imageUrlWithoutFileType);
 
-          setState((prev) => ({
-            ...prev,
-            images: [
-              ...prev.images,
-              {
-                displayName: displayName,
-                url: fullUrl.toString(),
-              },
-            ],
-          }));
+          newImages.push({
+            displayName,
+            url: fullUrl.toString(),
+          });
         }
       });
+
+      setState((prev) => ({
+        ...prev,
+        images: newImages,
+      }));
     })();
   }, [state.imageStoreUrl]);
 

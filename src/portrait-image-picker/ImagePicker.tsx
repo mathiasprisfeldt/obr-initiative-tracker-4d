@@ -1,3 +1,4 @@
+import AvatarPlaceholder from "assets/avatar-placeholder.png";
 import {
   Autocomplete,
   InputAdornment,
@@ -9,7 +10,6 @@ import {
   PortraitImage,
   usePortraitImagePickerStore,
 } from "./portrait-image-picker-store";
-const AvatarPlaceholder = "/public/avatar-placeholder.png";
 
 export interface Props {
   disabled: boolean;

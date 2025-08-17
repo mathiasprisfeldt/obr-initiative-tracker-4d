@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
+import { Typography } from "@mui/material";
 
 export default function Tracker() {
   const trackerStore = useTrackerStore();
@@ -23,11 +24,11 @@ function Content({
 }: {
   trackerStore: TrackerStore;
 }) {
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <Typography variant="h1">Loading...</Typography>;
 
   return (
     <div>
-      <h2>Round: {state.round}</h2>
+      <Typography variant="h2">Round: {state.round}</Typography>
 
       <CharacterTable>
         {state.characters.map((character) => (

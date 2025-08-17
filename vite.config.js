@@ -5,6 +5,11 @@ import { defineConfig } from "vite";
 export default defineConfig({
   base: "/obr-initiative-tracker-4d/",
   plugins: [pluginReact()],
+  resolve: {
+    alias: {
+      assets: resolve(__dirname, "src/assets"),
+    },
+  },
   build: {
     rollupOptions: {
       input: {

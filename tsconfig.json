@@ -6,6 +6,9 @@
     "strict": true,
     "moduleResolution": "bundler",
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "assets/*": ["./src/assets/*"]
+    }
   }
 }

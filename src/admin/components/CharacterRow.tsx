@@ -41,18 +41,20 @@ export default function CharacterRow({
       />
       <TextField
         label="Initiative"
-        type="number"
         size="small"
         disabled={isDraft}
         value={character?.properties.initiative}
-        onChange={(e) => onInitiativeChange?.(Number(e.target.value))}
+        onChange={(e) => {
+          const newValue = Number(e.target.value);
+          if (isNaN(newValue)) return;
+          return onInitiativeChange?.(newValue);
+        }}
         onBlur={onInitiativeSubmit}
         onKeyUp={(e) => {
           if (e.key === "Enter") {
             onInitiativeSubmit?.();
           }
         }}
-        inputProps={{ min: 1 }}
         sx={{ mr: 1, width: 130 }}
       />
       <HealthInput

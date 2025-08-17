@@ -16,7 +16,7 @@ export default function HealthInput({
   onMaxHealthChange,
 }: Props) {
   return (
-    <div>
+    <>
       <TextField
         label="HP"
         size="small"
@@ -27,9 +27,8 @@ export default function HealthInput({
           if (isNaN(newValue)) return;
           return onHealthChange?.(newValue);
         }}
-        sx={{ width: 75, mr: 1 }}
+        sx={{ maxWidth: 75, mr: 1 }}
       />
-      /
       <TextField
         label="Max HP"
         size="small"
@@ -40,8 +39,8 @@ export default function HealthInput({
           if (isNaN(newValue)) return;
           return onMaxHealthChange?.(newValue);
         }}
-        sx={{ width: 75, ml: 1 }}
+        sx={{ maxWidth: 75, ml: 1 }}
       />
-    </div>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { PortraitImage } from "../portrait-image-picker";
+import { PortraitImage } from "../character-portrait";
 
 const metadataKey = "obr-initiative-tracker-4d-tracker-store-metadata";
 

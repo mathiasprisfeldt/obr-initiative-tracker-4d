@@ -1,6 +1,6 @@
-export { ImagePicker } from "./ImagePicker";
+export { CharacterPortraitPicker } from "./CharacterPortraitPicker";
 
-export { ImageUrlInput } from "./ImageUrlInput";
+export { CharacterPortraitImageSourceInput } from "./CharacterPortraitImageSourceInput";
 
 export {
   usePortraitImagePickerState,

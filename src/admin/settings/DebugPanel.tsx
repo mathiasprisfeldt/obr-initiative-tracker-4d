@@ -1,6 +1,6 @@
 import { Button, Stack } from "@mui/material";
 import { useTrackerStore } from "../../store/tracker-store";
-import { usePortraitImagePickerStore } from "../../portrait-image-picker/portrait-image-picker-store";
+import { usePortraitImagePickerStore } from "../../character-portrait/portrait-image-picker-store";
 
 export function DebugPanel() {
   const { state: trackerState } = useTrackerStore();

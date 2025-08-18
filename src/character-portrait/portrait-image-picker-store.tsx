@@ -7,10 +7,11 @@ const metadataKey =
 export interface PortraitImage {
   displayName: string;
   url: string;
+  position?: string;
 }
 
 export interface PortraitImagePickerState {
-  imageStoreUrl: string;
+  imageSourceUrl: string;
   images: PortraitImage[];
 }
 
@@ -18,17 +19,19 @@ export interface PortraitImagePickerStore {
   state: PortraitImagePickerState;
   isLoading: boolean;
 
-  setImageStoreUrl(url: string): void;
+  setImageSourceUrl(url: string): void;
+  updatePortraitImage(portraitImage: PortraitImage): void;
 }
 
 const context = createContext<PortraitImagePickerStore>({
   state: {
-    imageStoreUrl: "",
+    imageSourceUrl: "",
     images: [],
   },
   isLoading: true,
 
-  setImageStoreUrl: () => {},
+  setImageSourceUrl: () => {},
+  updatePortraitImage: () => {},
 });
 
 export function usePortraitImagePickerStore(): PortraitImagePickerStore {
@@ -61,7 +64,7 @@ export function PortraitImagePickerStoreProvider({
   const [isLoading, setIsLoading] = useState(true);
 
   const [state, setState] = useState<PortraitImagePickerState>({
-    imageStoreUrl: "",
+    imageSourceUrl: "",
     images: [],
   });
 
@@ -92,10 +95,10 @@ export function PortraitImagePickerStoreProvider({
   }, []);
 
   useEffect(() => {
-    if (!state.imageStoreUrl) return;
+    if (!state.imageSourceUrl) return;
 
     (async () => {
-      const response = await fetch(state.imageStoreUrl);
+      const response = await fetch(state.imageSourceUrl);
 
       const domParser = new DOMParser();
       const document = domParser.parseFromString(
@@ -103,31 +106,34 @@ export function PortraitImagePickerStoreProvider({
         "text/html"
       );
 
-      let newImages: PortraitImage[] = [];
+      setState((prev) => {
+        let newImages: PortraitImage[] = [];
 
-      document.querySelectorAll("a").forEach((img) => {
-        const imageUrl = img.getAttribute("href");
+        document.querySelectorAll("a").forEach((img) => {
+          const imageUrl = img.getAttribute("href");
 
-        if (imageUrl === "/") return; // skip parent directory link
+          if (imageUrl === "/") return; // skip parent directory link
 
-        if (imageUrl) {
-          const fullUrl = new URL(imageUrl, state.imageStoreUrl);
-          const imageUrlWithoutFileType = imageUrl.replace(/\.\w+$/, "");
-          const displayName = decodeURI(imageUrlWithoutFileType);
+          if (imageUrl) {
+            const fullUrl = new URL(imageUrl, state.imageSourceUrl);
+            const imageUrlWithoutFileType = imageUrl.replace(/\.\w+$/, "");
+            const displayName = decodeURI(imageUrlWithoutFileType);
 
-          newImages.push({
-            displayName,
-            url: fullUrl.toString(),
-          });
-        }
+            newImages.push({
+              ...(prev.images.find((i) => i.displayName === displayName) || {}),
+              displayName,
+              url: fullUrl.toString(),
+            });
+          }
+        });
+
+        return {
+          ...prev,
+          images: newImages,
+        };
       });
-
-      setState((prev) => ({
-        ...prev,
-        images: newImages,
-      }));
     })();
-  }, [state.imageStoreUrl]);
+  }, [state.imageSourceUrl]);
 
   return (
     <context.Provider
@@ -135,8 +141,19 @@ export function PortraitImagePickerStoreProvider({
         state,
         isLoading,
 
-        setImageStoreUrl: (url: string) => {
-          setState((prev) => ({ ...prev, imageStoreUrl: url }));
+        setImageSourceUrl: (url: string) => {
+          setState((prev) => ({ ...prev, imageSourceUrl: url }));
+        },
+
+        updatePortraitImage: (portraitImage: PortraitImage) => {
+          setState((prev) => ({
+            ...prev,
+            images: prev.images.map((img) =>
+              img.displayName === portraitImage.displayName
+                ? portraitImage
+                : img
+            ),
+          }));
         },
       }}
     >

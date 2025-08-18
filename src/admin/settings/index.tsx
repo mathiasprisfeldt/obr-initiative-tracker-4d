@@ -1,16 +1,11 @@
-import { Divider, LinearProgress } from "@mui/material";
-import { usePortraitImagePickerStore } from "../../portrait-image-picker/portrait-image-picker-store";
-import { ImageUrlInput } from "../../portrait-image-picker";
+import { Divider } from "@mui/material";
 import { DebugPanel } from "./DebugPanel";
+import { CharacterPortraitSettings } from "../../character-portrait/CharacterPortraitSettings";
 
 export function Settings() {
-  const { isLoading } = usePortraitImagePickerStore();
-
-  if (isLoading) return <LinearProgress />;
-
   return (
     <>
-      <ImageUrlInput />
+      <CharacterPortraitSettings />
       <Divider sx={{ my: 2 }} />
       <DebugPanel />
     </>

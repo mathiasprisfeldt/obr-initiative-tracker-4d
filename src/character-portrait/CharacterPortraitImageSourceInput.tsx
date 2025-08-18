@@ -1,19 +1,19 @@
 import { usePortraitImagePickerStore } from "./portrait-image-picker-store";
 import { TextField } from "@mui/material";
 
-export function ImageUrlInput() {
+export function CharacterPortraitImageSourceInput() {
   const {
-    state: { imageStoreUrl },
-    setImageStoreUrl,
+    state: { imageSourceUrl },
+    setImageSourceUrl,
   } = usePortraitImagePickerStore();
 
   return (
     <TextField
-      label="Image Store URL"
+      label="Image Source URL"
       type="url"
       size="small"
-      value={imageStoreUrl}
-      onChange={(e) => setImageStoreUrl(e.target.value)}
+      value={imageSourceUrl}
+      onChange={(e) => setImageSourceUrl(e.target.value)}
       fullWidth
     />
   );

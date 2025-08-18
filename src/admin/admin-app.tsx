@@ -4,7 +4,7 @@ import { TrackerStoreProvider } from "../store/tracker-store";
 import Admin from "./Admin";
 import OBR from "@owlbear-rodeo/sdk";
 import { PluginThemeProvider } from "../PluginThemeProvider";
-import { PortraitImagePickerStoreProvider } from "../portrait-image-picker";
+import { PortraitImagePickerStoreProvider } from "../character-portrait";
 import { CssBaseline } from "@mui/material";
 
 const initializeRoot = () => {

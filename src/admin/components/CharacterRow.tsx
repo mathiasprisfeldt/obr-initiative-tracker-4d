@@ -1,4 +1,7 @@
-import { PortraitImage, ImagePicker } from "../../portrait-image-picker";
+import {
+  PortraitImage,
+  CharacterPortraitPicker,
+} from "../../character-portrait";
 import { Stack, TextField } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import HealthInput from "./HealthInput";
@@ -63,7 +66,7 @@ export default function CharacterRow({
         onHealthChange={onHealthChange}
         onMaxHealthChange={onMaxHealthChange}
       />
-      <ImagePicker
+      <CharacterPortraitPicker
         disabled={isDraft}
         value={character?.properties.portraitImage}
         onChange={onPortraitImageChange}

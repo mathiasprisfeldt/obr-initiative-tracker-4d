@@ -2,7 +2,6 @@ import AvatarPlaceholder from "assets/avatar-placeholder.png";
 import {
   Autocomplete,
   InputAdornment,
-  styled,
   TextField,
   Typography,
 } from "@mui/material";
@@ -10,6 +9,7 @@ import {
   PortraitImage,
   usePortraitImagePickerStore,
 } from "./portrait-image-picker-store";
+import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
 
 export interface Props {
   disabled: boolean;
@@ -17,7 +17,7 @@ export interface Props {
   onChange?: (image: PortraitImage | null) => void;
 }
 
-export function ImagePicker({ disabled, value, onChange }: Props) {
+export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
   const {
     state: { images },
   } = usePortraitImagePickerStore();
@@ -45,9 +45,8 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
               ...InputProps,
               startAdornment: (
                 <InputAdornment position="start">
-                  <ImagePortait
-                    src={value?.url.toString() || AvatarPlaceholder}
-                    alt={value?.displayName}
+                  <CharacterPortraitThumbnail
+                    portraitImage={value}
                     sx={{ width: 24 }}
                   />
                 </InputAdornment>
@@ -59,9 +58,8 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
       renderOption={({ key, ...rest }, option) => {
         return (
           <li key={key} {...rest}>
-            <ImagePortait
-              src={option.url.toString() || AvatarPlaceholder}
-              alt={option.displayName}
+            <CharacterPortraitThumbnail
+              portraitImage={option}
               sx={{ mr: 1, width: 52 }}
             />
             <Typography
@@ -79,12 +77,3 @@ export function ImagePicker({ disabled, value, onChange }: Props) {
     />
   );
 }
-
-const ImagePortait = styled("img")`
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center;
-  border: 2px solid #ccc;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;

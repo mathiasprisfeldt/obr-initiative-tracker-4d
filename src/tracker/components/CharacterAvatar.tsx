@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { Character } from "../../store/tracker-store";
+import { PortraitImage } from "../../character-portrait";
 
 export interface Props {
   character: Character;
@@ -15,7 +16,7 @@ export default function CharacterAvatar({
     <Background
       {...rest}
       hasTurn={hasTurn}
-      imageUrl={character.properties.portraitImage?.url.toString()}
+      portraitImage={character.properties.portraitImage}
     >
       {!character.properties.portraitImage && (
         <h3>{character.properties.name}</h3>
@@ -26,7 +27,7 @@ export default function CharacterAvatar({
 
 const Background = styled.div<{
   hasTurn: boolean;
-  imageUrl: string | undefined;
+  portraitImage: PortraitImage | null;
 }>`
   display: flex;
   align-items: center;
@@ -40,8 +41,8 @@ const Background = styled.div<{
 
   border: ${(props) => (props.hasTurn ? "6px solid #007bff" : "none")};
 
-  background-image: url(${(props) => props.imageUrl});
+  background-image: url(${(props) => props.portraitImage?.url});
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: top;
+  background-position: ${(props) => props.portraitImage?.position};
 `;

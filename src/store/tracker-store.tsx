@@ -186,7 +186,7 @@ export function TrackerStoreProvider({
         sortCharacters: () => {
           setState((prevState) => ({
             ...prevState,
-            characters: prevState.characters.sort((a, b) => {
+            characters: [...prevState.characters].sort((a, b) => {
               if (!b.properties.name) return -1; // Ensure draft characters are sorted last
 
               return (

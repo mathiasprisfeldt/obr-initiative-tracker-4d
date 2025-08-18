@@ -44,5 +44,5 @@ const Background = styled.div<{
   background-image: url(${(props) => props.portraitImage?.url});
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: ${(props) => props.portraitImage?.position};
+  background-position: ${(props) => props.portraitImage?.position || "center"};
 `;

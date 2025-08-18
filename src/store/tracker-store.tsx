@@ -2,7 +2,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { PortraitImage } from "../portrait-image-picker";
 
-const metadataKey = "obr-initiative-tracker-4d-state-metadata";
+const metadataKey = "obr-initiative-tracker-4d-tracker-store-metadata";
 
 export interface Character {
   id: string;
@@ -66,7 +66,7 @@ export function useTrackerState(): TrackerState | undefined {
   const [state, setState] = useState<TrackerState>();
 
   useEffect(() => {
-    OBR.scene.onMetadataChange((metadata) => {
+    OBR.room.onMetadataChange((metadata) => {
       let trackerState = metadata[metadataKey] as TrackerState;
 
       // clean up state before giving it to consumers, for instance removing draft characters
@@ -109,7 +109,7 @@ export function TrackerStoreProvider({
   useEffect(() => {
     if (isLoading || !OBR.isAvailable) return;
 
-    OBR.scene.setMetadata({
+    OBR.room.setMetadata({
       [metadataKey]: state,
     });
   }, [state]);
@@ -120,8 +120,8 @@ export function TrackerStoreProvider({
       return;
     }
 
-    OBR.scene.onReadyChange(async () => {
-      const metadata = await OBR.scene.getMetadata();
+    OBR.onReady(async () => {
+      const metadata = await OBR.room.getMetadata();
       const trackerState = metadata[metadataKey] as TrackerState;
 
       if (trackerState) {

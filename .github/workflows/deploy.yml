@@ -60,6 +60,8 @@ jobs:
           yarn build-prod
           mkdir -p ../site/prod
           cp -R ./dist/* ../site/prod
+          rm ../site/prod/manifest.test.json
+          mv ../site/prod/manifest.prod.json ../site/prod/manifest.json
 
       - name: Build test
         working-directory: repo-main
@@ -68,6 +70,8 @@ jobs:
           yarn build-test
           mkdir -p ../site/test
           cp -R ./dist/* ../site/test
+          rm ../site/test/manifest.prod.json
+          mv ../site/test/manifest.test.json ../site/test/manifest.json
 
       - name: Print combined artifact
         run: |

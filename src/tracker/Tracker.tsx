@@ -54,7 +54,7 @@ export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";
 export function OpenTracker() {
   OBR.popover.open({
     id: PopoverId,
-    url: "/obr-initiative-tracker-4d/src/tracker/index.html",
+    url: `${import.meta.env.BASE_URL}/src/tracker/index.html`,
     width: 200,
     height: 999999,
     anchorOrigin: { horizontal: "LEFT", vertical: "CENTER" },

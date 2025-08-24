@@ -1,0 +1,13 @@
+{
+  "name": "Initiative Tracker 4D",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "action": {
+    "title": "Initiative Tracker 4D",
+    "icon": "<VITE_BASE_URL>/icon.svg",
+    "popover": "<VITE_BASE_URL>/src/admin/index.html",
+    "height": 600,
+    "width": 600
+  },
+  "background_url": "<VITE_BASE_URL>/src/background/index.html"
+}

@@ -28,7 +28,8 @@ jobs:
 
       - name: Copy existing site
         run: |
-          git checkout gh-pages -- site
+          git fetch origin gh-pages
+          git worktree add gh-pages-temp gh-pages
 
       - name: Set up Node
         uses: actions/setup-node@v4

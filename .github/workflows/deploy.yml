@@ -58,6 +58,7 @@ jobs:
         run: |
           yarn install --frozen-lockfile
           yarn build-prod
+          ls -la ./dist
           rm dist/manifest.test.json
           mv dist/manifest.prod.json dist/manifest.json
           mkdir -p ../site/prod

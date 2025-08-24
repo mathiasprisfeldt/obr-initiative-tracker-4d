@@ -4,10 +4,10 @@
   "manifest_version": 1,
   "action": {
     "title": "Initiative Tracker 4D",
-    "icon": "obr-initiative-tracker-4d/prod/icon.svg",
-    "popover": "obr-initiative-tracker-4d/prod/src/admin/index.html",
+    "icon": "obr-initiative-tracker-4d/icon.svg",
+    "popover": "obr-initiative-tracker-4d/src/admin/index.html",
     "height": 600,
     "width": 600
   },
-  "background_url": "obr-initiative-tracker-4d/prod/src/background/index.html"
+  "background_url": "obr-initiative-tracker-4d/src/background/index.html"
 }

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build-test": "tsc --noEmit && NODE_ENV=development vite build --mode development --base=/obr-initiative-tracker-4d/test/",
-    "build-prod": "tsc --noEmit && vite build --base=/obr-initiative-tracker-4d/prod/",
+    "build-prod": "tsc --noEmit && vite build --base=/obr-initiative-tracker-4d/",
     "preview": "vite preview"
   },
   "devDependencies": {

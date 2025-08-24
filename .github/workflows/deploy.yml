@@ -60,8 +60,8 @@ jobs:
           yarn build-prod
           rm ./dist/manifest.test.json
           mv ./dist/manifest.prod.json ./dist/manifest.json
-          mkdir -p ../site/prod
-          cp -R ./dist/* ../site/prod
+          mkdir -p ../site
+          cp -R ./dist/* ../site
 
       - name: Build test
         working-directory: repo-main

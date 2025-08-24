@@ -58,8 +58,8 @@ jobs:
         run: |
           yarn install --frozen-lockfile
           yarn build-prod
-          rm ./dist/manifest.test.json
-          mv ./dist/manifest.prod.json ./dist/manifest.json
+          rm dist/manifest.test.json
+          mv dist/manifest.prod.json dist/manifest.json
           mkdir -p ../site/prod
           cp -R ./dist/* ../site/prod
 
@@ -68,10 +68,10 @@ jobs:
         run: |
           yarn install --frozen-lockfile
           yarn build-test
+          rm dist/manifest.prod.json
+          mv dist/manifest.test.json dist/manifest.json
           mkdir -p ../site/test
           cp -R ./dist/* ../site/test
-          rm ./dist/manifest.prod.json
-          mv ./dist/manifest.test.json ./dist/manifest.json
 
       - name: Print combined artifact
         run: |

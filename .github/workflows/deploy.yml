@@ -6,28 +6,18 @@ on:
       - main
   workflow_dispatch:
     inputs:
-      target:
-        description: "Environment"
-        required: true
-        type: choice
-        options:
-          - prod
-          - test
+      deploy-to-prod:
+        description: "Deploy to prod"
+        default: false
+        type: boolean
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
-  deploy-test:
-    if: >-
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.target == 'test' || inputs.target == 'prod'))
+  deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -35,6 +25,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Copy existing site
+        run: |
+          git fetch --depth=1 origin gh-pages:gh-pages
+          git checkout gh-pages -- ./site
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -46,52 +41,18 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build (test)
-        run: yarn build-test
-
-      - name: Prepare combined site artifact
         run: |
-          chmod +x .github/scripts/prepare-site.sh
-          .github/scripts/prepare-site.sh test ./site prod
+          yarn build-test
+          cp -R ./dist ./site/test
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload combined artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./site
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  deploy-prod:
-    if: github.event_name == 'workflow_dispatch' && inputs.target == 'prod'
-    needs: [deploy-test]
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: yarn
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Build
-        run: yarn build-prod
-
-      - name: Prepare combined site artifact
+      - name: Build (prod)
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy-to-prod
         run: |
-          chmod +x .github/scripts/prepare-site.sh
-          .github/scripts/prepare-site.sh prod ./site test
+          yarn build-prod
+          cp -R ./dist ./site/prod
+
+      - name: Print combined artifact
+        run: ls -la ./site
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

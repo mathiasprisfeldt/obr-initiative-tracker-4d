@@ -6,6 +6,10 @@ export function DebugPanel() {
   const { state: trackerState } = useTrackerStore();
   const { state: portraitImagePickerState } = usePortraitImagePickerStore();
 
+  if (import.meta.env.PROD) {
+    return null;
+  }
+
   return (
     <Stack direction="row" spacing={2}>
       <Button

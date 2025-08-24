@@ -5,11 +5,6 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      deploy-to-prod:
-        description: "Deploy to prod"
-        default: false
-        type: boolean
 
 permissions:
   contents: read
@@ -23,38 +18,62 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: repo-main
 
-      - name: Copy existing site
+      - name: Find latest release tag (release/x.x.x)
+        id: find_release_tag
+        working-directory: repo-main
+        shell: bash
         run: |
-          git fetch origin gh-pages
-          git worktree add gh-pages-temp gh-pages
+          git fetch --tags --force
+          tag=$(git for-each-ref --format="%(refname:short)" --sort=-version:refname refs/tags/release/* | head -n1)
+          if [ -z "$tag" ]; then
+            echo "No tags matching release/* were found" >&2
+            exit 1
+          fi
+          echo "release_tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout latest release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.find_release_tag.outputs.release_tag }}
+          path: repo-prod
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: yarn
+          cache-dependency-path: |
+            **/yarn.lock
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Build (test)
+      - name: Build prod
+        working-directory: repo-prod
         run: |
-          yarn build-test
-          cp -R ./dist ./site/test
-
-      - name: Build (prod)
-        if: github.event_name == 'workflow_dispatch' && inputs.deploy-to-prod
-        run: |
+          yarn install --frozen-lockfile
           yarn build-prod
-          cp -R ./dist ./site/prod
+          mkdir -p ../site/prod
+          cp -R ./dist/* ../site/prod
+
+      - name: Build test
+        working-directory: repo-main
+        run: |
+          yarn install --frozen-lockfile
+          yarn build-test
+          mkdir -p ../site/test
+          cp -R ./dist/* ../site/test
 
       - name: Print combined artifact
-        run: ls -la ./site
+        run: |
+          ls -la
+          echo "Contents of site/:"
+          ls -la ./site
 
-      - name: Setup Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
       - name: Upload combined artifact

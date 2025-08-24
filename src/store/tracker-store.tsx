@@ -192,7 +192,7 @@ export function TrackerStoreProvider({
               if (!a.properties.name) return 1;
 
               return (
-                (a.properties.initiative || 0) - (b.properties.initiative || 0)
+                (b.properties.initiative || 0) - (a.properties.initiative || 0)
               );
             }),
           }));

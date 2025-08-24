@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build-test": "tsc --noEmit && NODE_ENV=development vite build --mode development",
+    "build-prod": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {

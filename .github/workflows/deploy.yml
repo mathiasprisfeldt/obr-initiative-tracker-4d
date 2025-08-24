@@ -28,7 +28,6 @@ jobs:
 
       - name: Copy existing site
         run: |
-          git fetch origin gh-pages
           git checkout gh-pages -- site
 
       - name: Set up Node

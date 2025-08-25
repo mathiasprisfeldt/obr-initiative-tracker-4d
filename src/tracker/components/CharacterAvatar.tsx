@@ -1,6 +1,6 @@
-import styled from "styled-components";
 import { Character } from "../../store/tracker-store";
 import { PortraitImage } from "../../character-portrait";
+import { styled } from "@mui/material";
 
 export interface Props {
   character: Character;
@@ -25,7 +25,7 @@ export default function CharacterAvatar({
   );
 }
 
-const Background = styled.div<{
+const Background = styled("div")<{
   hasTurn: boolean;
   portraitImage: PortraitImage | null;
 }>`

@@ -6,10 +6,12 @@ import {
 } from "../store/tracker-store";
 import CharacterRow from "./components/CharacterRow";
 import OBR from "@owlbear-rodeo/sdk";
-import styled from "styled-components";
+import { styled, Typography } from "@mui/material";
 
 export function Tracker() {
   const state = useTrackerState();
+
+  if (!OBR.isAvailable) return <Preview endEncounter={false} />;
 
   return <Content state={state} />;
 }
@@ -25,12 +27,12 @@ function Content({ state }: { state: TrackerState | undefined }) {
           currentCharacter={state.currentCharacter}
         />
       )}
-      <RoundText>Round {state?.round}</RoundText>
+      <RoundText typography="h5">Round {state?.round}</RoundText>
     </Container>
   );
 }
 
-const Container = styled.div`
+const Container = styled("div")`
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -42,7 +44,7 @@ const StyledCharacterRow = styled(CharacterRow)`
   flex-grow: 1;
 `;
 
-const RoundText = styled.h2`
+const RoundText = styled(Typography)`
   font-weight: bold;
   margin: 0;
   padding: 8px;
@@ -125,7 +127,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
   };
 
   return (
-    <div style={{ width: "200px", height: "800px" }}>
+    <div style={{ width: "200px", height: "100%", background: "gray" }}>
       <Content state={state} />
     </div>
   );

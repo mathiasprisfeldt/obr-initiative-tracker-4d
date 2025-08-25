@@ -1,7 +1,12 @@
-import styled from "styled-components";
 import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
-import { Typography, Button, Stack, LinearProgress } from "@mui/material";
+import {
+  Typography,
+  Button,
+  Stack,
+  LinearProgress,
+  styled,
+} from "@mui/material";
 
 export default function Tracker() {
   const trackerStore = useTrackerStore();
@@ -121,6 +126,12 @@ function Content({
   );
 }
 
+const CharacterTable = styled("div")`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
 function Preview() {
   const trackerStore: TrackerStore = {
     state: {
@@ -162,9 +173,3 @@ function Preview() {
 
   return <Content trackerStore={trackerStore} />;
 }
-
-const CharacterTable = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;

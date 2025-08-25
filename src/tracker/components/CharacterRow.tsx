@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import { styled } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import CharacterAvatar from "./CharacterAvatar";
 
@@ -15,11 +15,12 @@ export default function CharacterRow({
   return (
     <Container {...rest}>
       {characters.map((character) => (
-        <StyledCharacterAvatar
-          key={character.id}
-          character={character}
-          hasTurn={currentCharacter?.id === character.id}
-        />
+        <CharacterAvatarContainer key={character.id}>
+          <StyledCharacterAvatar
+            character={character}
+            hasTurn={currentCharacter?.id === character.id}
+          />
+        </CharacterAvatarContainer>
       ))}
     </Container>
   );
@@ -27,12 +28,24 @@ export default function CharacterRow({
 
 const StyledCharacterAvatar = styled(CharacterAvatar)`
   rotate: -90deg;
+  flex-shrink: 1;
 `;
 
-const Container = styled.div`
+const CharacterAvatarContainer = styled("div")`
+  display: flex;
+  max-height: 150px;
+  flex-grow: 1;
+  justify-content: center;
+`;
+
+const Container = styled("div")`
   display: flex;
   flex-direction: column-reverse;
   gap: 16px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  justify-content: center;
 `;
 
 function Preview() {

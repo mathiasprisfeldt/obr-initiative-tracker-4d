@@ -32,7 +32,8 @@ export default function CharacterRow({
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
       {!isDraft && hasTurn && <span>🟢</span>}
-      {!isDraft && !hasTurn && <span>⚪️</span>}
+      {!isDraft && !hasTurn && <span>🟡</span>}
+      {isDraft && <span>⚪️</span>}
 
       <TextField
         label="Name"

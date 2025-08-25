@@ -2,14 +2,28 @@ import {
   PortraitImage,
   CharacterPortraitPicker,
 } from "../../character-portrait";
-import { Stack, TextField } from "@mui/material";
+import {
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Stack,
+  TextField,
+} from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import HealthInput from "./HealthInput";
+import { useState } from "react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 interface Props {
   hasTurn: boolean;
   character: Character;
   onNameChange?: (name: string) => void;
+  onHideNameChange?: (hideName: boolean) => void;
   onInitiativeChange?: (initiative: number) => void;
   onInitiativeSubmit?: () => void;
   onHealthChange?: (health: number) => void;
@@ -21,6 +35,7 @@ export default function CharacterRow({
   hasTurn,
   character,
   onNameChange,
+  onHideNameChange,
   onInitiativeChange,
   onInitiativeSubmit,
   onHealthChange,
@@ -28,6 +43,9 @@ export default function CharacterRow({
   onPortraitImageChange,
 }: Props) {
   const isDraft = character.properties.name === "";
+
+  const [contextMenu, setContextMenu] = useState<null | HTMLElement>(null);
+  const isContextMenuOpen = Boolean(contextMenu);
 
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -72,6 +90,43 @@ export default function CharacterRow({
         value={character?.properties.portraitImage}
         onChange={onPortraitImageChange}
       />
+      <IconButton
+        id="context-menu-button"
+        disabled={isDraft}
+        tabIndex={-1}
+        aria-controls={isContextMenuOpen ? "basic-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={isContextMenuOpen ? "true" : undefined}
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+          setContextMenu(event.currentTarget);
+        }}
+      >
+        <MoreVertIcon />
+      </IconButton>
+      <Menu
+        id="context-menu"
+        anchorEl={contextMenu}
+        open={isContextMenuOpen}
+        onClose={() => {
+          setContextMenu(null);
+        }}
+        slotProps={{
+          list: {
+            "aria-labelledby": "context-menu-button",
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => onHideNameChange?.(!character.properties.hideName)}
+        >
+          <ListItemIcon>
+            {character.properties.hideName ? <VisibilityOff /> : <Visibility />}
+          </ListItemIcon>
+          <ListItemText>
+            {character.properties.hideName ? "Show name" : "Hide name"}
+          </ListItemText>
+        </MenuItem>
+      </Menu>
     </Stack>
   );
 }

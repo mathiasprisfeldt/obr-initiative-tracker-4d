@@ -18,9 +18,7 @@ export default function CharacterAvatar({
       hasTurn={hasTurn}
       portraitImage={character.properties.portraitImage}
     >
-      {!character.properties.portraitImage && (
-        <h3>{character.properties.name}</h3>
-      )}
+      {!character.properties.hideName && <h3>{character.properties.name}</h3>}
     </Background>
   );
 }

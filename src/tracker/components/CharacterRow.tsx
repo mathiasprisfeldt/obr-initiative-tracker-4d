@@ -60,6 +60,7 @@ function Preview() {
           displayName: "Daggert Skyggestikker",
           url: "https://dnd.mathiasprisfeldt.me/img/Peter.png",
         },
+        hideName: true,
       },
     },
     {
@@ -72,6 +73,7 @@ function Preview() {
           displayName: "Alaeya",
           url: "https://dnd.mathiasprisfeldt.me/img/Vanessa.png",
         },
+        hideName: true,
       },
     },
     {
@@ -84,6 +86,7 @@ function Preview() {
           displayName: "Nadarr",
           url: "https://dnd.mathiasprisfeldt.me/img/Nicholai.png",
         },
+        hideName: true,
       },
     },
     {
@@ -96,6 +99,7 @@ function Preview() {
           displayName: "Wolf",
           url: "https://dnd.mathiasprisfeldt.me/img/Wolf.png",
         },
+        hideName: false,
       },
     },
   ];

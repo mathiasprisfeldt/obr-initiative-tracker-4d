@@ -46,6 +46,12 @@ function Content({
             onNameChange={(name) => {
               updateCharacter(character.id, { ...character.properties, name });
             }}
+            onHideNameChange={(hideName) => {
+              updateCharacter(character.id, {
+                ...character.properties,
+                hideName,
+              });
+            }}
             onInitiativeChange={(initiative) => {
               updateCharacter(character.id, {
                 ...character.properties,
@@ -144,6 +150,7 @@ function Preview() {
             health: 100,
             maxHealth: 100,
             portraitImage: null,
+            hideName: true,
           },
         },
         {
@@ -154,6 +161,7 @@ function Preview() {
             health: 80,
             maxHealth: 80,
             portraitImage: null,
+            hideName: true,
           },
         },
       ],

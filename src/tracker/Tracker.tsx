@@ -27,7 +27,7 @@ function Content({ state }: { state: TrackerState | undefined }) {
           currentCharacter={state.currentCharacter}
         />
       )}
-      <RoundText typography="h5">Round {state?.round}</RoundText>
+      <RoundText typography="body2">Round {state?.round}</RoundText>
     </Container>
   );
 }
@@ -49,6 +49,10 @@ const RoundText = styled(Typography)`
   margin: 0;
   padding: 8px;
   writing-mode: sideways-lr;
+  color: white;
+  border-radius: 16px;
+  border: 2px solid white;
+  background: gray;
 `;
 
 export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";

@@ -1,6 +1,6 @@
 import { Character } from "../../store/tracker-store";
 import { PortraitImage } from "../../character-portrait";
-import { styled } from "@mui/material";
+import { keyframes, styled, Typography } from "@mui/material";
 
 export interface Props {
   character: Character;
@@ -13,31 +13,77 @@ export default function CharacterAvatar({
   ...rest
 }: Props) {
   return (
-    <Background
-      {...rest}
-      hasTurn={hasTurn}
-      portraitImage={character.properties.portraitImage}
-    >
-      {!character.properties.hideName && <h3>{character.properties.name}</h3>}
+    <Background {...rest} portraitImage={character.properties.portraitImage}>
+      {hasTurn && <TurnIndicator>⚔️</TurnIndicator>}
+      {!character.properties.hideName && (
+        <Name variant="body2" sx={{ p: 1 }}>
+          {character.properties.name}
+        </Name>
+      )}
     </Background>
   );
 }
+const Name = styled(Typography)({
+  position: "absolute",
+  bottom: -16,
+  color: "white",
+  background: "gray",
+  borderRadius: "16px",
+  border: "2px solid white",
+});
+
+const TurnIndcatorIdleAnimation = keyframes`
+  0% {
+    transform: translateX(0%);
+  }
+
+  3% {
+    transform: translateX(-30px) rotate(-6deg);
+  }
+
+  6% {
+    transform: translateX(15px) rotate(6deg);
+  }
+
+  9% {
+    transform: translateX(-15px) rotate(-3.6deg);
+  }
+
+  12% {
+    transform: translateX(9px) rotate(2.4deg);
+  }
+
+  15% {
+    transform: translateX(-6px) rotate(-1.2deg);
+  }
+
+  18% {
+    transform: translateX(0%);
+  }
+`;
+
+const TurnIndicator = styled("div")({
+  position: "absolute",
+  bottom: -24,
+  color: "initial",
+  fontSize: "3em",
+  animation: `${TurnIndcatorIdleAnimation} 5s ease-in-out infinite`,
+  animationDelay: "1s",
+  textShadow:
+    "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
+});
 
 const Background = styled("div")<{
-  hasTurn: boolean;
   portraitImage: PortraitImage | null;
 }>`
   display: flex;
   align-items: center;
   justify-content: center;
 
-  box-shadow: 0px -10px 60px black inset;
   background-color: #f0f0f0;
   border-radius: 100%;
   aspect-ratio: 1 / 1;
   padding: 16px;
-
-  border: ${(props) => (props.hasTurn ? "6px solid #007bff" : "none")};
 
   background-image: url(${(props) => props.portraitImage?.url});
   background-size: cover;

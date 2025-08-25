@@ -30,6 +30,7 @@ const Name = styled(Typography)({
   background: "gray",
   borderRadius: "16px",
   border: "2px solid white",
+  textAlign: "center",
 });
 
 const TurnIndcatorIdleAnimation = keyframes`

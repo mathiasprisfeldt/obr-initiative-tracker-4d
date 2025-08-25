@@ -1,9 +1,9 @@
 {
-  "name": "Initiative Tracker 4D",
+  "name": "Initiative Tracker 4D (TEST)",
   "version": "1.0.0",
   "manifest_version": 1,
   "action": {
-    "title": "Initiative Tracker 4D",
+    "title": "Initiative Tracker 4D (TEST)",
     "icon": "/obr-initiative-tracker-4d/test/icon.svg",
     "popover": "/obr-initiative-tracker-4d/test/src/admin/index.html",
     "height": 600,

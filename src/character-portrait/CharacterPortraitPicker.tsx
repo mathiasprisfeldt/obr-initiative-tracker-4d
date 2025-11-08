@@ -27,10 +27,15 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
       disabled={disabled}
       disablePortal
       options={images}
-      sx={{ width: 300 }}
+      sx={{ width: 100 }}
       value={value}
       onChange={(_, newValue) => {
         onChange?.(newValue);
+      }}
+      slotProps={{
+        popper: {
+          sx: { width: "fit-content !important", maxWidth: 500 },
+        },
       }}
       getOptionKey={(option) => option.url.toString()}
       getOptionLabel={(option) => option.displayName}
@@ -60,7 +65,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
           <li key={key} {...rest}>
             <CharacterPortraitThumbnail
               portraitImage={option}
-              sx={{ mr: 1, width: 52 }}
+              sx={{ mr: 1, width: 24 }}
             />
             <Typography
               sx={{

@@ -1,284 +1,278 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { PortraitImage } from "../character-portrait";
+import { simpleMathEval } from "../utils/simple-math-eval";
 
 const metadataKey = "obr-initiative-tracker-4d-tracker-store-metadata";
 
 export interface Character {
-  id: string;
-  properties: CharacterProperties;
+    id: string;
+    properties: CharacterProperties;
 }
 
 export interface CharacterProperties {
-  name: string;
-  initiative?: number;
-  health: number;
-  maxHealth: number;
-  portraitImage: PortraitImage | null;
-  hideName: boolean;
+    name: string;
+    initiative?: number;
+    health: number;
+    maxHealth: number;
+    portraitImage: PortraitImage | null;
+    hideName: boolean;
 }
 
 export interface TrackerState {
-  characters: Character[];
-  currentCharacter?: Character;
-  round: number;
-  hasEncounterStarted: boolean;
+    characters: Character[];
+    currentCharacter?: Character;
+    round: number;
+    hasEncounterStarted: boolean;
 }
 
 export interface TrackerStore {
-  state: TrackerState;
-  isLoading: boolean;
-  canStartEncounter: boolean;
+    state: TrackerState;
+    isLoading: boolean;
+    canStartEncounter: boolean;
 
-  updateCharacter(id: string, properties: CharacterProperties): void;
-  sortCharacters(): void;
+    updateCharacter(id: string, properties: CharacterProperties): void;
+    sortCharacters(): void;
 
-  previousTurn(): void;
-  nextTurn(): void;
+    previousTurn(): void;
+    nextTurn(): void;
 
-  startEncounter(): void;
-  endEncounter(): void;
+    startEncounter(): void;
+    endEncounter(): void;
 }
 
 const context = createContext<TrackerStore>({
-  state: {
-    characters: [],
-    round: 1,
-    hasEncounterStarted: false,
-  },
-  isLoading: true,
-  canStartEncounter: false,
+    state: {
+        characters: [],
+        round: 1,
+        hasEncounterStarted: false,
+    },
+    isLoading: true,
+    canStartEncounter: false,
 
-  updateCharacter: () => {},
-  sortCharacters: () => {},
+    updateCharacter: () => {},
+    sortCharacters: () => {},
 
-  previousTurn: () => {},
-  nextTurn: () => {},
+    previousTurn: () => {},
+    nextTurn: () => {},
 
-  startEncounter: () => {},
-  endEncounter: () => {},
+    startEncounter: () => {},
+    endEncounter: () => {},
 });
 
 export function useTrackerStore(): TrackerStore {
-  return useContext(context);
+    return useContext(context);
 }
 
 export function useTrackerState(): TrackerState | undefined {
-  const [state, setState] = useState<TrackerState>();
+    const [state, setState] = useState<TrackerState>();
 
-  useEffect(() => {
-    if (!OBR.isAvailable) return;
+    useEffect(() => {
+        if (!OBR.isAvailable) return;
 
-    OBR.room.onMetadataChange((metadata) => {
-      let trackerState = metadata[metadataKey] as TrackerState;
+        OBR.room.onMetadataChange((metadata) => {
+            let trackerState = metadata[metadataKey] as TrackerState;
 
-      // clean up state before giving it to consumers, for instance removing draft characters
-      trackerState = {
-        ...trackerState,
-        characters: trackerState.characters.filter(
-          (c) => c.properties.name.trim() !== ""
-        ),
-      };
+            // clean up state before giving it to consumers, for instance removing draft characters
+            trackerState = {
+                ...trackerState,
+                characters: trackerState.characters.filter((c) => c.properties.name.trim() !== ""),
+            };
 
-      setState(trackerState);
-    });
-  }, []);
+            setState(trackerState);
+        });
+    }, []);
 
-  return state;
+    return state;
 }
 
-export function TrackerStoreProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [isLoading, setIsLoading] = useState(true);
+export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {
+    const [isLoading, setIsLoading] = useState(true);
 
-  const [state, setState] = useState<TrackerState>({
-    characters: [
-      {
-        id: crypto.randomUUID(),
-        properties: {
-          name: "",
-          health: 0,
-          maxHealth: 0,
-          portraitImage: null,
-          hideName: false,
-        },
-      },
-    ],
-    round: 1,
-    hasEncounterStarted: false,
-  });
-
-  const canStartEncounter = useMemo(() => {
-    return state.characters.length > 1;
-  }, [state.characters.length]);
-
-  useEffect(() => {
-    if (isLoading || !OBR.isAvailable) return;
-
-    OBR.room.setMetadata({
-      [metadataKey]: state,
-    });
-  }, [state]);
-
-  useEffect(() => {
-    if (!OBR.isAvailable) {
-      setIsLoading(false);
-      return;
-    }
-
-    OBR.onReady(async () => {
-      const metadata = await OBR.room.getMetadata();
-      const trackerState = metadata[metadataKey] as TrackerState;
-
-      if (trackerState) {
-        setState(trackerState);
-      }
-
-      setIsLoading(false);
-    });
-  }, []);
-
-  return (
-    <context.Provider
-      value={{
-        state,
-        isLoading: isLoading,
-        canStartEncounter: canStartEncounter,
-
-        updateCharacter: (id: string, properties: CharacterProperties) => {
-          setState((prevState) => {
-            const updatedCharacters = prevState.characters.map((c) =>
-              c.id === id ? { id, properties } : c
-            );
-
-            // Add new placeholder character if this one is new
-            if (
-              !prevState.characters.find((c) => c.id === id)?.properties.name
-            ) {
-              updatedCharacters.push({
+    const [state, setState] = useState<TrackerState>({
+        characters: [
+            {
                 id: crypto.randomUUID(),
                 properties: {
-                  name: "",
-                  health: 0,
-                  maxHealth: 0,
-                  portraitImage: null,
-                  hideName: false,
+                    name: "",
+                    health: 0,
+                    maxHealth: 0,
+                    portraitImage: null,
+                    hideName: false,
                 },
-              });
+            },
+        ],
+        round: 1,
+        hasEncounterStarted: false,
+    });
+
+    const canStartEncounter = useMemo(() => {
+        return state.characters.length > 1;
+    }, [state.characters.length]);
+
+    useEffect(() => {
+        if (isLoading || !OBR.isAvailable) return;
+
+        OBR.room.setMetadata({
+            [metadataKey]: state,
+        });
+    }, [state]);
+
+    useEffect(() => {
+        if (!OBR.isAvailable) {
+            setIsLoading(false);
+            return;
+        }
+
+        OBR.onReady(async () => {
+            const metadata = await OBR.room.getMetadata();
+            const trackerState = metadata[metadataKey] as TrackerState;
+
+            if (trackerState) {
+                setState(trackerState);
             }
 
-            // Remove character if name is cleared
-            if (properties.name.trim() === "") {
-              // Advance turn if the current character is being removed
-              if (prevState.currentCharacter?.id === id) {
-                return {
-                  ...nextTurn(prevState),
-                  characters: updatedCharacters.filter((c) => c.id !== id),
-                };
-              }
+            setIsLoading(false);
+        });
+    }, []);
 
-              return {
-                ...prevState,
-                characters: updatedCharacters.filter((c) => c.id !== id),
-              };
-            }
+    return (
+        <context.Provider
+            value={{
+                state,
+                isLoading: isLoading,
+                canStartEncounter: canStartEncounter,
 
+                updateCharacter: (id: string, properties: CharacterProperties) => {
+                    setState((prevState) => {
+                        if (properties.health > properties.maxHealth) {
+                            properties.maxHealth = properties.health;
+                        }
+
+                        const updatedCharacters = prevState.characters.map((c) =>
+                            c.id === id ? { id, properties } : c,
+                        );
+
+                        // Add new placeholder character if this one is new
+                        if (!prevState.characters.find((c) => c.id === id)?.properties.name) {
+                            updatedCharacters.push({
+                                id: crypto.randomUUID(),
+                                properties: {
+                                    name: "",
+                                    health: 0,
+                                    maxHealth: 0,
+                                    portraitImage: null,
+                                    hideName: false,
+                                },
+                            });
+                        }
+
+                        // Remove character if name is cleared
+                        if (properties.name.trim() === "") {
+                            // Advance turn if the current character is being removed
+                            if (prevState.currentCharacter?.id === id) {
+                                return {
+                                    ...nextTurn(prevState),
+                                    characters: updatedCharacters.filter((c) => c.id !== id),
+                                };
+                            }
+
+                            return {
+                                ...prevState,
+                                characters: updatedCharacters.filter((c) => c.id !== id),
+                            };
+                        }
+
+                        return {
+                            ...prevState,
+                            characters: updatedCharacters,
+                        };
+                    });
+                },
+
+                sortCharacters: () => {
+                    setState((prevState) => ({
+                        ...prevState,
+                        characters: prevState.characters.sort((a, b) => {
+                            // Ensure draft characters are sorted last
+                            if (!b.properties.name) return -1;
+                            if (!a.properties.name) return 1;
+
+                            return (b.properties.initiative || 0) - (a.properties.initiative || 0);
+                        }),
+                    }));
+                },
+
+                previousTurn: () => {
+                    setState((prevState) => {
+                        const currentCharacterIndex = prevState.characters.findIndex(
+                            (c) => c.id === prevState.currentCharacter?.id,
+                        );
+                        let previousTurnIndex = currentCharacterIndex - 1;
+
+                        // Go back to previous round if at the start of the current round
+                        if (previousTurnIndex < 0) {
+                            if (prevState.round === 1) {
+                                return prevState; // No previous turn if already at round 1
+                            }
+
+                            previousTurnIndex = prevState.characters.length - 2;
+                        }
+
+                        return {
+                            ...prevState,
+                            currentCharacter: prevState.characters[previousTurnIndex],
+                            round:
+                                previousTurnIndex === prevState.characters.length - 2
+                                    ? prevState.round - 1
+                                    : prevState.round,
+                        };
+                    });
+                },
+
+                nextTurn: () => {
+                    setState((prevState) => nextTurn(prevState));
+                },
+
+                startEncounter: () => {
+                    setState((prevState) => ({
+                        ...prevState,
+                        hasEncounterStarted: true,
+                        currentCharacter: prevState.characters[0],
+                        round: 1,
+                    }));
+                },
+
+                endEncounter: () => {
+                    setState((prevState) => ({
+                        ...prevState,
+                        hasEncounterStarted: false,
+                        currentCharacter: undefined,
+                        round: 1,
+                    }));
+                },
+            }}
+        >
+            {children}
+        </context.Provider>
+    );
+
+    function nextTurn(state: TrackerState): TrackerState {
+        if (state.currentCharacter === undefined) {
             return {
-              ...prevState,
-              characters: updatedCharacters,
+                ...state,
+                currentCharacter: state.characters[0],
             };
-          });
-        },
+        }
 
-        sortCharacters: () => {
-          setState((prevState) => ({
-            ...prevState,
-            characters: prevState.characters.sort((a, b) => {
-              // Ensure draft characters are sorted last
-              if (!b.properties.name) return -1;
-              if (!a.properties.name) return 1;
+        const nextTurnIndex =
+            (state.characters.findIndex((c) => c.id === state.currentCharacter?.id) + 1) %
+            (state.characters.length - 1);
 
-              return (
-                (b.properties.initiative || 0) - (a.properties.initiative || 0)
-              );
-            }),
-          }));
-        },
-
-        previousTurn: () => {
-          setState((prevState) => {
-            const currentCharacterIndex = prevState.characters.findIndex(
-              (c) => c.id === prevState.currentCharacter?.id
-            );
-            let previousTurnIndex = currentCharacterIndex - 1;
-
-            // Go back to previous round if at the start of the current round
-            if (previousTurnIndex < 0) {
-              if (prevState.round === 1) {
-                return prevState; // No previous turn if already at round 1
-              }
-
-              previousTurnIndex = prevState.characters.length - 2;
-            }
-
-            return {
-              ...prevState,
-              currentCharacter: prevState.characters[previousTurnIndex],
-              round:
-                previousTurnIndex === prevState.characters.length - 2
-                  ? prevState.round - 1
-                  : prevState.round,
-            };
-          });
-        },
-
-        nextTurn: () => {
-          setState((prevState) => nextTurn(prevState));
-        },
-
-        startEncounter: () => {
-          setState((prevState) => ({
-            ...prevState,
-            hasEncounterStarted: true,
-            currentCharacter: prevState.characters[0],
-            round: 1,
-          }));
-        },
-
-        endEncounter: () => {
-          setState((prevState) => ({
-            ...prevState,
-            hasEncounterStarted: false,
-            currentCharacter: undefined,
-            round: 1,
-          }));
-        },
-      }}
-    >
-      {children}
-    </context.Provider>
-  );
-
-  function nextTurn(state: TrackerState): TrackerState {
-    if (state.currentCharacter === undefined) {
-      return {
-        ...state,
-        currentCharacter: state.characters[0],
-      };
+        return {
+            ...state,
+            currentCharacter: state.characters[nextTurnIndex],
+            round: nextTurnIndex === 0 ? state.round + 1 : state.round,
+        };
     }
-
-    const nextTurnIndex =
-      (state.characters.findIndex((c) => c.id === state.currentCharacter?.id) +
-        1) %
-      (state.characters.length - 1);
-
-    return {
-      ...state,
-      currentCharacter: state.characters[nextTurnIndex],
-      round: nextTurnIndex === 0 ? state.round + 1 : state.round,
-    };
-  }
 }

@@ -1,14 +1,14 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "module": "esnext",
-    "jsx": "react-jsx",
-    "strict": true,
-    "moduleResolution": "bundler",
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "assets/*": ["./src/assets/*"]
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "esnext",
+        "jsx": "react-jsx",
+        "strict": true,
+        "moduleResolution": "bundler",
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "paths": {
+            "assets/*": ["./src/assets/*"]
+        }
     }
-  }
 }

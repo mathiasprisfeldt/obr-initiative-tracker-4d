@@ -53,6 +53,9 @@ jobs:
           cache-dependency-path: |
             **/yarn.lock
 
+      - name: Set up Corepack
+        run: corepack enable
+
       - name: Build prod
         working-directory: repo-prod
         run: |

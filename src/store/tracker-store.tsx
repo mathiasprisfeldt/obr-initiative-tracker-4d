@@ -12,7 +12,7 @@ export interface Character {
 
 export interface CharacterProperties {
     name: string;
-    initiative?: number;
+    initiative: number;
     health: number;
     maxHealth: number;
     portraitImage: PortraitImage | null;
@@ -95,6 +95,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 id: crypto.randomUUID(),
                 properties: {
                     name: "",
+                    initiative: 0,
                     health: 0,
                     maxHealth: 0,
                     portraitImage: null,
@@ -159,6 +160,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                                 id: crypto.randomUUID(),
                                 properties: {
                                     name: "",
+                                    initiative: 0,
                                     health: 0,
                                     maxHealth: 0,
                                     portraitImage: null,

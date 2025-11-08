@@ -73,6 +73,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
             id: "1",
             properties: {
                 name: "Daggert Skyggestikker",
+                initiative: 0,
                 health: 0,
                 maxHealth: 0,
                 portraitImage: {
@@ -86,6 +87,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
             id: "2",
             properties: {
                 name: "Alaeya",
+                initiative: 0,
                 health: 0,
                 maxHealth: 0,
                 portraitImage: {
@@ -99,6 +101,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
             id: "3",
             properties: {
                 name: "Nadarr",
+                initiative: 0,
                 health: 0,
                 maxHealth: 0,
                 portraitImage: {
@@ -112,6 +115,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
             id: "4",
             properties: {
                 name: "Wolf",
+                initiative: 0,
                 health: 0,
                 maxHealth: 0,
                 portraitImage: null,

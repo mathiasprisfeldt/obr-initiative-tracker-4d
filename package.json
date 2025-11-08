@@ -11,20 +11,21 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "vite": "^3.2.0"
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.1",
-    "@mui/lab": "^7.0.0-beta.16",
-    "@mui/material": "^7.3.1",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/lab": "^7.0.0-beta.19",
+    "@mui/material": "^7.3.5",
     "@owlbear-rodeo/sdk": "^3.1.0",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.7.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
-  }
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "packageManager": "yarn@4.9.4"
 }

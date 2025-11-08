@@ -45,6 +45,9 @@ jobs:
           ref: ${{ steps.find_release_tag.outputs.release_tag }}
           path: repo-prod
 
+      - name: Set up Corepack
+        run: corepack enable
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -52,9 +55,6 @@ jobs:
           cache: yarn
           cache-dependency-path: |
             **/yarn.lock
-
-      - name: Set up Corepack
-        run: corepack enable
 
       - name: Build prod
         working-directory: repo-prod

@@ -1,6 +1,7 @@
 import { Character } from "../../store/tracker-store";
 import { PortraitImage } from "../../character-portrait";
 import { keyframes, styled, Typography } from "@mui/material";
+import AvatarPlaceholder from "assets/avatar-placeholder.png";
 
 export interface Props {
     character: Character;
@@ -81,7 +82,7 @@ const Background = styled("div")<{
     aspect-ratio: 1 / 1;
     padding: 16px;
 
-    background-image: url("${(props) => props.portraitImage?.url}");
+    background-image: url("${(props) => props.portraitImage?.url || AvatarPlaceholder}");
     background-size: cover;
     background-repeat: no-repeat;
     background-position: ${(props) => props.portraitImage?.position || "center"};

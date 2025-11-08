@@ -114,10 +114,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
                 name: "Wolf",
                 health: 0,
                 maxHealth: 0,
-                portraitImage: {
-                    displayName: "Wolf",
-                    url: "https://dnd.mathiasprisfeldt.me/img/Xel's%20Orb.png",
-                },
+                portraitImage: null,
                 hideName: false,
             },
         },

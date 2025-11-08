@@ -58,7 +58,7 @@ export default function CharacterRow({
                 sx={{ mr: 1, width: 200 }}
             />
             <TextField
-                label="Initiative"
+                label="INI"
                 size="small"
                 disabled={isDraft}
                 value={character?.properties.initiative}
@@ -73,7 +73,7 @@ export default function CharacterRow({
                         onInitiativeSubmit?.();
                     }
                 }}
-                sx={{ mr: 1, width: 130 }}
+                sx={{ mr: 1, width: 60 }}
             />
             <HealthInput
                 disabled={isDraft}

@@ -55,7 +55,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
     const [isLoading, setIsLoading] = useState(true);
 
     const [state, setState] = useState<PortraitImagePickerState>({
-        imageSourceUrl: "",
+        imageSourceUrl: import.meta.env.DEV ? "https://dnd.mathiasprisfeldt.me/img/" : "",
         images: [],
     });
 

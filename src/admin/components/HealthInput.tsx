@@ -1,6 +1,8 @@
 import { TextField, TextFieldProps } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import { simpleMathEval } from "../../utils/simple-math-eval";
+import styled from "@emotion/styled";
+import { orange, red, yellow } from "@mui/material/colors";
 
 export interface Props {
     disabled: boolean;
@@ -19,13 +21,14 @@ export default function HealthInput({
 }: Props) {
     return (
         <>
-            <MathField
+            <MaxHealthAwareMathField
                 label="HP"
                 size="small"
                 disabled={disabled}
                 value={health}
                 onValueChange={onHealthChange}
                 sx={{ maxWidth: 75, mr: 1 }}
+                maxhealth={maxHealth}
             />
             <MathField
                 label="Max HP"
@@ -83,3 +86,30 @@ function MathField({
         />
     );
 }
+
+const MaxHealthAwareMathField = styled(MathField)<{
+    maxhealth: number;
+}>`
+    & .MuiOutlinedInput-root {
+        & fieldset {
+            border-color: ${(props) => {
+                if (props.maxhealth <= 0) {
+                    return "inherit";
+                }
+
+                const percentage = (props.value / props.maxhealth) * 100;
+                if (percentage >= 50) {
+                    return "inherit";
+                }
+                if (percentage >= 25) {
+                    return yellow[700];
+                }
+                if (percentage >= 15) {
+                    return orange[700];
+                }
+
+                return red[700];
+            }};
+        }
+    }
+`;

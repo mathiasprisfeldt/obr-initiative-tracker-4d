@@ -9,44 +9,30 @@ export interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "className">
 }
 
 export function PortraitImageWithPlaceholder({ portraitImage, ...rest }: Props) {
-    const url = portraitImage?.url || AvatarPlaceholder;
-    const imageUrl = portraitImage?.url ?? null;
-    const providedBlurhash = portraitImage?.blurhash ?? null;
     const [isLoaded, setIsLoaded] = useState(false);
-    const [blurhash, setBlurhash] = useState<string | null>(providedBlurhash);
+    const [src, setSrc] = useState(portraitImage?.url || AvatarPlaceholder);
+
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const imgRef = useRef<HTMLImageElement | null>(null);
 
     useEffect(() => {
-        setIsLoaded(false);
-        setBlurhash(portraitImage?.blurhash ?? null);
-    }, [imageUrl]);
-
-    useEffect(() => {
-        setBlurhash(providedBlurhash ?? null);
-    }, [providedBlurhash]);
-
-    useEffect(() => {
-        if (!blurhash) return;
+        if (!portraitImage?.blurhash) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
-        renderBlurhashToCanvas(canvas, blurhash, 32, 32);
-    }, [blurhash]);
+        renderBlurhashToCanvas(canvas, portraitImage.blurhash, 32, 32);
+    }, [portraitImage?.blurhash]);
 
     return (
         <Root {...rest}>
-            {blurhash && (
+            {portraitImage?.blurhash && (
                 <Canvas ref={canvasRef} aria-hidden style={{ opacity: isLoaded ? 0 : 1 }} />
             )}
             <Img
-                ref={imgRef}
-                src={url}
+                src={src}
                 alt={portraitImage?.displayName}
+                onLoadStart={() => setIsLoaded(false)}
                 onLoad={() => setIsLoaded(true)}
                 onError={() => {
-                    if (imgRef.current) {
-                        imgRef.current.src = AvatarPlaceholder;
-                    }
+                    setSrc(AvatarPlaceholder);
                     setIsLoaded(true);
                 }}
                 style={{

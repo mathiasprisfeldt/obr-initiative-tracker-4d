@@ -1,7 +1,7 @@
 import { Character } from "../../store/tracker-store";
 import { PortraitImage } from "../../character-portrait";
 import { keyframes, styled, Typography } from "@mui/material";
-import AvatarPlaceholder from "assets/avatar-placeholder.png";
+import { PortraitImageWithPlaceholder } from "../../character-portrait/PortraitImageWithPlaceholder";
 
 export interface Props {
     character: Character;
@@ -11,6 +11,14 @@ export interface Props {
 export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) {
     return (
         <Background {...rest} portraitImage={character.properties.portraitImage}>
+            <PortraitImageWithPlaceholder
+                portraitImage={character.properties.portraitImage}
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "100%",
+                }}
+            />
             {hasTurn && <TurnIndicator>⚔️</TurnIndicator>}
             {!character.properties.hideName && (
                 <Name variant="body2" sx={{ p: 1 }}>
@@ -80,10 +88,4 @@ const Background = styled("div")<{
     background-color: #f0f0f0;
     border-radius: 100%;
     aspect-ratio: 1 / 1;
-    padding: 16px;
-
-    background-image: url("${(props) => props.portraitImage?.url || AvatarPlaceholder}");
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: ${(props) => props.portraitImage?.position || "center"};
 `;

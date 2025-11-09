@@ -28,7 +28,7 @@ export function CharacterPortraitSettings() {
           <TableBody>
             {images.map((image) => (
               <CharacterPortraitProperties
-                key={image.displayName}
+                key={image.url}
                 portraitImage={image}
                 onPositionChanged={(position) => {
                   updatePortraitImage({ ...image, position });

@@ -1,7 +1,7 @@
 import { styled } from "@mui/material";
-import { CharacterPortraitImageBase } from "./CharacterPortraitImageBase";
+import { PortraitImageWithPlaceholder } from "./PortraitImageWithPlaceholder";
 
-export const CharacterPortraitThumbnail = styled(CharacterPortraitImageBase)`
+export const CharacterPortraitThumbnail = styled(PortraitImageWithPlaceholder)`
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: 2px solid #ccc;

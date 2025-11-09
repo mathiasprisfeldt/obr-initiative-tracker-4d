@@ -1,5 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useState } from "react";
+import { computeBlurhashFromUrl } from "../utils/blurhash";
 
 const metadataKey = "obr-initiative-tracker-4d-portrait-image-picker-store-metadata";
 
@@ -7,6 +8,7 @@ export interface PortraitImage {
     displayName: string;
     url: string;
     position?: string;
+    blurhash?: string | null;
 }
 
 export interface PortraitImagePickerState {
@@ -94,23 +96,28 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
             const domParser = new DOMParser();
             const document = domParser.parseFromString(await response.text(), "text/html");
 
+            let newImages: PortraitImage[] = [];
             setState((prev) => {
-                let newImages: PortraitImage[] = [];
-
                 document.querySelectorAll("a").forEach((img) => {
                     const imageUrl = img.getAttribute("href");
 
-                    if (imageUrl === "/") return; // skip parent directory link
-
+                    if (imageUrl === "/") return; // Skip parent directory link
                     if (imageUrl) {
+                        // Only include common image file types
+                        if (!/\.(png|jpe?g|webp|gif)$/i.test(imageUrl)) return;
+
                         const fullUrl = new URL(imageUrl, state.imageSourceUrl);
                         const imageUrlWithoutFileType = imageUrl.replace(/\.\w+$/, "");
                         const displayName = decodeURI(imageUrlWithoutFileType);
 
+                        const existing = prev.images.find((i) => i.displayName === displayName);
+                        const href = fullUrl.href;
+                        if (newImages.some((i) => i.url === href)) return;
+
                         newImages.push({
-                            ...(prev.images.find((i) => i.displayName === displayName) || {}),
+                            ...(existing || {}),
                             displayName,
-                            url: fullUrl.href,
+                            url: href,
                         });
                     }
                 });
@@ -120,6 +127,31 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                     images: newImages,
                 };
             });
+
+            // Compute blurhashes only for those missing one to avoid heavy CPU/load
+            const toCompute = newImages.filter((img) => !img.blurhash);
+            if (toCompute.length > 0) {
+                const results = await Promise.allSettled(
+                    toCompute.map(async (img) => {
+                        const bh = await computeBlurhashFromUrl(img.url);
+                        return { url: img.url, blurhash: bh ?? null };
+                    }),
+                );
+                const urlToBlurhash = new Map<string, string | null>();
+                results.forEach((res) => {
+                    if (res.status === "fulfilled") {
+                        urlToBlurhash.set(res.value.url, res.value.blurhash);
+                    }
+                });
+                setState((prev) => ({
+                    ...prev,
+                    images: prev.images.map((img) =>
+                        urlToBlurhash.has(img.url)
+                            ? { ...img, blurhash: urlToBlurhash.get(img.url) ?? null }
+                            : img,
+                    ),
+                }));
+            }
         })();
     }, [state.imageSourceUrl]);
 

@@ -1,8 +1,11 @@
 import { decode, encode } from "blurhash";
 
-export async function computeBlurhashFromUrl(url: string): Promise<string | null> {
+export async function computeBlurhashFromUrl(
+    url: string,
+    abortSignal: AbortSignal,
+): Promise<string | null> {
     try {
-        const img = await loadImage(url);
+        const img = await loadImage(url, abortSignal);
         const { width, height } = fitWithin(
             img.naturalWidth || img.width,
             img.naturalHeight || img.height,
@@ -42,13 +45,18 @@ export function renderBlurhashToCanvas(
     ctx.putImageData(imageData, 0, 0);
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
+function loadImage(url: string, abortSignal: AbortSignal): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => resolve(img);
         img.onerror = reject;
         img.src = url;
+
+        abortSignal.onabort = () => {
+            img.src = ""; // Cancel the image load
+            reject();
+        };
     });
 }
 

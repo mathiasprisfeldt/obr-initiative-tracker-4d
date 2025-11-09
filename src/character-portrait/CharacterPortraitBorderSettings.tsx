@@ -8,15 +8,13 @@ import {
     TextField,
 } from "@mui/material";
 import { usePortraitImagePickerStore } from "./portrait-image-picker-store";
-import { CharacterPortraitProperties } from "./CharacterPortraitProperties";
 
-export function CharacterPortraitSettings() {
+export function CharacterPortraitBorderSettings() {
     const {
         isLoading,
-        state: { images, imageSourceUrl },
+        state: { borders, borderSourceUrl },
 
-        setImageSourceUrl,
-        updatePortraitImage,
+        setBorderSourceUrl,
     } = usePortraitImagePickerStore();
 
     if (isLoading) return <LinearProgress />;
@@ -27,21 +25,15 @@ export function CharacterPortraitSettings() {
                 label="Image Source URL"
                 type="url"
                 size="small"
-                value={imageSourceUrl}
-                onChange={(e) => setImageSourceUrl(e.target.value)}
+                value={borderSourceUrl}
+                onChange={(e) => setBorderSourceUrl(e.target.value)}
                 fullWidth
             />
             <TableContainer component={Paper} sx={{ mt: 2 }}>
                 <Table size="small">
                     <TableBody>
-                        {images.map((image) => (
-                            <CharacterPortraitProperties
-                                key={image.url}
-                                portraitImage={image}
-                                onPositionChanged={(position) => {
-                                    updatePortraitImage({ ...image, position });
-                                }}
-                            />
+                        {borders.map((image) => (
+                            <img key={image.url} src={image.url} alt="Border" />
                         ))}
                     </TableBody>
                 </Table>

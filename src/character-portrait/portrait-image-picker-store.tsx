@@ -11,9 +11,16 @@ export interface PortraitImage {
     blurhash?: string | null;
 }
 
+export interface PortraitBorder {
+    url: string;
+    maskUrl: string;
+}
+
 export interface PortraitImagePickerState {
     imageSourceUrl: string;
+    borderSourceUrl?: string;
     images: PortraitImage[];
+    borders: PortraitBorder[];
 }
 
 export interface PortraitImagePickerStore {
@@ -21,17 +28,21 @@ export interface PortraitImagePickerStore {
     isLoading: boolean;
 
     setImageSourceUrl(url: string): void;
+    setBorderSourceUrl(url: string): void;
     updatePortraitImage(portraitImage: PortraitImage): void;
 }
 
 const context = createContext<PortraitImagePickerStore>({
     state: {
         imageSourceUrl: "",
+        borderSourceUrl: undefined,
         images: [],
+        borders: [],
     },
     isLoading: true,
 
     setImageSourceUrl: () => {},
+    setBorderSourceUrl: () => {},
     updatePortraitImage: () => {},
 });
 
@@ -58,7 +69,11 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
 
     const [state, setState] = useState<PortraitImagePickerState>({
         imageSourceUrl: import.meta.env.DEV ? "https://dnd.mathiasprisfeldt.me/img/" : "",
+        borderSourceUrl: import.meta.env.DEV
+            ? "https://dnd.mathiasprisfeldt.me/portrait_border/"
+            : "",
         images: [],
+        borders: [],
     });
 
     useEffect(() => {
@@ -87,54 +102,44 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         });
     }, []);
 
+    // Download images from source URL when it changes
     useEffect(() => {
         if (!state.imageSourceUrl) return;
 
         (async () => {
-            const response = await fetch(state.imageSourceUrl);
-
-            const domParser = new DOMParser();
-            const document = domParser.parseFromString(await response.text(), "text/html");
-
-            let newImages: PortraitImage[] = [];
+            const images = await downloadImageUrlsFromSource(state.imageSourceUrl);
             setState((prev) => {
-                document.querySelectorAll("a").forEach((img) => {
-                    const imageUrl = img.getAttribute("href");
-
-                    if (imageUrl === "/") return; // Skip parent directory link
-                    if (imageUrl) {
-                        // Only include common image file types
-                        if (!/\.(png|jpe?g|webp|gif)$/i.test(imageUrl)) return;
-
-                        const fullUrl = new URL(imageUrl, state.imageSourceUrl);
-                        const imageUrlWithoutFileType = imageUrl.replace(/\.\w+$/, "");
-                        const displayName = decodeURI(imageUrlWithoutFileType);
-
-                        const existing = prev.images.find((i) => i.displayName === displayName);
-                        const href = fullUrl.href;
-                        if (newImages.some((i) => i.url === href)) return;
-
-                        newImages.push({
-                            ...(existing || {}),
-                            displayName,
-                            url: href,
-                        });
-                    }
+                const mergedImages = images.map((img) => {
+                    const existing = prev.images.find((i) => i.displayName === img.displayName);
+                    return {
+                        ...img,
+                        ...(existing || {}),
+                    };
                 });
 
                 return {
                     ...prev,
-                    images: newImages,
+                    images: mergedImages,
                 };
             });
+        })();
+    }, [state.imageSourceUrl]);
 
+    // Update blurhashes for portrait images when new images are added
+    useEffect(() => {
+        const abortController = new AbortController();
+        (async () => {
             // Compute blurhashes only for those missing one to avoid heavy CPU/load
-            const toCompute = newImages.filter((img) => !img.blurhash);
+            const toCompute = state.images.filter((img) => !img.blurhash);
+
             if (toCompute.length > 0) {
                 const results = await Promise.allSettled(
                     toCompute.map(async (img) => {
-                        const bh = await computeBlurhashFromUrl(img.url);
-                        return { url: img.url, blurhash: bh ?? null };
+                        const blurhash = await computeBlurhashFromUrl(
+                            img.url,
+                            abortController.signal,
+                        );
+                        return { url: img.url, blurhash: blurhash ?? null };
                     }),
                 );
                 const urlToBlurhash = new Map<string, string | null>();
@@ -143,6 +148,9 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                         urlToBlurhash.set(res.value.url, res.value.blurhash);
                     }
                 });
+
+                if (abortController.signal.aborted) return;
+
                 setState((prev) => ({
                     ...prev,
                     images: prev.images.map((img) =>
@@ -153,7 +161,53 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                 }));
             }
         })();
-    }, [state.imageSourceUrl]);
+
+        return () => {
+            abortController.abort();
+        };
+    }, [state.images]);
+
+    useEffect(() => {
+        if (!state.borderSourceUrl) return;
+
+        const abortController = new AbortController();
+
+        (async () => {
+            const maskRegex = /_mask\.\w*/i;
+            const borders = await downloadImageUrlsFromSource(state.borderSourceUrl!);
+            const portraitBorders: PortraitBorder[] = borders
+                .filter((img) => {
+                    return !maskRegex.test(img.url);
+                })
+                .map((img) => {
+                    const matchingMask = borders.find((borderImg) => {
+                        return borderImg.displayName === `${img.displayName}_mask`;
+                    });
+
+                    if (!matchingMask) {
+                        console.warn(`No mask found for border image: ${img.url}`);
+                        return null;
+                    }
+
+                    return {
+                        url: img.url,
+                        maskUrl: matchingMask?.url,
+                    };
+                })
+                .filter((border) => border !== null);
+
+            if (abortController.signal.aborted) return;
+
+            setState((prev) => ({
+                ...prev,
+                borders: portraitBorders,
+            }));
+        })();
+
+        return () => {
+            abortController.abort();
+        };
+    }, [state.borderSourceUrl]);
 
     return (
         <context.Provider
@@ -163,6 +217,10 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
 
                 setImageSourceUrl: (url: string) => {
                     setState((prev) => ({ ...prev, imageSourceUrl: url }));
+                },
+
+                setBorderSourceUrl: (url: string) => {
+                    setState((prev) => ({ ...prev, borderSourceUrl: url }));
                 },
 
                 updatePortraitImage: (portraitImage: PortraitImage) => {
@@ -178,4 +236,38 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
             {children}
         </context.Provider>
     );
+}
+
+interface Image {
+    displayName: string;
+    url: string;
+}
+
+async function downloadImageUrlsFromSource(sourceUrl: string): Promise<Image[]> {
+    const response = await fetch(sourceUrl);
+
+    const domParser = new DOMParser();
+    const document = domParser.parseFromString(await response.text(), "text/html");
+
+    let images: Image[] = [];
+    document.querySelectorAll("a").forEach((img) => {
+        const imageUrl = img.getAttribute("href");
+
+        if (imageUrl === "/") return; // Skip parent directory link
+        if (imageUrl) {
+            // Only include common image file types
+            if (!/\.(png|jpe?g|webp|gif)$/i.test(imageUrl)) return;
+
+            const fullUrl = new URL(imageUrl, sourceUrl);
+            const imageUrlWithoutFileType = imageUrl.replace(/\.\w+$/, "");
+            const displayName = decodeURI(imageUrlWithoutFileType);
+
+            images.push({
+                displayName,
+                url: fullUrl.href,
+            });
+        }
+    });
+
+    return images;
 }

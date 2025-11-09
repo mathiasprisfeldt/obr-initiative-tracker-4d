@@ -10,7 +10,7 @@ import {
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
-import * as React from "react";
+import { useState, useRef, useMemo, forwardRef, MouseEventHandler } from "react";
 
 export interface Props {
     disabled: boolean;
@@ -23,23 +23,23 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
         state: { images },
     } = usePortraitImagePickerStore();
 
-    const [open, setOpen] = React.useState(false);
-    const [inputValue, setInputValue] = React.useState("");
-    const searchInputRef = React.useRef<HTMLInputElement | null>(null);
-    const hiddenInputRef = React.useRef<HTMLInputElement | null>(null);
-    const controlSize = 32;
+    const [open, setOpen] = useState(false);
+    const [inputValue, setInputValue] = useState("");
+    const searchInputRef = useRef<HTMLInputElement | null>(null);
+    const hiddenInputRef = useRef<HTMLInputElement | null>(null);
+    const pickerIconSize = 32;
 
-    const DropdownPaper = React.useMemo(
+    const DropdownPaper = useMemo(
         () =>
-            React.forwardRef<HTMLDivElement, PaperProps>(function DropdownPaper(
+            forwardRef<HTMLDivElement, PaperProps>(function DropdownPaper(
                 { children, ...paperProps },
                 ref,
             ) {
-                // Strip MUI's default onMouseDown (prevents default) so inputs inside can be focused
                 const { onMouseDown: _omitOnMouseDown, ...restPaperProps } =
                     paperProps as PaperProps & {
-                        onMouseDown?: React.MouseEventHandler<HTMLDivElement>;
+                        onMouseDown?: MouseEventHandler<HTMLDivElement>;
                     };
+
                 return (
                     <ClickAwayListener
                         onClickAway={() => {
@@ -66,7 +66,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     inputRef={searchInputRef}
-                                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                                    onKeyDown={(e) => {
                                         const keysToForward = new Set([
                                             "ArrowDown",
                                             "ArrowUp",
@@ -91,7 +91,6 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                         if (e.key === "Escape") {
                                             e.preventDefault();
                                             setOpen(false);
-                                            // Blur the search input; don't restore focus to the icon
                                             (e.currentTarget as HTMLInputElement).blur();
                                         }
                                     }}
@@ -101,7 +100,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                     onClick={(e) => {
                                         e.stopPropagation();
                                     }}
-                                    onBlur={() => {
+                                    onBlur={(e) => {
                                         setOpen(false);
                                     }}
                                 />
@@ -119,12 +118,11 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
             disabled={disabled}
             disablePortal
             options={images}
-            sx={{ width: controlSize }}
+            sx={{ width: pickerIconSize }}
             value={value ?? undefined}
             open={open}
             onOpen={() => {
                 setOpen(true);
-                // Focus dropdown search on open
                 setTimeout(() => searchInputRef.current?.focus(), 0);
             }}
             onClose={(_, reason) => {
@@ -166,7 +164,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                         minWidth: 0,
                         "& .MuiInputBase-root": {
                             p: 0,
-                            height: controlSize,
+                            height: pickerIconSize,
                         },
                         "& .MuiInputAdornment-root": {
                             m: 0,
@@ -177,6 +175,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                     slotProps={{
                         input: {
                             ...InputProps,
+                            disabled: disabled,
                             endAdornment: null,
                             sx: {
                                 p: 0,
@@ -203,9 +202,10 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                 >
                                     <CharacterPortraitThumbnail
                                         portraitImage={value}
+                                        aria-disabled={disabled}
                                         sx={{
                                             width: "100%",
-                                            cursor: "pointer",
+                                            cursor: disabled ? "default" : "pointer",
                                             outline: "none",
                                             borderColor: open ? "primary.main" : undefined,
                                             boxShadow: open
@@ -219,11 +219,13 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                             },
                                         }}
                                         onClick={() => {
+                                            if (disabled) return;
                                             setOpen((prev) => !prev);
                                             setTimeout(() => searchInputRef.current?.focus(), 0);
                                         }}
-                                        tabIndex={0}
+                                        tabIndex={disabled ? undefined : 0}
                                         onFocus={() => {
+                                            if (disabled) return;
                                             setOpen(true);
                                             setTimeout(() => searchInputRef.current?.focus(), 0);
                                         }}

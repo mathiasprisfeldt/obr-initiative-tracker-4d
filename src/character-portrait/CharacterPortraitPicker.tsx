@@ -96,11 +96,13 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                         }
                                     }}
                                     onMouseDown={(e) => {
-                                        // Keep focus on input
                                         e.stopPropagation();
                                     }}
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                    }}
+                                    onBlur={() => {
+                                        setOpen(false);
                                     }}
                                 />
                             </Box>
@@ -156,6 +158,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
             renderInput={({ InputProps, ...rest }) => (
                 <TextField
                     {...rest}
+                    disabled={disabled}
                     label=""
                     inputRef={hiddenInputRef}
                     sx={{

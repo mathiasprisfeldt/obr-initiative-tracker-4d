@@ -21,6 +21,11 @@ export function PortraitImageWithPlaceholder({ portraitImage, ...rest }: Props) 
         renderBlurhashToCanvas(canvas, portraitImage.blurhash, 32, 32);
     }, [portraitImage?.blurhash]);
 
+    useEffect(() => {
+        setSrc(portraitImage?.url || AvatarPlaceholder);
+        setIsLoaded(false);
+    }, [portraitImage?.url]);
+
     return (
         <Root {...rest}>
             {portraitImage?.blurhash && (

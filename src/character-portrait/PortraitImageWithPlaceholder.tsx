@@ -81,7 +81,6 @@ const Root = styled("div")`
 
 const Canvas = styled("canvas")`
     position: absolute;
-    inset: 0;
     width: 100%;
     height: 100%;
     image-rendering: optimizeSpeed;
@@ -92,14 +91,15 @@ const Canvas = styled("canvas")`
 `;
 
 const Img = styled("img")`
-    display: block;
+    position: absolute;
     width: 100%;
     height: 100%;
+    top: 0;
+    left: 0;
     border-radius: inherit;
     object-fit: cover;
     object-position: center;
     transition: opacity 260ms cubic-bezier(0, 0, 0.2, 1);
-    position: relative;
 `;
 
 const Border = styled("img")`
@@ -108,6 +108,5 @@ const Border = styled("img")`
     height: 100%;
     top: 0;
     left: 0;
-    border-radius: inherit;
     pointer-events: none;
 `;

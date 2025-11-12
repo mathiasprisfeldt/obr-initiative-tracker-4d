@@ -21,15 +21,15 @@ export function CharacterPortraitProperties({
     return (
         <TableRow>
             <TableCell>
-                <Tooltip title={portraitTooltip}>
-                    <Button onClick={onPortraitClicked} disabled={!portraitClickEnabled}>
+                <Button onClick={onPortraitClicked} disabled={!portraitClickEnabled}>
+                    <Tooltip title={portraitTooltip}>
                         <CharacterPortraitThumbnail
                             portraitImage={portraitImage}
                             showBorder={true}
                             sx={{ width: 100 }}
                         />
-                    </Button>
-                </Tooltip>
+                    </Tooltip>
+                </Button>
             </TableCell>
             <TableCell>
                 <Typography>{portraitImage.displayName}</Typography>

@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { css, styled } from "@mui/material";
-import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
+import {
+    PortraitImage,
+    usePortraitImagePickerState,
+    usePortraitImagePickerStore,
+} from "./portrait-image-picker-store";
 import AvatarPlaceholder from "assets/avatar-placeholder.png";
 import { renderBlurhashToCanvas } from "../utils/blurhash";
 
@@ -10,7 +14,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "className">
 }
 
 export function PortraitImageWithPlaceholder({ portraitImage, showBorder, ...rest }: Props) {
-    const { findBorderById } = usePortraitImagePickerStore();
+    const state = usePortraitImagePickerState();
 
     const [isLoaded, setIsLoaded] = useState(false);
     const [src, setSrc] = useState(portraitImage?.url || AvatarPlaceholder);
@@ -26,7 +30,6 @@ export function PortraitImageWithPlaceholder({ portraitImage, showBorder, ...res
 
     useEffect(() => {
         setSrc(portraitImage?.url || AvatarPlaceholder);
-        setIsLoaded(false);
     }, [portraitImage?.url]);
 
     const borderStyling = showBorder
@@ -36,7 +39,7 @@ export function PortraitImageWithPlaceholder({ portraitImage, showBorder, ...res
           `
         : undefined;
 
-    const border = findBorderById(portraitImage?.borderId)?.url;
+    const border = state?.borders?.find((border) => border.id === portraitImage?.borderId)?.url;
 
     return (
         <Root {...rest}>

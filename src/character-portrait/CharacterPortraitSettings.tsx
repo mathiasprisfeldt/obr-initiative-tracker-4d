@@ -10,7 +10,6 @@ import {
     TableBody,
     TableContainer,
     TextField,
-    Tooltip,
 } from "@mui/material";
 import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
 import { CharacterPortraitProperties } from "./CharacterPortraitProperties";

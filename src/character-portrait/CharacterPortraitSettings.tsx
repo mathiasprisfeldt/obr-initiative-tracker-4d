@@ -10,6 +10,7 @@ import {
     TableBody,
     TableContainer,
     TextField,
+    Tooltip,
 } from "@mui/material";
 import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
 import { CharacterPortraitProperties } from "./CharacterPortraitProperties";
@@ -28,7 +29,7 @@ export function CharacterPortraitSettings() {
         null,
     );
     const [currentCharacterPortraitElement, setCurrentCharacterPortraitElement] =
-        useState<HTMLDivElement | null>(null);
+        useState<HTMLElement | null>(null);
 
     if (isLoading) return <LinearProgress />;
 
@@ -49,6 +50,7 @@ export function CharacterPortraitSettings() {
                             <CharacterPortraitProperties
                                 key={image.url}
                                 portraitImage={image}
+                                portraitTooltip="Change border"
                                 onPositionChanged={(position) => {
                                     updatePortraitImage({ ...image, position });
                                 }}
@@ -69,8 +71,8 @@ export function CharacterPortraitSettings() {
                     setCurrentCharacterPortrait(null);
                 }}
                 anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "left",
+                    vertical: "top",
+                    horizontal: "right",
                 }}
             >
                 <Grid container component={Paper} sx={{ p: 1 }} spacing={1}>

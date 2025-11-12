@@ -1,28 +1,33 @@
-import { TableCell, TableRow, TextField, Typography } from "@mui/material";
+import { Button, TableCell, TableRow, TextField, Tooltip, Typography } from "@mui/material";
 import { PortraitImage } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
 import { MouseEventHandler } from "react";
 
 interface Props {
     portraitImage: PortraitImage;
+    portraitTooltip?: string;
     onPositionChanged?: (position: string) => void;
-    onPortraitClicked?: MouseEventHandler<HTMLDivElement>;
+    onPortraitClicked?: MouseEventHandler<HTMLButtonElement>;
 }
 
 export function CharacterPortraitProperties({
     portraitImage,
+    portraitTooltip,
     onPositionChanged,
     onPortraitClicked,
 }: Props) {
     return (
         <TableRow>
             <TableCell>
-                <CharacterPortraitThumbnail
-                    portraitImage={portraitImage}
-                    showBorder={true}
-                    sx={{ width: 100 }}
-                    onClick={onPortraitClicked}
-                />
+                <Tooltip title={portraitTooltip}>
+                    <Button onClick={onPortraitClicked}>
+                        <CharacterPortraitThumbnail
+                            portraitImage={portraitImage}
+                            showBorder={true}
+                            sx={{ width: 100 }}
+                        />
+                    </Button>
+                </Tooltip>
             </TableCell>
             <TableCell>
                 <Typography>{portraitImage.displayName}</Typography>

@@ -23,7 +23,7 @@ export function CharacterPortraitBorderSettings() {
                 fullWidth
             />
             <Grid container component={Paper} sx={{ mt: 2 }} spacing={1}>
-                {borders.map((image) => (
+                {borders?.map((image) => (
                     <Tooltip key={image.id} title="Set as default border">
                         <Button
                             variant={defaultBorderId === image.id ? "outlined" : "text"}

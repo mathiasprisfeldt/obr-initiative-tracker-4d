@@ -51,6 +51,7 @@ export function CharacterPortraitSettings() {
                                 key={image.url}
                                 portraitImage={image}
                                 portraitTooltip="Change border"
+                                portraitClickEnabled={borders && borders.length > 0}
                                 onPositionChanged={(position) => {
                                     updatePortraitImage({ ...image, position });
                                 }}
@@ -63,45 +64,47 @@ export function CharacterPortraitSettings() {
                     </TableBody>
                 </Table>
             </TableContainer>
-            <Popover
-                open={Boolean(currentCharacterPortraitElement)}
-                anchorEl={currentCharacterPortraitElement}
-                onClose={() => {
-                    setCurrentCharacterPortraitElement(null);
-                    setCurrentCharacterPortrait(null);
-                }}
-                anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                }}
-            >
-                <Grid container component={Paper} sx={{ p: 1 }} spacing={1}>
-                    {borders.map((border) => (
-                        <Button
-                            key={border.id}
-                            variant={
-                                currentCharacterPortrait?.borderId === border.id
-                                    ? "outlined"
-                                    : "text"
-                            }
-                        >
-                            <BorderElement
-                                src={border.url}
-                                alt={border.id}
-                                onClick={() => {
-                                    setCurrentCharacterPortraitElement(null);
-                                    setCurrentCharacterPortrait(null);
+            {borders && (
+                <Popover
+                    open={Boolean(currentCharacterPortraitElement)}
+                    anchorEl={currentCharacterPortraitElement}
+                    onClose={() => {
+                        setCurrentCharacterPortraitElement(null);
+                        setCurrentCharacterPortrait(null);
+                    }}
+                    anchorOrigin={{
+                        vertical: "top",
+                        horizontal: "right",
+                    }}
+                >
+                    <Grid container component={Paper} sx={{ p: 1 }} spacing={1}>
+                        {borders.map((border) => (
+                            <Button
+                                key={border.id}
+                                variant={
+                                    currentCharacterPortrait?.borderId === border.id
+                                        ? "outlined"
+                                        : "text"
+                                }
+                            >
+                                <BorderElement
+                                    src={border.url}
+                                    alt={border.id}
+                                    onClick={() => {
+                                        setCurrentCharacterPortraitElement(null);
+                                        setCurrentCharacterPortrait(null);
 
-                                    updatePortraitImage({
-                                        ...currentCharacterPortrait!,
-                                        borderId: border.id,
-                                    });
-                                }}
-                            />
-                        </Button>
-                    ))}
-                </Grid>
-            </Popover>
+                                        updatePortraitImage({
+                                            ...currentCharacterPortrait!,
+                                            borderId: border.id,
+                                        });
+                                    }}
+                                />
+                            </Button>
+                        ))}
+                    </Grid>
+                </Popover>
+            )}
         </Stack>
     );
 }

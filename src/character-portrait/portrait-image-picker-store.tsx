@@ -21,7 +21,7 @@ export interface PortraitImagePickerState {
     imageSourceUrl: string;
     borderSourceUrl?: string;
     images: PortraitImage[];
-    borders: PortraitBorder[];
+    borders?: PortraitBorder[];
     defaultBorderId?: string | null;
 }
 
@@ -112,7 +112,14 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
 
     // Download images from source URL when it changes
     useEffect(() => {
-        if (!state.imageSourceUrl) return;
+        if (isLoading) return;
+        if (!state.imageSourceUrl) {
+            setState((prev) => ({
+                ...prev,
+                images: [],
+            }));
+            return;
+        }
 
         (async () => {
             const images = await downloadImageUrlsFromSource(state.imageSourceUrl);
@@ -131,7 +138,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                 };
             });
         })();
-    }, [state.imageSourceUrl]);
+    }, [isLoading, state.imageSourceUrl]);
 
     // Update blurhashes for portrait images when new images are added
     useEffect(() => {
@@ -176,7 +183,14 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
     }, [state.images]);
 
     useEffect(() => {
-        if (!state.borderSourceUrl) return;
+        if (isLoading) return;
+        if (!state.borderSourceUrl) {
+            setState((prev) => ({
+                ...prev,
+                borders: [],
+            }));
+            return;
+        }
 
         const abortController = new AbortController();
 
@@ -200,7 +214,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         return () => {
             abortController.abort();
         };
-    }, [state.borderSourceUrl]);
+    }, [isLoading, state.borderSourceUrl]);
 
     return (
         <context.Provider
@@ -233,8 +247,8 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                 },
 
                 findBorderById: (id: string): PortraitBorder | null => {
-                    const border = state.borders.find((border) => border.id === id);
-                    const defaultBorder = state.borders.find(
+                    const border = state.borders?.find((border) => border.id === id);
+                    const defaultBorder = state.borders?.find(
                         (border) => border.id === state.defaultBorderId,
                     );
                     return border || defaultBorder || null;

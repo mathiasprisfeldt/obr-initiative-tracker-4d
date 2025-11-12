@@ -6,6 +6,7 @@ import { MouseEventHandler } from "react";
 interface Props {
     portraitImage: PortraitImage;
     portraitTooltip?: string;
+    portraitClickEnabled?: boolean;
     onPositionChanged?: (position: string) => void;
     onPortraitClicked?: MouseEventHandler<HTMLButtonElement>;
 }
@@ -13,6 +14,7 @@ interface Props {
 export function CharacterPortraitProperties({
     portraitImage,
     portraitTooltip,
+    portraitClickEnabled,
     onPositionChanged,
     onPortraitClicked,
 }: Props) {
@@ -20,7 +22,7 @@ export function CharacterPortraitProperties({
         <TableRow>
             <TableCell>
                 <Tooltip title={portraitTooltip}>
-                    <Button onClick={onPortraitClicked}>
+                    <Button onClick={onPortraitClicked} disabled={!portraitClickEnabled}>
                         <CharacterPortraitThumbnail
                             portraitImage={portraitImage}
                             showBorder={true}

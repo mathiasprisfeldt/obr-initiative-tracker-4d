@@ -57,7 +57,7 @@ export function OpenTracker() {
     OBR.popover.open({
         id: PopoverId,
         url: `${import.meta.env.BASE_URL}/src/tracker/index.html`,
-        width: 200,
+        width: 250,
         height: 999999,
         anchorOrigin: { horizontal: "LEFT", vertical: "CENTER" },
         transformOrigin: { horizontal: "LEFT", vertical: "CENTER" },
@@ -132,7 +132,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
     };
 
     return (
-        <div style={{ width: "200px", height: "100%", background: "gray" }}>
+        <div style={{ width: "250px", height: "100%", background: "gray" }}>
             <Content state={state} />
         </div>
     );

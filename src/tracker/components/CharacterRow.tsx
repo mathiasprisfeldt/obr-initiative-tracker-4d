@@ -29,7 +29,7 @@ const StyledCharacterAvatar = styled(CharacterAvatar)`
 
 const CharacterAvatarContainer = styled("div")`
     display: flex;
-    max-height: 150px;
+    max-height: 200px;
     flex-grow: 1;
     justify-content: center;
 `;

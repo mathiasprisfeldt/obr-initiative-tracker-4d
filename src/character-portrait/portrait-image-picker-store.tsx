@@ -13,7 +13,6 @@ export interface PortraitImage {
 
 export interface PortraitBorder {
     url: string;
-    maskUrl: string;
 }
 
 export interface PortraitImagePickerState {
@@ -173,28 +172,12 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         const abortController = new AbortController();
 
         (async () => {
-            const maskRegex = /_mask\.\w*/i;
             const borders = await downloadImageUrlsFromSource(state.borderSourceUrl!);
-            const portraitBorders: PortraitBorder[] = borders
-                .filter((img) => {
-                    return !maskRegex.test(img.url);
-                })
-                .map((img) => {
-                    const matchingMask = borders.find((borderImg) => {
-                        return borderImg.displayName === `${img.displayName}_mask`;
-                    });
-
-                    if (!matchingMask) {
-                        console.warn(`No mask found for border image: ${img.url}`);
-                        return null;
-                    }
-
-                    return {
-                        url: img.url,
-                        maskUrl: matchingMask?.url,
-                    };
-                })
-                .filter((border) => border !== null);
+            const portraitBorders: PortraitBorder[] = borders.map((img) => {
+                return {
+                    url: img.url,
+                };
+            });
 
             if (abortController.signal.aborted) return;
 

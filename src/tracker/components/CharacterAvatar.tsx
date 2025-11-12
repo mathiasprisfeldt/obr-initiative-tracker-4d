@@ -10,15 +10,19 @@ export interface Props {
 
 export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) {
     return (
-        <Background {...rest} portraitImage={character.properties.portraitImage}>
-            <PortraitImageWithPlaceholder
-                portraitImage={character.properties.portraitImage}
-                style={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: "100%",
-                }}
-            />
+        <Background {...rest}>
+            <PortraitContainer>
+                <PortraitImageWithPlaceholder
+                    portraitImage={character.properties.portraitImage}
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        boxSizing: "border-box",
+                        padding: "14%",
+                    }}
+                />
+                <Border src="https://dnd.mathiasprisfeldt.me/portrait_border/portrait_border_enemy.png" />
+            </PortraitContainer>
             {hasTurn && <TurnIndicator>⚔️</TurnIndicator>}
             {!character.properties.hideName && (
                 <Name variant="body2" sx={{ p: 1 }}>
@@ -78,14 +82,28 @@ const TurnIndicator = styled("div")({
     textShadow: "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000",
 });
 
-const Background = styled("div")<{
-    portraitImage: PortraitImage | null;
-}>`
+const Background = styled("div")`
     display: flex;
     align-items: center;
     justify-content: center;
 
-    background-color: #f0f0f0;
     border-radius: 100%;
     aspect-ratio: 1 / 1;
+`;
+
+const PortraitContainer = styled("div")`
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    overflow: hidden;
+`;
+
+const Border = styled("img")`
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    border-radius: inherit;
+    pointer-events: none;
 `;

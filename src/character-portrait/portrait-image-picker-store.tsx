@@ -9,9 +9,11 @@ export interface PortraitImage {
     url: string;
     position?: string;
     blurhash?: string | null;
+    borderId?: string | null;
 }
 
 export interface PortraitBorder {
+    id: string;
     url: string;
 }
 
@@ -29,6 +31,7 @@ export interface PortraitImagePickerStore {
     setImageSourceUrl(url: string): void;
     setBorderSourceUrl(url: string): void;
     updatePortraitImage(portraitImage: PortraitImage): void;
+    findBorderById(id?: string | null): PortraitBorder | null;
 }
 
 const context = createContext<PortraitImagePickerStore>({
@@ -43,6 +46,9 @@ const context = createContext<PortraitImagePickerStore>({
     setImageSourceUrl: () => {},
     setBorderSourceUrl: () => {},
     updatePortraitImage: () => {},
+    findBorderById: () => {
+        return null;
+    },
 });
 
 export function usePortraitImagePickerStore(): PortraitImagePickerStore {
@@ -175,6 +181,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
             const borders = await downloadImageUrlsFromSource(state.borderSourceUrl!);
             const portraitBorders: PortraitBorder[] = borders.map((img) => {
                 return {
+                    id: img.displayName,
                     url: img.url,
                 };
             });
@@ -213,6 +220,11 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                             img.displayName === portraitImage.displayName ? portraitImage : img,
                         ),
                     }));
+                },
+
+                findBorderById: (id: string): PortraitBorder | null => {
+                    const border = state.borders.find((border) => border.id === id);
+                    return border || null;
                 },
             }}
         >

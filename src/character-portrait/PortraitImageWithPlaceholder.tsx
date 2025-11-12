@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
-import { styled } from "@mui/material";
-import { PortraitImage } from "./portrait-image-picker-store";
+import { css, styled } from "@mui/material";
+import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
 import AvatarPlaceholder from "assets/avatar-placeholder.png";
 import { renderBlurhashToCanvas } from "../utils/blurhash";
 
 export interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "className"> {
     portraitImage?: PortraitImage | null;
+    showBorder: boolean;
 }
 
-export function PortraitImageWithPlaceholder({ portraitImage, ...rest }: Props) {
+export function PortraitImageWithPlaceholder({ portraitImage, showBorder, ...rest }: Props) {
+    const { findBorderById } = usePortraitImagePickerStore();
+
     const [isLoaded, setIsLoaded] = useState(false);
     const [src, setSrc] = useState(portraitImage?.url || AvatarPlaceholder);
 
@@ -26,12 +29,27 @@ export function PortraitImageWithPlaceholder({ portraitImage, ...rest }: Props) 
         setIsLoaded(false);
     }, [portraitImage?.url]);
 
+    const borderStyling = showBorder
+        ? css`
+              box-sizing: border-box;
+              padding: 12%;
+          `
+        : undefined;
+
+    const border = findBorderById(portraitImage?.borderId)?.url;
+
     return (
         <Root {...rest}>
             {portraitImage?.blurhash && (
-                <Canvas ref={canvasRef} aria-hidden style={{ opacity: isLoaded ? 0 : 1 }} />
+                <Canvas
+                    ref={canvasRef}
+                    aria-hidden
+                    style={{ opacity: isLoaded ? 0 : 1 }}
+                    sx={borderStyling}
+                />
             )}
             <Img
+                sx={borderStyling}
                 src={src}
                 alt={portraitImage?.displayName}
                 onLoadStart={() => setIsLoaded(false)}
@@ -46,6 +64,7 @@ export function PortraitImageWithPlaceholder({ portraitImage, ...rest }: Props) 
                 }}
                 data-position={portraitImage?.position}
             />
+            {showBorder && border && <Border src={border} />}
         </Root>
     );
 }
@@ -78,4 +97,13 @@ const Img = styled("img")`
     object-position: center;
     transition: opacity 260ms cubic-bezier(0, 0, 0.2, 1);
     position: relative;
+`;
+
+const Border = styled("img")`
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    border-radius: inherit;
+    pointer-events: none;
 `;

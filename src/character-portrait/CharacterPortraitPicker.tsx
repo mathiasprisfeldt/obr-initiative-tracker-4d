@@ -202,6 +202,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                 >
                                     <CharacterPortraitThumbnail
                                         portraitImage={value}
+                                        showBorder={false}
                                         aria-disabled={disabled}
                                         sx={{
                                             width: "100%",
@@ -241,6 +242,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                     <li key={key} {...rest}>
                         <CharacterPortraitThumbnail
                             portraitImage={option}
+                            showBorder={false}
                             sx={{ mr: 1, width: 24 }}
                         />
                         <Typography

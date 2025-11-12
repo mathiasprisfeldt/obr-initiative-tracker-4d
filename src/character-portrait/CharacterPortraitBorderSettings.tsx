@@ -33,7 +33,12 @@ export function CharacterPortraitBorderSettings() {
                 <Table size="small">
                     <TableBody>
                         {borders.map((image) => (
-                            <img key={image.url} src={image.url} alt="Border" />
+                            <img
+                                key={image.url}
+                                src={image.url}
+                                style={{ width: "250px", height: "250px" }}
+                                alt="Border"
+                            />
                         ))}
                     </TableBody>
                 </Table>

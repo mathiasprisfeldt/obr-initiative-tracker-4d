@@ -22,6 +22,7 @@ export interface PortraitImagePickerState {
     borderSourceUrl?: string;
     images: PortraitImage[];
     borders: PortraitBorder[];
+    defaultBorderId?: string | null;
 }
 
 export interface PortraitImagePickerStore {
@@ -30,6 +31,7 @@ export interface PortraitImagePickerStore {
 
     setImageSourceUrl(url: string): void;
     setBorderSourceUrl(url: string): void;
+    setDefaultBorder(id?: string | null): void;
     updatePortraitImage(portraitImage: PortraitImage): void;
     findBorderById(id?: string | null): PortraitBorder | null;
 }
@@ -45,6 +47,7 @@ const context = createContext<PortraitImagePickerStore>({
 
     setImageSourceUrl: () => {},
     setBorderSourceUrl: () => {},
+    setDefaultBorder: () => {},
     updatePortraitImage: () => {},
     findBorderById: () => {
         return null;
@@ -213,6 +216,13 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                     setState((prev) => ({ ...prev, borderSourceUrl: url }));
                 },
 
+                setDefaultBorder: (id?: string | null) => {
+                    setState((prev) => ({
+                        ...prev,
+                        defaultBorderId: id,
+                    }));
+                },
+
                 updatePortraitImage: (portraitImage: PortraitImage) => {
                     setState((prev) => ({
                         ...prev,
@@ -224,7 +234,10 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
 
                 findBorderById: (id: string): PortraitBorder | null => {
                     const border = state.borders.find((border) => border.id === id);
-                    return border || null;
+                    const defaultBorder = state.borders.find(
+                        (border) => border.id === state.defaultBorderId,
+                    );
+                    return border || defaultBorder || null;
                 },
             }}
         >

@@ -1,4 +1,6 @@
 import {
+    Button,
+    Grid,
     LinearProgress,
     Paper,
     Popover,
@@ -71,28 +73,32 @@ export function CharacterPortraitSettings() {
                     horizontal: "left",
                 }}
             >
-                <TableContainer component={Paper}>
-                    <Table size="small">
-                        <TableBody>
-                            {borders.map((border) => (
-                                <BorderElement
-                                    src={border.url}
-                                    alt={border.id}
-                                    key={border.id}
-                                    onClick={() => {
-                                        setCurrentCharacterPortraitElement(null);
-                                        setCurrentCharacterPortrait(null);
+                <Grid container component={Paper} sx={{ p: 1 }} spacing={1}>
+                    {borders.map((border) => (
+                        <Button
+                            key={border.id}
+                            variant={
+                                currentCharacterPortrait?.borderId === border.id
+                                    ? "outlined"
+                                    : "text"
+                            }
+                        >
+                            <BorderElement
+                                src={border.url}
+                                alt={border.id}
+                                onClick={() => {
+                                    setCurrentCharacterPortraitElement(null);
+                                    setCurrentCharacterPortrait(null);
 
-                                        updatePortraitImage({
-                                            ...currentCharacterPortrait!,
-                                            borderId: border.id,
-                                        });
-                                    }}
-                                />
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                                    updatePortraitImage({
+                                        ...currentCharacterPortrait!,
+                                        borderId: border.id,
+                                    });
+                                }}
+                            />
+                        </Button>
+                    ))}
+                </Grid>
             </Popover>
         </Stack>
     );

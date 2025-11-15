@@ -119,7 +119,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
             disablePortal
             options={images}
             sx={{ width: pickerIconSize }}
-            value={value ?? undefined}
+            value={value ?? { displayName: "", url: "" }}
             open={open}
             onOpen={() => {
                 setOpen(true);

@@ -15,7 +15,7 @@ export function CharacterPortraitBorderSettings() {
     return (
         <Stack>
             <TextField
-                label="Image Source URL"
+                label="URL"
                 type="url"
                 size="small"
                 value={borderSourceUrl}

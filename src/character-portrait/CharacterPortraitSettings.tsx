@@ -35,7 +35,7 @@ export function CharacterPortraitSettings() {
     return (
         <Stack>
             <TextField
-                label="Image Source URL"
+                label="URL"
                 type="url"
                 size="small"
                 value={imageSourceUrl}

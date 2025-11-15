@@ -24,18 +24,22 @@ export function CharacterPortraitBorderSettings() {
             />
             <Grid container component={Paper} sx={{ mt: 2 }} spacing={1}>
                 {borders?.map((image) => (
-                    <Tooltip key={image.id} title="Set as default border">
-                        <Button
-                            variant={defaultBorderId === image.id ? "outlined" : "text"}
-                            onClick={() => setDefaultBorder(image.id)}
-                        >
-                            <img
-                                src={image.url}
-                                style={{ width: "250px", height: "250px" }}
-                                alt="Border"
-                            />
-                        </Button>
-                    </Tooltip>
+                    <Grid key={image.id} size={6}>
+                        <Stack alignItems="center">
+                            <Tooltip title="Set as default border">
+                                <Button
+                                    variant={defaultBorderId === image.id ? "outlined" : "text"}
+                                    onClick={() => setDefaultBorder(image.id)}
+                                >
+                                    <img
+                                        src={image.url}
+                                        style={{ width: "100%", maxWidth: "250px" }}
+                                        alt="Border"
+                                    />
+                                </Button>
+                            </Tooltip>
+                        </Stack>
+                    </Grid>
                 ))}
             </Grid>
         </Stack>

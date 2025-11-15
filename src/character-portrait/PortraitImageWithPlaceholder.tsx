@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState, type HTMLAttributes } from "react";
 import { css, styled } from "@mui/material";
-import {
-    PortraitImage,
-    usePortraitImagePickerState,
-    usePortraitImagePickerStore,
-} from "./portrait-image-picker-store";
+import { PortraitImage, usePortraitImagePickerState } from "./portrait-image-picker-store";
 import AvatarPlaceholder from "assets/avatar-placeholder.png";
 import { renderBlurhashToCanvas } from "../utils/blurhash";
+import TurnIndicator from "../tracker/components/TurnIndicator";
 
 export interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "className"> {
+    hasTurn?: boolean;
     portraitImage?: PortraitImage | null;
     showBorder: boolean;
 }
 
-export function PortraitImageWithPlaceholder({ portraitImage, showBorder, ...rest }: Props) {
+export function PortraitImageWithPlaceholder({
+    portraitImage,
+    showBorder,
+    hasTurn = false,
+    ...rest
+}: Props) {
     const state = usePortraitImagePickerState();
 
     const [isLoaded, setIsLoaded] = useState(false);
@@ -67,6 +70,7 @@ export function PortraitImageWithPlaceholder({ portraitImage, showBorder, ...res
                 }}
                 data-position={portraitImage?.position}
             />
+            <TurnIndicatorStyled hasTurn={hasTurn} />
             {showBorder && border && <Border src={border} />}
         </Root>
     );
@@ -111,4 +115,10 @@ const Border = styled("img")`
     top: 0;
     left: 0;
     pointer-events: none;
+`;
+
+const TurnIndicatorStyled = styled(TurnIndicator)`
+    width: 100%;
+    height: 100%;
+    clip-path: circle(38%);
 `;

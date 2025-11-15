@@ -60,9 +60,6 @@ export function usePortraitImagePickerStore(): PortraitImagePickerStore {
 
 export function usePortraitImagePickerState(): PortraitImagePickerState | undefined {
     const store = usePortraitImagePickerStore();
-    if (!store.isLoading) {
-        return store.state;
-    }
 
     const [state, setState] = useState<PortraitImagePickerState>();
 
@@ -85,6 +82,10 @@ export function usePortraitImagePickerState(): PortraitImagePickerState | undefi
         });
     }, []);
 
+    if (!OBR.isAvailable) {
+        return store.state;
+    }
+
     return state;
 }
 
@@ -97,7 +98,6 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
             ? "https://dnd.mathiasprisfeldt.me/portrait_border/"
             : "",
         images: [],
-        borders: [],
     });
 
     useEffect(() => {

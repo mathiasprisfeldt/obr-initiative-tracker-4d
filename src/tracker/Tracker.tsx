@@ -4,6 +4,7 @@ import CharacterRow from "./components/CharacterRow";
 import OBR from "@owlbear-rodeo/sdk";
 import { styled } from "@mui/material";
 import { TextPlate } from "./components/TextPlate";
+import { PortraitImagePickerStoreProvider } from "../character-portrait";
 
 export function Tracker() {
     const state = useTrackerState();
@@ -51,7 +52,7 @@ export function OpenTracker() {
     OBR.popover.open({
         id: PopoverId,
         url: `${import.meta.env.BASE_URL}/src/tracker/index.html`,
-        width: 250,
+        width: 300,
         height: 999999,
         anchorOrigin: { horizontal: "LEFT", vertical: "CENTER" },
         transformOrigin: { horizontal: "LEFT", vertical: "CENTER" },
@@ -73,6 +74,7 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
                 portraitImage: {
                     displayName: "Daggert Skyggestikker",
                     url: "https://dnd.mathiasprisfeldt.me/img/Peter.png",
+                    borderId: "portrait_border_hero",
                 },
                 hideName: true,
             },
@@ -126,8 +128,10 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
     };
 
     return (
-        <div style={{ width: "250px", height: "100%", background: "gray" }}>
-            <Content state={state} />
+        <div style={{ width: "300px", height: "100%", background: "gray" }}>
+            <PortraitImagePickerStoreProvider>
+                <Content state={state} />
+            </PortraitImagePickerStoreProvider>
         </div>
     );
 }

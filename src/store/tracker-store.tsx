@@ -75,24 +75,26 @@ export function useTrackerState(): TrackerState | undefined {
             const trackerState = metadata[metadataKey] as TrackerState;
 
             if (trackerState && state === undefined) {
-                setState(trackerState);
+                setState(cleanUpStateForClient(trackerState));
             }
         });
 
         OBR.room.onMetadataChange((metadata) => {
             let trackerState = metadata[metadataKey] as TrackerState;
 
-            // clean up state before giving it to consumers, for instance removing draft characters
-            trackerState = {
-                ...trackerState,
-                characters: trackerState.characters.filter((c) => c.properties.name.trim() !== ""),
-            };
-
-            setState(trackerState);
+            setState(cleanUpStateForClient(trackerState));
         });
     }, []);
 
     return state;
+}
+
+function cleanUpStateForClient(state: TrackerState) {
+    return {
+        ...state,
+        // remove draft characters
+        characters: state.characters.filter((c) => c.properties.name.trim() !== ""),
+    };
 }
 
 export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,6 @@ import { Particles, initParticlesEngine } from "@tsparticles/react";
 import type { ISourceOptions } from "@tsparticles/engine";
 import { loadSlim } from "@tsparticles/slim";
 import { loadEmittersPlugin } from "@tsparticles/plugin-emitters";
-import { loadEmittersShapeCircle } from "@tsparticles/plugin-emitters-shape-circle";
 import { Box, BoxProps } from "@mui/material";
 
 export interface TurnIndicatorProps {
@@ -18,7 +17,6 @@ export default function TurnIndicator({ hasTurn, ...rest }: TurnIndicatorProps &
         initParticlesEngine(async (engine) => {
             await loadSlim(engine);
             await loadEmittersPlugin(engine);
-            await loadEmittersShapeCircle(engine);
         }).then(() => {
             if (!cancelled) setEngineReady(true);
         });

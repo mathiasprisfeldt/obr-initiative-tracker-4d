@@ -70,6 +70,15 @@ export function useTrackerState(): TrackerState | undefined {
     useEffect(() => {
         if (!OBR.isAvailable) return;
 
+        OBR.onReady(async () => {
+            const metadata = await OBR.room.getMetadata();
+            const trackerState = metadata[metadataKey] as TrackerState;
+
+            if (trackerState && state === undefined) {
+                setState(trackerState);
+            }
+        });
+
         OBR.room.onMetadataChange((metadata) => {
             let trackerState = metadata[metadataKey] as TrackerState;
 

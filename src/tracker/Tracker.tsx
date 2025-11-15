@@ -2,7 +2,8 @@ import "./tracker.css";
 import { Character, TrackerState, useTrackerState } from "../store/tracker-store";
 import CharacterRow from "./components/CharacterRow";
 import OBR from "@owlbear-rodeo/sdk";
-import { styled, Typography } from "@mui/material";
+import { styled } from "@mui/material";
+import { TextPlate } from "./components/TextPlate";
 
 export function Tracker() {
     const state = useTrackerState();
@@ -23,7 +24,7 @@ function Content({ state }: { state: TrackerState | undefined }) {
                     currentCharacter={state.currentCharacter}
                 />
             )}
-            <RoundText typography="body2">Round {state?.round}</RoundText>
+            <RoundText typography="h5">Round {state?.round}</RoundText>
         </Container>
     );
 }
@@ -40,15 +41,8 @@ const StyledCharacterRow = styled(CharacterRow)`
     flex-grow: 1;
 `;
 
-const RoundText = styled(Typography)`
-    font-weight: bold;
-    margin: 0;
-    padding: 8px;
+const RoundText = styled(TextPlate)`
     writing-mode: sideways-lr;
-    color: white;
-    border-radius: 16px;
-    border: 2px solid white;
-    background: gray;
 `;
 
 export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";

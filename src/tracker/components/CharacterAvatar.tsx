@@ -2,6 +2,7 @@ import { Character } from "../../store/tracker-store";
 import { PortraitImage } from "../../character-portrait";
 import { keyframes, styled, Typography } from "@mui/material";
 import { PortraitImageWithPlaceholder } from "../../character-portrait/PortraitImageWithPlaceholder";
+import { TextPlate } from "./TextPlate";
 
 export interface Props {
     character: Character;
@@ -21,22 +22,16 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
             />
             {hasTurn && <TurnIndicator>⚔️</TurnIndicator>}
             {!character.properties.hideName && (
-                <Name variant="body2" sx={{ p: 1 }}>
-                    {character.properties.name}
-                </Name>
+                <Name variant="body2">{character.properties.name}</Name>
             )}
         </Background>
     );
 }
-const Name = styled(Typography)({
-    position: "absolute",
-    bottom: -16,
-    color: "white",
-    background: "gray",
-    borderRadius: "16px",
-    border: "2px solid white",
-    textAlign: "center",
-});
+const Name = styled(TextPlate)`
+    position: absolute;
+    bottom: 8px;
+    text-align: center;
+`;
 
 const TurnIndcatorIdleAnimation = keyframes`
   0% {

@@ -69,6 +69,15 @@ export function usePortraitImagePickerState(): PortraitImagePickerState | undefi
     useEffect(() => {
         if (!OBR.isAvailable) return;
 
+        OBR.onReady(async () => {
+            const metadata = await OBR.room.getMetadata();
+            const portraitImagePickerState = metadata[metadataKey] as PortraitImagePickerState;
+
+            if (portraitImagePickerState && state === undefined) {
+                setState(portraitImagePickerState);
+            }
+        });
+
         OBR.room.onMetadataChange((metadata) => {
             let portraitImagePickerState = metadata[metadataKey] as PortraitImagePickerState;
 

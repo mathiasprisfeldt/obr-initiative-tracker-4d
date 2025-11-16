@@ -66,7 +66,7 @@ export function usePortraitImagePickerState(): PortraitImagePickerState | undefi
     useEffect(() => {
         if (!OBR.isAvailable) return;
 
-        OBR.onReady(async () => {
+        return OBR.onReady(async () => {
             const metadata = await OBR.room.getMetadata();
             const portraitImagePickerState = metadata[metadataKey] as PortraitImagePickerState;
 
@@ -74,8 +74,12 @@ export function usePortraitImagePickerState(): PortraitImagePickerState | undefi
                 setState(portraitImagePickerState);
             }
         });
+    }, []);
 
-        OBR.room.onMetadataChange((metadata) => {
+    useEffect(() => {
+        if (!OBR.isAvailable) return;
+
+        return OBR.room.onMetadataChange((metadata) => {
             let portraitImagePickerState = metadata[metadataKey] as PortraitImagePickerState;
 
             setState(portraitImagePickerState);

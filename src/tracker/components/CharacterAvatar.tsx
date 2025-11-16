@@ -15,7 +15,13 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
             <PortraitImageWithPlaceholder
                 portraitImage={character.properties.portraitImage}
                 showBorder={true}
-                portraitOverlay={<TurnIndicatorStyled id={character.id} hasTurn={hasTurn} />}
+                portraitOverlay={
+                    <TurnIndicatorStyled
+                        id={character.id}
+                        hasTurn={hasTurn}
+                        palette={character.properties.portraitImage?.blurhash?.palette}
+                    />
+                }
                 style={{
                     width: "100%",
                     height: "100%",

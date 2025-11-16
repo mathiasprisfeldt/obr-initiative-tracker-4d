@@ -3,7 +3,6 @@ import { css, styled } from "@mui/material";
 import { PortraitImage, usePortraitImagePickerState } from "./portrait-image-picker-store";
 import AvatarPlaceholder from "assets/avatar-placeholder.png";
 import { renderBlurhashToCanvas } from "../utils/blurhash";
-import TurnIndicator from "../tracker/components/TurnIndicator";
 
 export interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "className"> {
     portraitImage?: PortraitImage | null;
@@ -28,7 +27,7 @@ export function PortraitImageWithPlaceholder({
         if (!portraitImage?.blurhash) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
-        renderBlurhashToCanvas(canvas, portraitImage.blurhash, 32, 32);
+        renderBlurhashToCanvas(canvas, portraitImage.blurhash?.hash, 32, 32);
     }, [portraitImage?.blurhash]);
 
     useEffect(() => {

@@ -104,6 +104,10 @@ function Preview({ hasEncounterStarted }: { hasEncounterStarted: boolean }) {
                 portraitImage: {
                     displayName: "Alaeya",
                     url: "https://dnd.mathiasprisfeldt.me/img/Vanessa.png",
+                    blurhash: {
+                        hash: "LKO2?U%2Tw=^%M%MIVD*9Goe-;WB",
+                        palette: ["#6C4A3D", "#D9B998", "#A27C65", "#40241A", "#8C6451"],
+                    },
                 },
                 hideName: true,
             },
@@ -137,7 +141,7 @@ function Preview({ hasEncounterStarted }: { hasEncounterStarted: boolean }) {
 
     const state: TrackerState = {
         characters: characters,
-        currentCharacter: characters[3],
+        currentCharacter: characters[1],
         round: 1,
         hasEncounterStarted: !hasEncounterStarted,
     };

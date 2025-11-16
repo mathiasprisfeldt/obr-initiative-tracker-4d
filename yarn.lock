@@ -630,6 +630,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jimmyclchu/image-palette@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@jimmyclchu/image-palette@npm:1.0.0"
+  peerDependencies:
+    canvas: ^2.11.2
+  peerDependenciesMeta:
+    canvas:
+      optional: true
+  checksum: 10c0/5009ffca131ad411cf11bcd5770ae269476d54bfe346e85919fcbb98f1afa745559032e43726a2053e35a0c44c22640521e7c9a1f007e72b50aafeef6781bcf9
+  languageName: node
+  linkType: hard
+
 "@jridgewell/gen-mapping@npm:^0.3.12, @jridgewell/gen-mapping@npm:^0.3.5":
   version: 0.3.12
   resolution: "@jridgewell/gen-mapping@npm:0.3.12"
@@ -2448,6 +2460,7 @@ __metadata:
   dependencies:
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
+    "@jimmyclchu/image-palette": "npm:^1.0.0"
     "@mui/icons-material": "npm:^7.3.5"
     "@mui/lab": "npm:^7.0.0-beta.19"
     "@mui/material": "npm:^7.3.5"

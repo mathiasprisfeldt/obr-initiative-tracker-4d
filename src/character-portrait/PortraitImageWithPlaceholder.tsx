@@ -24,11 +24,11 @@ export function PortraitImageWithPlaceholder({
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
-        if (!portraitImage?.blurhash) return;
+        if (!portraitImage?.blurhash?.hash) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         renderBlurhashToCanvas(canvas, portraitImage.blurhash?.hash, 32, 32);
-    }, [portraitImage?.blurhash]);
+    }, [portraitImage?.blurhash?.hash]);
 
     useEffect(() => {
         setSrc(portraitImage?.url || AvatarPlaceholder);

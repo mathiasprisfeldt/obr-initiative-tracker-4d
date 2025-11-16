@@ -5,11 +5,26 @@ import OBR from "@owlbear-rodeo/sdk";
 import { styled } from "@mui/material";
 import { TextPlate } from "./components/TextPlate";
 import { PortraitImagePickerStoreProvider } from "../character-portrait";
+import { loadEmittersPlugin } from "@tsparticles/plugin-emitters";
+import { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import { useEffect, useState } from "react";
 
 export function Tracker() {
     const state = useTrackerState();
+    const [particleEngineReady, setParticleEngineReady] = useState(false);
 
-    if (!OBR.isAvailable) return <Preview endEncounter={false} />;
+    useEffect(() => {
+        initParticlesEngine(async (engine) => {
+            await loadSlim(engine);
+            await loadEmittersPlugin(engine);
+        }).then(() => {
+            setParticleEngineReady(true);
+        });
+    }, []);
+
+    if (!particleEngineReady) return null;
+    if (!OBR.isAvailable) return <Preview hasEncounterStarted={false} />;
 
     return <Content state={state} />;
 }
@@ -62,7 +77,7 @@ export function OpenTracker() {
     });
 }
 
-function Preview({ endEncounter }: { endEncounter: boolean }) {
+function Preview({ hasEncounterStarted }: { hasEncounterStarted: boolean }) {
     const characters: Character[] = [
         {
             id: "1",
@@ -122,9 +137,9 @@ function Preview({ endEncounter }: { endEncounter: boolean }) {
 
     const state: TrackerState = {
         characters: characters,
-        currentCharacter: characters[0],
+        currentCharacter: characters[3],
         round: 1,
-        hasEncounterStarted: !endEncounter,
+        hasEncounterStarted: !hasEncounterStarted,
     };
 
     return (

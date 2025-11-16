@@ -6,15 +6,15 @@ import { renderBlurhashToCanvas } from "../utils/blurhash";
 import TurnIndicator from "../tracker/components/TurnIndicator";
 
 export interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "className"> {
-    hasTurn?: boolean;
     portraitImage?: PortraitImage | null;
+    portraitOverlay?: React.ReactNode;
     showBorder: boolean;
 }
 
 export function PortraitImageWithPlaceholder({
     portraitImage,
     showBorder,
-    hasTurn = false,
+    portraitOverlay,
     ...rest
 }: Props) {
     const state = usePortraitImagePickerState();
@@ -70,7 +70,8 @@ export function PortraitImageWithPlaceholder({
                 }}
                 data-position={portraitImage?.position}
             />
-            <TurnIndicatorStyled hasTurn={hasTurn} />
+
+            {portraitOverlay}
             {showBorder && border && <Border src={border} />}
         </Root>
     );
@@ -115,10 +116,4 @@ const Border = styled("img")`
     top: 0;
     left: 0;
     pointer-events: none;
-`;
-
-const TurnIndicatorStyled = styled(TurnIndicator)`
-    width: 100%;
-    height: 100%;
-    clip-path: circle(38%);
 `;

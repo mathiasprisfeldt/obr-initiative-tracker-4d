@@ -1,35 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Particles, initParticlesEngine } from "@tsparticles/react";
+import { useMemo } from "react";
+import { Particles } from "@tsparticles/react";
 import type { ISourceOptions } from "@tsparticles/engine";
-import { loadSlim } from "@tsparticles/slim";
-import { loadEmittersPlugin } from "@tsparticles/plugin-emitters";
 import { Box, BoxProps } from "@mui/material";
+import styled from "@emotion/styled";
 
 export interface TurnIndicatorProps {
+    id: string;
     hasTurn: boolean;
 }
 
-export default function TurnIndicator({ hasTurn, ...rest }: TurnIndicatorProps & BoxProps) {
-    const [engineReady, setEngineReady] = useState(false);
-
-    useEffect(() => {
-        let cancelled = false;
-        initParticlesEngine(async (engine) => {
-            await loadSlim(engine);
-            await loadEmittersPlugin(engine);
-        }).then(() => {
-            if (!cancelled) setEngineReady(true);
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
+export default function TurnIndicator({ id, hasTurn, ...rest }: TurnIndicatorProps & BoxProps) {
     const options = useMemo<ISourceOptions>(() => {
         return {
             fpsLimit: 60,
             detectRetina: true,
-            fullScreen: { enable: true },
             particles: {
                 number: { value: 0 },
                 color: { value: ["#ffae00", "#ff7a00", "#ffd966"] },
@@ -87,13 +71,18 @@ export default function TurnIndicator({ hasTurn, ...rest }: TurnIndicatorProps &
                 },
             ],
         };
-    }, [hasTurn]);
-
-    if (!engineReady) return null;
+    }, [hasTurn, id]);
 
     return (
-        <Box {...rest}>
-            <Particles options={options} />
-        </Box>
+        <ParticlesContainer id={id} {...rest}>
+            <Particles id={id} options={options} />
+        </ParticlesContainer>
     );
 }
+
+const ParticlesContainer = styled(Box)<{ id: string }>`
+    #${(props) => props.id} {
+        width: 100%;
+        height: 100%;
+    }
+`;

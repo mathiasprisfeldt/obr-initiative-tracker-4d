@@ -165,7 +165,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         const abortController = new AbortController();
         (async () => {
             // Compute blurhashes only for those missing one to avoid heavy CPU/load
-            const toCompute = state.images.filter((img) => !img.blurhash);
+            const toCompute = state.images.filter((img) => !img.blurhash?.hash);
 
             if (toCompute.length > 0) {
                 const results = await Promise.allSettled(

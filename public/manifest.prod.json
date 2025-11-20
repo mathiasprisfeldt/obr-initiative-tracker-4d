@@ -1,7 +1,7 @@
 {
   "name": "Initiative Tracker 4D",
   "version": "1.0.0",
-  "manifest_version": 1,
+  "manifest_version": 2,
   "action": {
     "title": "Initiative Tracker 4D",
     "icon": "/obr-initiative-tracker-4d/icon.svg",

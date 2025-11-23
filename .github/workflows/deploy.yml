@@ -23,7 +23,7 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: main
           path: repo-main
 
       - name: Find latest release tag (release/x.x.x)
@@ -75,12 +75,6 @@ jobs:
           mv ./dist/manifest.test.json ./dist/manifest.json
           mkdir -p ../site/test
           cp -R ./dist/* ../site/test
-
-      - name: Print combined artifact
-        run: |
-          ls -la
-          echo "Contents of site/:"
-          ls -la ./site
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

@@ -2,6 +2,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { PortraitImage } from "../character-portrait";
 import { simpleMathEval } from "../utils/simple-math-eval";
+import { compress, Compressed, decompress } from "compress-json";
 
 const metadataKey = "obr-initiative-tracker-4d-tracker-store-metadata";
 
@@ -72,7 +73,7 @@ export function useTrackerState(): TrackerState | undefined {
 
         OBR.onReady(async () => {
             const metadata = await OBR.room.getMetadata();
-            const trackerState = metadata[metadataKey] as TrackerState;
+            const trackerState = decompress(metadata[metadataKey] as Compressed) as TrackerState;
 
             if (trackerState && state === undefined) {
                 setState(cleanUpStateForClient(trackerState));
@@ -80,7 +81,7 @@ export function useTrackerState(): TrackerState | undefined {
         });
 
         OBR.room.onMetadataChange((metadata) => {
-            let trackerState = metadata[metadataKey] as TrackerState;
+            let trackerState = decompress(metadata[metadataKey] as Compressed) as TrackerState;
 
             setState(cleanUpStateForClient(trackerState));
         });
@@ -126,7 +127,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         if (isLoading || !OBR.isAvailable) return;
 
         OBR.room.setMetadata({
-            [metadataKey]: state,
+            [metadataKey]: compress(state),
         });
     }, [state]);
 

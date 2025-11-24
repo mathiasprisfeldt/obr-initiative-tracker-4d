@@ -1724,6 +1724,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"compress-json@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "compress-json@npm:3.4.0"
+  checksum: 10c0/705b21a3f3612421b6660b3e51bdb643822d4012c12c19441752745db60ce8d67fd04514221b76e73c7dce077c849f74a514a8088e441991bff05749d5102a88
+  languageName: node
+  linkType: hard
+
 "convert-source-map@npm:^1.5.0":
   version: 1.9.0
   resolution: "convert-source-map@npm:1.9.0"
@@ -2473,6 +2480,7 @@ __metadata:
     "@types/react-dom": "npm:^19.2.2"
     "@vitejs/plugin-react": "npm:^5.1.0"
     blurhash: "npm:^2.0.5"
+    compress-json: "npm:^3.4.0"
     react: "npm:^19.2.0"
     react-dom: "npm:^19.2.0"
     typescript: "npm:^5.9.3"

@@ -1,6 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Blurhash, computeBlurhashFromUrl } from "../utils/blurhash";
+import { compress } from "compress-json";
 
 const metadataKey = "obr-initiative-tracker-4d-portrait-image-picker-store-metadata";
 
@@ -108,7 +109,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         if (isLoading || !OBR.isAvailable) return;
 
         OBR.room.setMetadata({
-            [metadataKey]: state,
+            [metadataKey]: compress(state),
         });
     }, [state]);
 

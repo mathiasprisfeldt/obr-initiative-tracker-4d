@@ -27,7 +27,7 @@ export function PortraitImageWithPlaceholder({
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
-        if (!portraitImage?.blurhash) return;
+        if (!portraitImage?.blurhash && typeof portraitImage?.blurhash !== "string") return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         renderBlurhashToCanvas(canvas, portraitImage.blurhash, 32, 32);

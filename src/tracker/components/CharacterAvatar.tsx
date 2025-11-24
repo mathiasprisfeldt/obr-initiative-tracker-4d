@@ -3,6 +3,9 @@ import { styled } from "@mui/material";
 import { PortraitImageWithPlaceholder } from "../../character-portrait/PortraitImageWithPlaceholder";
 import { TextPlate } from "./TextPlate";
 import TurnIndicator from "./TurnIndicator";
+import { extractPalette } from "@jimmyclchu/image-palette";
+import { useEffect, useState } from "react";
+import { paletteFromImageElement } from "../../utils/palette";
 
 export interface Props {
     character: Character;
@@ -10,6 +13,25 @@ export interface Props {
 }
 
 export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) {
+    const [portraitImage, setPortraitImage] = useState<HTMLImageElement | undefined>(undefined);
+    const [portraitPalette, setPortraitPalette] = useState<string[] | undefined>(undefined);
+
+    useEffect(() => {
+        if (!portraitImage) return;
+        let ignore = false;
+
+        (async () => {
+            const palette = await paletteFromImageElement(portraitImage);
+
+            if (ignore) return;
+            setPortraitPalette(palette);
+        })();
+
+        return () => {
+            ignore = true;
+        };
+    }, [portraitImage]);
+
     return (
         <Background {...rest}>
             <PortraitImageWithPlaceholder
@@ -19,12 +41,15 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                     <TurnIndicatorStyled
                         id={character.id}
                         hasTurn={hasTurn}
-                        palette={character.properties.portraitImage?.blurhash?.palette}
+                        palette={portraitPalette}
                     />
                 }
                 style={{
                     width: "100%",
                     height: "100%",
+                }}
+                onImageLoad={(event) => {
+                    setPortraitImage(event);
                 }}
             />
             {!character.properties.hideName && (

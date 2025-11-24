@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useState } from "react";
-import { Blurhash, computeBlurhashFromUrl } from "../utils/blurhash";
+import { computeBlurhashFromUrl } from "../utils/blurhash";
 
 const metadataKey = "obr-initiative-tracker-4d-portrait-image-picker-store-metadata";
 
@@ -8,7 +8,7 @@ export interface PortraitImage {
     displayName: string;
     url: string;
     position?: string;
-    blurhash?: Blurhash | null;
+    blurhash?: string | null;
     borderId?: string | null;
 }
 
@@ -165,7 +165,9 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         const abortController = new AbortController();
         (async () => {
             // Compute blurhashes only for those missing one to avoid heavy CPU/load
-            const toCompute = state.images.filter((img) => !img.blurhash?.hash);
+            const toCompute = state.images.filter(
+                (img) => !img.blurhash || typeof img.blurhash !== "string",
+            );
 
             if (toCompute.length > 0) {
                 const results = await Promise.allSettled(
@@ -177,7 +179,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                         return { url: img.url, blurhash: blurhash ?? null };
                     }),
                 );
-                const urlToBlurhash = new Map<string, Blurhash | null>();
+                const urlToBlurhash = new Map<string, string | null>();
                 results.forEach((res) => {
                     if (res.status === "fulfilled") {
                         urlToBlurhash.set(res.value.url, res.value.blurhash);

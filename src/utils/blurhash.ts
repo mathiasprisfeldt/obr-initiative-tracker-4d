@@ -1,15 +1,9 @@
-import { extractPalette, HexColor } from "@jimmyclchu/image-palette";
 import { decode, encode } from "blurhash";
-
-export interface Blurhash {
-    hash: string;
-    palette: HexColor[];
-}
 
 export async function computeBlurhashFromUrl(
     url: string,
     abortSignal: AbortSignal,
-): Promise<Blurhash | null> {
+): Promise<string | null> {
     try {
         const img = await loadImage(url, abortSignal);
         const { width, height } = fitWithin(
@@ -27,16 +21,8 @@ export async function computeBlurhashFromUrl(
         ctx.drawImage(img, 0, 0, width, height);
 
         const imageData = ctx.getImageData(0, 0, width, height);
-        const imageBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
 
-        return {
-            hash: encode(imageData.data, width, height, 4, 4),
-            palette: (
-                await extractPalette<"hex">(imageBlob, {
-                    colorCount: 5,
-                })
-            ).map((color) => (typeof color === "string" ? color : color.color)),
-        };
+        return encode(imageData.data, width, height, 4, 4);
     } catch (_err) {
         return null;
     }

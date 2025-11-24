@@ -8,12 +8,14 @@ export interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "className">
     portraitImage?: PortraitImage | null;
     portraitOverlay?: React.ReactNode;
     showBorder: boolean;
+    onImageLoad?(target: HTMLImageElement): void;
 }
 
 export function PortraitImageWithPlaceholder({
     portraitImage,
     showBorder,
     portraitOverlay,
+    onImageLoad,
     ...rest
 }: Props) {
     const state = usePortraitImagePickerState();
@@ -24,11 +26,11 @@ export function PortraitImageWithPlaceholder({
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
-        if (!portraitImage?.blurhash?.hash) return;
+        if (!portraitImage?.blurhash) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
-        renderBlurhashToCanvas(canvas, portraitImage.blurhash?.hash, 32, 32);
-    }, [portraitImage?.blurhash?.hash]);
+        renderBlurhashToCanvas(canvas, portraitImage.blurhash, 32, 32);
+    }, [portraitImage?.blurhash]);
 
     useEffect(() => {
         setSrc(portraitImage?.url || AvatarPlaceholder);
@@ -58,7 +60,10 @@ export function PortraitImageWithPlaceholder({
                 src={src}
                 alt={portraitImage?.displayName}
                 onLoadStart={() => setIsLoaded(false)}
-                onLoad={() => setIsLoaded(true)}
+                onLoad={(event) => {
+                    setIsLoaded(true);
+                    onImageLoad?.(event.currentTarget);
+                }}
                 onError={() => {
                     setSrc(AvatarPlaceholder);
                     setIsLoaded(true);
@@ -67,6 +72,7 @@ export function PortraitImageWithPlaceholder({
                     opacity: isLoaded ? 1 : 0,
                     objectPosition: portraitImage?.position || "center",
                 }}
+                crossOrigin="anonymous"
                 data-position={portraitImage?.position}
             />
 

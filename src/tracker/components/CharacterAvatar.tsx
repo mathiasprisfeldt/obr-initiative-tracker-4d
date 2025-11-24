@@ -3,7 +3,6 @@ import { styled } from "@mui/material";
 import { PortraitImageWithPlaceholder } from "../../character-portrait/PortraitImageWithPlaceholder";
 import { TextPlate } from "./TextPlate";
 import TurnIndicator from "./TurnIndicator";
-import { extractPalette } from "@jimmyclchu/image-palette";
 import { useEffect, useState } from "react";
 import { paletteFromImageElement } from "../../utils/palette";
 

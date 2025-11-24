@@ -21,6 +21,7 @@ export function PortraitImageWithPlaceholder({
     const state = usePortraitImagePickerState();
 
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isBorderLoaded, setIsBorderLoaded] = useState(false);
     const [src, setSrc] = useState(portraitImage?.url || AvatarPlaceholder);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -77,7 +78,15 @@ export function PortraitImageWithPlaceholder({
             />
 
             {portraitOverlay}
-            {showBorder && border && <Border src={border} />}
+            {showBorder && border && (
+                <Border
+                    src={border}
+                    onLoad={() => {
+                        setIsBorderLoaded(true);
+                    }}
+                    sx={{ opacity: isLoaded && isBorderLoaded ? 1 : 0 }}
+                />
+            )}
         </Root>
     );
 }
@@ -121,4 +130,5 @@ const Border = styled("img")`
     top: 0;
     left: 0;
     pointer-events: none;
+    transition: opacity 260ms cubic-bezier(0, 0, 0.2, 1);
 `;

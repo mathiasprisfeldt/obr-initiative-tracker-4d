@@ -28,7 +28,7 @@ jobs:
 
       - name: Find latest release tag (release/x.x.x)
         id: find_release_tag
-        working-directory: repo-main
+        working-directory: repo-prod
         shell: bash
         run: |
           git fetch --tags --force

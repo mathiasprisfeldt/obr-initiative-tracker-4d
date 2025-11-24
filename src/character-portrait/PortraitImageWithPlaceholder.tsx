@@ -44,7 +44,12 @@ export function PortraitImageWithPlaceholder({
           `
         : undefined;
 
-    const border = state?.borders?.find((border) => border.id === portraitImage?.borderId)?.url;
+    const defaultBorderUrl = state?.borders?.find(
+        (border) => border.id === state.defaultBorderId,
+    )?.url;
+    const border =
+        state?.borders?.find((border) => border.id === portraitImage?.borderId)?.url ||
+        defaultBorderUrl;
 
     return (
         <Root {...rest}>

@@ -1,5 +1,5 @@
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { Box, Tab } from "@mui/material";
+import { Box, Tab, Typography } from "@mui/material";
 import { useState } from "react";
 import Tracker from "./home";
 import { DebugPanel } from "./DebugPanel";
@@ -33,6 +33,19 @@ export default function Admin() {
                     <DebugPanel />
                 </TabPanel>
             </TabContext>
+            <Typography
+                variant="caption"
+                sx={{
+                    position: "fixed",
+                    bottom: 4,
+                    right: 8,
+                    opacity: 0.5,
+                    pointerEvents: "none",
+                    userSelect: "none",
+                }}
+            >
+                {import.meta.env.BUILD_VERSION}
+            </Typography>
         </Box>
     );
 }

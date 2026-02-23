@@ -56,8 +56,21 @@ jobs:
           cache-dependency-path: |
             **/yarn.lock
 
+      - name: Compute version strings
+        id: version
+        working-directory: repo-main
+        shell: bash
+        run: |
+          tag="${{ steps.find_release_tag.outputs.release_tag }}"
+          version="${tag#release/}"
+          echo "prod_version=$version" >> "$GITHUB_OUTPUT"
+          patch=$(git rev-list "$tag"..HEAD --count)
+          echo "test_version=$version.$patch" >> "$GITHUB_OUTPUT"
+
       - name: Build prod
         working-directory: repo-prod
+        env:
+          VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
         run: |
           yarn install --frozen-lockfile
           yarn build-prod
@@ -68,6 +81,8 @@ jobs:
 
       - name: Build test
         working-directory: repo-main
+        env:
+          VITE_BUILD_VERSION: ${{ steps.version.outputs.test_version }}
         run: |
           cd client
           yarn install --frozen-lockfile

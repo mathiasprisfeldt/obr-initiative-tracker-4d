@@ -74,8 +74,8 @@ jobs:
           yarn build-test
           rm ./dist/manifest.prod.json
           mv ./dist/manifest.test.json ./dist/manifest.json
-          mkdir -p ../site/test
-          cp -R ./dist/* ../site/test
+          mkdir -p ../../site/test
+          cp -R ./dist/* ../../site/test
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # YARN
-.yarn/install-state.gz
+.yarn

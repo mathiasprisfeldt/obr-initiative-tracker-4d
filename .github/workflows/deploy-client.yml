@@ -70,7 +70,7 @@ jobs:
       - name: Build prod
         working-directory: repo-prod
         env:
-          BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
+          VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
         run: |
           yarn install --frozen-lockfile
           yarn build-prod
@@ -82,7 +82,7 @@ jobs:
       - name: Build test
         working-directory: repo-main
         env:
-          BUILD_VERSION: ${{ steps.version.outputs.test_version }}
+          VITE_BUILD_VERSION: ${{ steps.version.outputs.test_version }}
         run: |
           cd client
           yarn install --frozen-lockfile

@@ -44,7 +44,7 @@ export default function Admin() {
                     userSelect: "none",
                 }}
             >
-                {import.meta.env.BUILD_VERSION}
+                {import.meta.env.VITE_BUILD_VERSION}
             </Typography>
         </Box>
     );

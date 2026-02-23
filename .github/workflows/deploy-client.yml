@@ -19,9 +19,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    defaults:
-      run:
-        working-directory: client
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -72,6 +69,7 @@ jobs:
       - name: Build test
         working-directory: repo-main
         run: |
+          cd client
           yarn install --frozen-lockfile
           yarn build-test
           rm ./dist/manifest.prod.json

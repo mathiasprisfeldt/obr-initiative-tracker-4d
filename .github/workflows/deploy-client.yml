@@ -72,12 +72,13 @@ jobs:
         env:
           VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
         run: |
+          cd client
           yarn install --frozen-lockfile
           yarn build-prod
           rm ./dist/manifest.test.json
           mv ./dist/manifest.prod.json ./dist/manifest.json
-          mkdir -p ../site
-          cp -R ./dist/* ../site
+          mkdir -p ../../site
+          cp -R ./dist/* ../../site
 
       - name: Build test
         working-directory: repo-main

@@ -21,7 +21,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     defaults:
       run:
-        working-directory: ./client
+        working-directory: client
     steps:
       - name: Checkout main
         uses: actions/checkout@v4

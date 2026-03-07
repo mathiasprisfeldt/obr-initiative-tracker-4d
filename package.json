@@ -1,0 +1,9 @@
+{
+    "name": "obr-initiative-tracker-4d-root",
+    "private": true,
+    "workspaces": [
+        "client",
+        "backend"
+    ],
+    "packageManager": "yarn@4.9.4"
+}

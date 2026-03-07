@@ -1,37 +1,38 @@
 {
-  "name": "obr-initiative-tracker-4d",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "license": "MIT",
-  "scripts": {
-    "dev": "vite",
-    "build-test": "tsc --noEmit && NODE_ENV=development vite build --mode development --base=/obr-initiative-tracker-4d/test/",
-    "build-prod": "tsc --noEmit && vite build --base=/obr-initiative-tracker-4d/",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3",
-    "vite": "^7.2.2"
-  },
-  "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@jimmyclchu/image-palette": "^1.0.0",
-    "@mui/icons-material": "^7.3.5",
-    "@mui/lab": "^7.0.0-beta.19",
-    "@mui/material": "^7.3.5",
-    "@owlbear-rodeo/sdk": "^3.1.0",
-    "@tsparticles/engine": "^3.9.1",
-    "@tsparticles/plugin-emitters": "^3.9.1",
-    "@tsparticles/react": "^3.0.0",
-    "@tsparticles/slim": "^3.9.1",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.1.0",
-    "blurhash": "^2.0.5",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
-  },
-  "packageManager": "yarn@4.9.4"
+    "name": "obr-initiative-tracker-4d",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "scripts": {
+        "dev": "vite",
+        "build-test": "tsc --noEmit && NODE_ENV=development vite build --mode development --base=/obr-initiative-tracker-4d/test/",
+        "build-prod": "tsc --noEmit && vite build --base=/obr-initiative-tracker-4d/",
+        "preview": "vite preview"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.3",
+        "vite": "^7.2.2"
+    },
+    "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.1",
+        "@jimmyclchu/image-palette": "^1.0.0",
+        "@mui/icons-material": "^7.3.5",
+        "@mui/lab": "^7.0.0-beta.19",
+        "@mui/material": "^7.3.5",
+        "@owlbear-rodeo/sdk": "^3.1.0",
+        "@tsparticles/engine": "^3.9.1",
+        "@tsparticles/plugin-emitters": "^3.9.1",
+        "@tsparticles/react": "^3.0.0",
+        "@tsparticles/slim": "^3.9.1",
+        "@types/react": "^19.2.2",
+        "@types/react-dom": "^19.2.2",
+        "@vitejs/plugin-react": "^5.1.0",
+        "blurhash": "^2.0.5",
+        "obr-initiative-tracker-4d-backend": "workspace:*",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0"
+    },
+    "packageManager": "yarn@4.9.4"
 }

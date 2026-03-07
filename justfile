@@ -4,7 +4,11 @@ default:
   @just --list
 
 install:
-    cd client && yarn
+    yarn install
 
 dev:
+    start "backend" cmd /c "cd backend && yarn dev"
     cd client && yarn dev
+
+dev-backend:
+    cd backend && yarn dev

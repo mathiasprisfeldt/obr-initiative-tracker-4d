@@ -72,8 +72,8 @@ jobs:
         env:
           VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
         run: |
+          yarn install --immutable
           cd client
-          yarn install --frozen-lockfile
           yarn build-prod
           rm ./dist/manifest.test.json
           mv ./dist/manifest.prod.json ./dist/manifest.json
@@ -85,8 +85,8 @@ jobs:
         env:
           VITE_BUILD_VERSION: ${{ steps.version.outputs.test_version }}
         run: |
+          yarn install --immutable
           cd client
-          yarn install --frozen-lockfile
           yarn build-test
           rm ./dist/manifest.prod.json
           mv ./dist/manifest.test.json ./dist/manifest.json

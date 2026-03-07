@@ -1,5 +1,3 @@
-set shell := ["cmd.exe", "/c"]
-
 default:
   @just --list
 
@@ -7,8 +5,11 @@ install:
     yarn install
 
 dev:
-    start "backend" cmd /c "cd backend && yarn dev"
-    cd client && yarn dev
+    yarn workspace obr-initiative-tracker-4d-backend dev &
+    yarn workspace obr-initiative-tracker-4d dev
+
+dev-client:
+    yarn workspace obr-initiative-tracker-4d dev
 
 dev-backend:
-    cd backend && yarn dev
+    yarn workspace obr-initiative-tracker-4d-backend dev

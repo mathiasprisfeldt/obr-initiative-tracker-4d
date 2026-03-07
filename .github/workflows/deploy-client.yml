@@ -67,18 +67,18 @@ jobs:
           patch=$(git rev-list "$tag"..HEAD --count)
           echo "test_version=$version.$patch" >> "$GITHUB_OUTPUT"
 
-      - name: Build prod
-        working-directory: repo-prod
-        env:
-          VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
-        run: |
-          yarn install --immutable
-          cd client
-          yarn build-prod
-          rm ./dist/manifest.test.json
-          mv ./dist/manifest.prod.json ./dist/manifest.json
-          mkdir -p ../../site
-          cp -R ./dist/* ../../site
+      # - name: Build prod
+      #   working-directory: repo-prod
+      #   env:
+      #     VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
+      #   run: |
+      #     yarn install --immutable
+      #     cd client
+      #     yarn build-prod
+      #     rm ./dist/manifest.test.json
+      #     mv ./dist/manifest.prod.json ./dist/manifest.json
+      #     mkdir -p ../../site
+      #     cp -R ./dist/* ../../site
 
       - name: Build test
         working-directory: repo-main

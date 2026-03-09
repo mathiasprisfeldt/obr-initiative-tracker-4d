@@ -1,14 +1,15 @@
 services:
-  backend:
-    build: .
+  db:
+    image: postgres:17-alpine
     ports:
-      - "3001:3001"
+      - "5432:5432"
     volumes:
-      - tracker-data:/app/data
+      - pgdata:/var/lib/postgresql/data
     environment:
-      - NODE_ENV=production
-      - PORT=3001
+      POSTGRES_USER: tracker
+      POSTGRES_PASSWORD: tracker
+      POSTGRES_DB: tracker
     restart: unless-stopped
 
 volumes:
-  tracker-data:
+  pgdata:

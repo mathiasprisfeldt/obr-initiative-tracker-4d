@@ -7,13 +7,11 @@ RUN corepack enable && yarn install --immutable
 
 COPY dist/ ./dist/
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
-    && mkdir -p /app/data && chown appuser:appgroup /app/data
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 USER appuser
 
 ENV NODE_ENV=production
-ENV DATA_DIR=/app/data
 ENV PORT=3001
 
 EXPOSE 3001

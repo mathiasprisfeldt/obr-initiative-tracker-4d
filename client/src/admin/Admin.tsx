@@ -2,7 +2,7 @@ import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { Box, Tab, Typography } from "@mui/material";
 import { useState } from "react";
 import Tracker from "./home";
-import { DebugPanel } from "./DebugPanel";
+import { SettingsPanel } from "./SettingsPanel";
 import { CharacterPortraitBorderSettings } from "../character-portrait/CharacterPortraitBorderSettings";
 import { CharacterPortraitSettings } from "../character-portrait/CharacterPortraitSettings";
 
@@ -17,7 +17,7 @@ export default function Admin() {
                         <Tab label="Home" value="1" />
                         <Tab label="Portraits" value="2" />
                         <Tab label="Borders" value="3" />
-                        <Tab label="Debug" value="4" />
+                        <Tab label="Settings" value="4" />
                     </TabList>
                 </Box>
                 <TabPanel value="1">
@@ -30,7 +30,7 @@ export default function Admin() {
                     <CharacterPortraitBorderSettings />
                 </TabPanel>
                 <TabPanel value="4">
-                    <DebugPanel />
+                    <SettingsPanel />
                 </TabPanel>
             </TabContext>
             <Typography

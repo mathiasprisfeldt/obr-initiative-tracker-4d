@@ -1,14 +1,7 @@
 import { Router } from "express";
 import { getRoom } from "../db.js";
-import type { FetchFn } from "../api-client.js";
 
 const router = Router();
-
-export function clientGetRoom(_fetch: FetchFn, url: (path: string) => string) {
-    return (roomId: string): Promise<Response> => {
-        return _fetch(url(`/api/room/${encodeURIComponent(roomId)}`));
-    };
-}
 
 /**
  * @openapi

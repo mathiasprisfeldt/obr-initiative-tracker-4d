@@ -1,20 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db.js";
-import type { FetchFn } from "../api-client.js";
 
 const router = Router();
-
-export function clientIsHealthy(_fetch: FetchFn, url: (path: string) => string) {
-    return async (): Promise<boolean> => {
-        try {
-            const res = await _fetch(url("/api/health"));
-            const body = await res.json();
-            return body?.status === "ok";
-        } catch {
-            return false;
-        }
-    };
-}
 
 /**
  * @openapi

@@ -9,11 +9,10 @@
  *   const state = await client.getRoom("my-room-id");
  *   await client.setRoom("my-room-id", { [metadataKey]: trackerState });
  *   const healthy = await client.isHealthy();
+ *
+ * This module is browser-safe — it must not import any server-side code
+ * (Express, pg, etc.).
  */
-
-import { clientGetRoom } from "./routes/get-room.js";
-import { clientSetRoom } from "./routes/post-room.js";
-import { clientIsHealthy } from "./routes/health.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,7 +62,6 @@ export function createApiClient(options: ApiClientOptions) {
     const _fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
 
     function url(path: string) {
-        // Strip potential trailing slash from baseUrl
         return `${baseUrl.replace(/\/+$/, "")}${path}`;
     }
 
@@ -82,12 +80,28 @@ export function createApiClient(options: ApiClientOptions) {
 
     return {
         async getRoom(roomId: string): Promise<RoomState> {
-            return handleResponse<RoomState>(await clientGetRoom(_fetch, url)(roomId));
+            const res = await _fetch(url(`/api/room/${encodeURIComponent(roomId)}`));
+            return handleResponse<RoomState>(res);
         },
+
         async setRoom(roomId: string, data: RoomState): Promise<RoomState> {
-            return handleResponse<RoomState>(await clientSetRoom(_fetch, url)(roomId, data));
+            const res = await _fetch(url(`/api/room/${encodeURIComponent(roomId)}`), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+            return handleResponse<RoomState>(res);
         },
-        isHealthy: clientIsHealthy(_fetch, url),
+
+        async isHealthy(): Promise<boolean> {
+            try {
+                const res = await _fetch(url("/api/health"));
+                const body = await res.json();
+                return body?.status === "ok";
+            } catch {
+                return false;
+            }
+        },
     };
 }
 

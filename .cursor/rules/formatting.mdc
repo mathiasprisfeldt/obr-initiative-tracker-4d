@@ -1,0 +1,16 @@
+---
+description: Run Prettier on changed files after editing
+alwaysApply: true
+---
+
+# Formatting
+
+After editing files, run Prettier to ensure consistent formatting:
+
+```bash
+npx prettier --write <changed files>
+```
+
+Prettier config is in `.prettierrc`. It uses double quotes, trailing commas, 100 char width, and 4-space indentation.
+
+Prettier does not support Dockerfile, `.env`, or justfile — skip those.

@@ -1,4 +1,7 @@
 import pg from "pg";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const connectionString = process.env.DATABASE_CONNECTION_STRING;
 if (!connectionString) {
@@ -8,23 +11,41 @@ if (!connectionString) {
 
 export const pool = new pg.Pool({ connectionString });
 
-// Create the rooms table if it doesn't exist
-await pool.query(`
-    CREATE TABLE IF NOT EXISTS rooms (
-        room_id TEXT PRIMARY KEY,
-        state   JSONB NOT NULL DEFAULT '{}'::jsonb
-    )
-`);
+// ---------------------------------------------------------------------------
+// Run idempotent SQL migrations
+// ---------------------------------------------------------------------------
 
-export async function getRoom(roomId: string): Promise<Record<string, unknown>> {
-    const result = await pool.query("SELECT state FROM rooms WHERE room_id = $1", [roomId]);
-    return result.rows.length > 0 ? (result.rows[0].state as Record<string, unknown>) : {};
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const migrationsDir = path.join(__dirname, "migrations");
+
+const migrationFiles = fs
+    .readdirSync(migrationsDir)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+
+for (const file of migrationFiles) {
+    const sql = fs.readFileSync(path.join(migrationsDir, file), "utf-8");
+    await pool.query(sql);
 }
 
-export async function upsertRoom(roomId: string, state: Record<string, unknown>): Promise<void> {
+// ---------------------------------------------------------------------------
+// Room-state helpers
+// ---------------------------------------------------------------------------
+
+export async function getRoomState<T>(roomId: string, key: string): Promise<T | null> {
+    const result = await pool.query(
+        "SELECT state FROM room_states WHERE room_id = $1 AND key = $2",
+        [roomId, key],
+    );
+    return result.rows.length > 0 ? (result.rows[0].state as T) : null;
+}
+
+export async function upsertRoomState<T>(roomId: string, key: string, state: T): Promise<void> {
     await pool.query(
-        `INSERT INTO rooms (room_id, state) VALUES ($1, $2)
-         ON CONFLICT (room_id) DO UPDATE SET state = $2`,
-        [roomId, JSON.stringify(state)],
+        `INSERT INTO room_states (room_id, key, state) VALUES ($1, $2, $3)
+         ON CONFLICT (room_id, key) DO UPDATE SET state = $3`,
+        [roomId, key, JSON.stringify(state)],
     );
 }

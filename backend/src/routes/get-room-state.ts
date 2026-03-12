@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { getRoom } from "../db.js";
+import { getRoomState } from "../db.js";
 
 const router = Router();
 
 /**
  * @openapi
- * /api/room/{roomId}:
+ * /api/room/{roomId}/state/{key}:
  *   get:
- *     summary: Get room state
- *     description: Returns the full room state object. The roomId acts as both identifier and auth.
+ *     summary: Get a keyed state for a room
+ *     description: Returns the state stored under the given key for a room.
  *     parameters:
  *       - in: path
  *         name: roomId
@@ -16,9 +16,15 @@ const router = Router();
  *         schema:
  *           type: string
  *         description: The room identifier
+ *       - in: path
+ *         name: key
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The state key
  *     responses:
  *       200:
- *         description: The room state object
+ *         description: The keyed state object
  *         content:
  *           application/json:
  *             schema:
@@ -26,9 +32,9 @@ const router = Router();
  *       500:
  *         description: Internal server error
  */
-router.get("/api/room/:roomId", async (req, res) => {
+router.get("/api/room/:roomId/state/:key", async (req, res) => {
     try {
-        const state = await getRoom(req.params.roomId);
+        const state = await getRoomState(req.params.roomId, req.params.key);
         res.json(state);
     } catch (e) {
         console.error("Error reading room state:", e);

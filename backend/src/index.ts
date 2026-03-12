@@ -5,8 +5,8 @@ import swaggerUi from "swagger-ui-express";
 import { fileURLToPath } from "url";
 import path from "path";
 
-import getRoomRoute from "./routes/get-room.js";
-import postRoomRoute from "./routes/post-room.js";
+import getRoomStateRoute from "./routes/get-room-state.js";
+import postRoomStateRoute from "./routes/post-room-state.js";
 import healthRoute from "./routes/health.js";
 
 // Ensure db module is initialized (creates table, etc.)
@@ -44,8 +44,8 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Routes
 // ---------------------------------------------------------------------------
 
-app.use(getRoomRoute);
-app.use(postRoomRoute);
+app.use(getRoomStateRoute);
+app.use(postRoomStateRoute);
 app.use(healthRoute);
 
 const PORT = process.env.PORT || 3001;

@@ -6,8 +6,8 @@
  *
  *   const client = createApiClient({ baseUrl: "https://your-server.com" });
  *
- *   const state = await client.getRoom("my-room-id");
- *   await client.setRoom("my-room-id", { [metadataKey]: trackerState });
+ *   const state = await client.getRoomState("my-room-id", "tracker");
+ *   await client.setRoomState("my-room-id", "tracker", { ... });
  *   const healthy = await client.isHealthy();
  *
  * This module is browser-safe — it must not import any server-side code
@@ -17,9 +17,6 @@
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-/** The shape returned by GET /api/room/:roomId – a generic metadata bag. */
-export type RoomState = Record<string, unknown>;
 
 export interface ApiError {
     error: string;
@@ -79,18 +76,23 @@ export function createApiClient(options: ApiClientOptions) {
     }
 
     return {
-        async getRoom(roomId: string): Promise<RoomState> {
-            const res = await _fetch(url(`/api/room/${encodeURIComponent(roomId)}`));
-            return handleResponse<RoomState>(res);
+        async getRoomState<T>(roomId: string, key: string): Promise<T> {
+            const res = await _fetch(
+                url(`/api/room/${encodeURIComponent(roomId)}/state/${encodeURIComponent(key)}`),
+            );
+            return handleResponse<T>(res);
         },
 
-        async setRoom(roomId: string, data: RoomState): Promise<RoomState> {
-            const res = await _fetch(url(`/api/room/${encodeURIComponent(roomId)}`), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            });
-            return handleResponse<RoomState>(res);
+        async setRoomState<T>(roomId: string, key: string, data: T): Promise<T> {
+            const res = await _fetch(
+                url(`/api/room/${encodeURIComponent(roomId)}/state/${encodeURIComponent(key)}`),
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                },
+            );
+            return handleResponse<T>(res);
         },
 
         async isHealthy(): Promise<boolean> {

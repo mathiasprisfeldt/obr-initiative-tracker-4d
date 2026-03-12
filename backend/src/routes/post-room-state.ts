@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { upsertRoom } from "../db.js";
+import { upsertRoomState } from "../db.js";
 
 const router = Router();
 
 /**
  * @openapi
- * /api/room/{roomId}:
+ * /api/room/{roomId}/state/{key}:
  *   post:
- *     summary: Replace room state
- *     description: Replaces the entire room state with the request body.
+ *     summary: Replace a keyed state for a room
+ *     description: Replaces the state stored under the given key for a room with the request body.
  *     parameters:
  *       - in: path
  *         name: roomId
@@ -16,6 +16,12 @@ const router = Router();
  *         schema:
  *           type: string
  *         description: The room identifier
+ *       - in: path
+ *         name: key
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The state key
  *     requestBody:
  *       required: true
  *       content:
@@ -24,7 +30,7 @@ const router = Router();
  *             type: object
  *     responses:
  *       200:
- *         description: The new room state
+ *         description: The new keyed state
  *         content:
  *           application/json:
  *             schema:
@@ -34,14 +40,14 @@ const router = Router();
  *       500:
  *         description: Internal server error
  */
-router.post("/api/room/:roomId", async (req, res) => {
+router.post("/api/room/:roomId/state/:key", async (req, res) => {
     if (typeof req.body !== "object" || req.body === null || Array.isArray(req.body)) {
         res.status(400).json({ error: "Request body must be a JSON object" });
         return;
     }
 
     try {
-        await upsertRoom(req.params.roomId, req.body);
+        await upsertRoomState(req.params.roomId, req.params.key, req.body);
         res.json(req.body);
     } catch (e) {
         console.error("Error writing room state:", e);

@@ -12,7 +12,7 @@ const initializeRoot = () => {
     createRoot(document.getElementById("root")!).render(
         <StrictMode>
             <PluginThemeProvider>
-                <CssBaseline />
+                {import.meta.env.DEV && <CssBaseline />}
                 <SettingsStoreProvider>
                     <PortraitImagePickerStoreProvider>
                         <TrackerStoreProvider>

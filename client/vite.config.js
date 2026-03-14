@@ -6,11 +6,13 @@ export default defineConfig({
     base: "/obr-initiative-tracker-4d/",
     plugins: [pluginReact()],
     resolve: {
-        alias: {
-            assets: resolve(__dirname, "src/assets"),
-        },
+        alias: [
+            { find: "assets", replacement: resolve(__dirname, "src/assets") },
+            { find: /^@owlbear-rodeo\/sdk$/, replacement: resolve(__dirname, "src/obr.ts") },
+        ],
     },
     build: {
+        sourcemap: true,
         rollupOptions: {
             input: {
                 admin: resolve(__dirname, "src/admin/index.html"),

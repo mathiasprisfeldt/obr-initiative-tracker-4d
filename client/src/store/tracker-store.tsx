@@ -1,7 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { PortraitImage } from "../character-portrait";
-import { simpleMathEval } from "../utils/simple-math-eval";
+import { useApi } from "./settings-store";
 
 const metadataKey = "obr-initiative-tracker-4d-tracker-store-metadata";
 
@@ -99,6 +99,7 @@ function cleanUpStateForClient(state: TrackerState) {
 
 export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
+    const api = useApi();
 
     const [state, setState] = useState<TrackerState>({
         characters: [
@@ -129,6 +130,12 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             [metadataKey]: state,
         });
     }, [state]);
+
+    useEffect(() => {
+        if (isLoading || !api || !OBR.isAvailable) return;
+
+        api.setRoomState<TrackerState>(OBR.room.id, "tracker", state).catch(console.error);
+    }, [state, api]);
 
     useEffect(() => {
         if (!OBR.isAvailable) {

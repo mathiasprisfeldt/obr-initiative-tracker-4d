@@ -8,7 +8,8 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "paths": {
-            "assets/*": ["./src/assets/*"]
+            "assets/*": ["./src/assets/*"],
+            "@owlbear-rodeo/sdk": ["./src/obr.ts"]
         }
     }
 }

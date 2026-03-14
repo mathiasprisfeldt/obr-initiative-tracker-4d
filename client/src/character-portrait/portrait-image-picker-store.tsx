@@ -1,6 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useState } from "react";
 import { computeBlurhashFromUrl } from "../utils/blurhash";
+import { useApi } from "../store/settings-store";
 
 const metadataKey = "obr-initiative-tracker-4d-portrait-image-picker-store-metadata";
 
@@ -91,6 +92,8 @@ export function usePortraitImagePickerState(): PortraitImagePickerState | undefi
 
 export function PortraitImagePickerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
+    const [isGM, setIsGM] = useState(false);
+    const api = useApi();
 
     const [state, setState] = useState<PortraitImagePickerState>({
         imageSourceUrl: import.meta.env.DEV ? "https://dnd.mathiasprisfeldt.me/img/" : "",
@@ -109,12 +112,25 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
     }, [state]);
 
     useEffect(() => {
+        if (isLoading || !api || !OBR.isAvailable) return;
+
+        api.setRoomState<PortraitImagePickerState>(
+            OBR.room.id,
+            "portrait-image-picker",
+            state,
+        ).catch(console.error);
+    }, [state, api]);
+
+    useEffect(() => {
         if (!OBR.isAvailable) {
             setIsLoading(false);
             return;
         }
 
         OBR.onReady(async () => {
+            const role = await OBR.player.getRole();
+            setIsGM(role === "GM");
+
             const metadata = await OBR.room.getMetadata();
             const state = metadata[metadataKey] as PortraitImagePickerState;
 
@@ -128,7 +144,8 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
 
     // Download images from source URL when it changes
     useEffect(() => {
-        if (isLoading) return;
+        if (isLoading || !isGM) return;
+
         if (!state.imageSourceUrl) {
             setState((prev) => ({
                 ...prev,
@@ -154,10 +171,12 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                 };
             });
         })();
-    }, [isLoading, state.imageSourceUrl]);
+    }, [isLoading, isGM, state.imageSourceUrl]);
 
     // Update blurhashes for portrait images when new images are added
     useEffect(() => {
+        if (!isGM) return;
+
         const abortController = new AbortController();
         (async () => {
             // Compute blurhashes only for those missing one to avoid heavy CPU/load
@@ -198,10 +217,11 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         return () => {
             abortController.abort();
         };
-    }, [state.images]);
+    }, [isGM, state.images]);
 
     useEffect(() => {
-        if (isLoading) return;
+        if (isLoading || !isGM) return;
+
         if (!state.borderSourceUrl) {
             setState((prev) => ({
                 ...prev,
@@ -232,7 +252,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         return () => {
             abortController.abort();
         };
-    }, [isLoading, state.borderSourceUrl]);
+    }, [isLoading, isGM, state.borderSourceUrl]);
 
     return (
         <context.Provider

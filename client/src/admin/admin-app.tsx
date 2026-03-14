@@ -12,6 +12,7 @@ const initializeRoot = () => {
     createRoot(document.getElementById("root")!).render(
         <StrictMode>
             <PluginThemeProvider>
+                <CssBaseline />
                 <SettingsStoreProvider>
                     <PortraitImagePickerStoreProvider>
                         <TrackerStoreProvider>

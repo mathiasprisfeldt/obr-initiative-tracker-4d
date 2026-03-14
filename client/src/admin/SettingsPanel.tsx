@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-    Alert,
-    Button,
-    Divider,
-    IconButton,
-    Skeleton,
-    Stack,
-    TextField,
-} from "@mui/material";
+import { Alert, Button, Divider, IconButton, Skeleton, Stack, TextField } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useTrackerStore } from "../store/tracker-store";
 import { usePortraitImagePickerStore } from "../character-portrait/portrait-image-picker-store";
@@ -60,7 +52,9 @@ export function SettingsPanel() {
         healthStatus === "ok" ? "success" : healthStatus === "idle" ? "info" : "error";
     const healthMessage =
         healthStatus === "idle"
-            ? (api ? "Checking..." : "Enter a backend URL to check health")
+            ? api
+                ? "Checking..."
+                : "Enter a backend URL to check health"
             : healthStatus === "ok"
               ? "Backend is healthy"
               : (errorMessage ?? "Unknown error");
@@ -90,11 +84,7 @@ export function SettingsPanel() {
                     )
                 }
             >
-                {loading ? (
-                    <Skeleton variant="text" width={150} animation="wave" />
-                ) : (
-                    healthMessage
-                )}
+                {loading ? <Skeleton variant="text" width={150} animation="wave" /> : healthMessage}
             </Alert>
             <Divider />
             <Stack direction="row" spacing={2} alignItems="center">

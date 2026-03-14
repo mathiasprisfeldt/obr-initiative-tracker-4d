@@ -24,13 +24,12 @@ export function Tracker() {
     }, []);
 
     if (!particleEngineReady) return null;
-    if (!OBR.isAvailable) return <Preview hasEncounterStarted={false} />;
 
     return <Content state={state} />;
 }
 
 function Content({ state }: { state: TrackerState | undefined }) {
-    if (!state?.hasEncounterStarted) return;
+    if (!state?.hasEncounterStarted) return <Preview hasEncounterStarted={false} />;
 
     return (
         <Container>

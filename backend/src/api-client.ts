@@ -110,6 +110,46 @@ export function createApiClient(options: ApiClientOptions) {
         return response.json() as Promise<T>;
     }
 
+    // Shared WebSocket connections per room
+    const sharedConnections = new Map<
+        string,
+        { ws: WebSocket; subscribers: Set<RoomConnectionOptions> }
+    >();
+
+    function getOrCreateSharedConnection(roomId: string) {
+        let shared = sharedConnections.get(roomId);
+        if (shared) return shared;
+
+        const wsUrl = baseUrl.replace(/^http/, "ws").replace(/\/+$/, "");
+        const ws = new WebSocket(`${wsUrl}/ws/room/${encodeURIComponent(roomId)}`);
+
+        shared = { ws, subscribers: new Set() };
+        const ref = shared;
+
+        ws.addEventListener("open", () => {
+            for (const sub of ref.subscribers) sub.onConnected?.();
+        });
+
+        ws.addEventListener("close", () => {
+            sharedConnections.delete(roomId);
+            for (const sub of ref.subscribers) sub.onDisconnected?.();
+        });
+
+        ws.addEventListener("message", (event) => {
+            try {
+                const msg = JSON.parse(event.data as string) as ServerMessage;
+                if (msg.action === ServerAction.StateChanged) {
+                    for (const sub of ref.subscribers) sub.onStateChanged(msg.key, msg.state);
+                }
+            } catch {
+                /* ignore malformed messages */
+            }
+        });
+
+        sharedConnections.set(roomId, shared);
+        return shared;
+    }
+
     return {
         async getRoomState<T>(roomId: string, key: string): Promise<T> {
             const res = await _fetch(
@@ -141,31 +181,44 @@ export function createApiClient(options: ApiClientOptions) {
         },
 
         connectRoom(roomId: string, options: RoomConnectionOptions): RoomConnection {
-            const wsUrl = baseUrl.replace(/^http/, "ws").replace(/\/+$/, "");
-            const ws = new WebSocket(`${wsUrl}/ws/room/${encodeURIComponent(roomId)}`);
+            const shared = getOrCreateSharedConnection(roomId);
+            shared.subscribers.add(options);
 
-            ws.addEventListener("open", () => options.onConnected?.());
-            ws.addEventListener("close", () => options.onDisconnected?.());
-            ws.addEventListener("message", (event) => {
-                try {
-                    const msg = JSON.parse(event.data as string) as ServerMessage;
-                    if (msg.action === ServerAction.StateChanged) {
-                        options.onStateChanged(msg.key, msg.state);
-                    }
-                } catch {
-                    /* ignore malformed messages */
-                }
-            });
+            // If already open, fire onConnected immediately
+            if (shared.ws.readyState === WebSocket.OPEN) {
+                options.onConnected?.();
+            }
+
+            const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
             return {
                 updateState(key: string, state: unknown) {
-                    if (ws.readyState === WebSocket.OPEN) {
-                        const msg: ClientMessage = { action: ClientAction.UpdateState, key, state };
-                        ws.send(JSON.stringify(msg));
-                    }
+                    const existing = debounceTimers.get(key);
+                    if (existing != null) clearTimeout(existing);
+
+                    debounceTimers.set(
+                        key,
+                        setTimeout(() => {
+                            debounceTimers.delete(key);
+                            if (shared.ws.readyState === WebSocket.OPEN) {
+                                const msg: ClientMessage = {
+                                    action: ClientAction.UpdateState,
+                                    key,
+                                    state,
+                                };
+                                shared.ws.send(JSON.stringify(msg));
+                            }
+                        }, 100),
+                    );
                 },
                 close() {
-                    ws.close();
+                    for (const timer of debounceTimers.values()) clearTimeout(timer);
+                    debounceTimers.clear();
+                    shared.subscribers.delete(options);
+                    if (shared.subscribers.size === 0) {
+                        shared.ws.close();
+                        sharedConnections.delete(roomId);
+                    }
                 },
             };
         },

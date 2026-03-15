@@ -99,7 +99,8 @@ function cleanUpStateForClient(state: TrackerState) {
 export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const api = useApi();
-    const connectionRef = useRef<RoomConnection | null>(null);
+    const roomConnectionRef = useRef<RoomConnection | null>(null);
+    const skipNextSendRef = useRef(false);
 
     const [state, setState] = useState<TrackerState>({
         characters: [
@@ -126,7 +127,12 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
     useEffect(() => {
         if (isLoading) return;
 
-        connectionRef.current?.updateState(TRACKER_STATE_KEY, state);
+        if (skipNextSendRef.current) {
+            skipNextSendRef.current = false;
+            return;
+        }
+
+        roomConnectionRef.current?.updateState(TRACKER_STATE_KEY, state);
     }, [state]);
 
     // Manage WebSocket connection lifecycle
@@ -136,6 +142,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         const connection = api.connectRoom(OBR.room.id, {
             onStateChanged: (key, incomingState) => {
                 if (key === TRACKER_STATE_KEY) {
+                    skipNextSendRef.current = true;
                     setState(incomingState as TrackerState);
                     setIsLoading(false);
                 }
@@ -144,11 +151,11 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 setIsLoading(false);
             },
         });
-        connectionRef.current = connection;
+        roomConnectionRef.current = connection;
 
         return () => {
             connection.close();
-            connectionRef.current = null;
+            roomConnectionRef.current = null;
         };
     }, [api]);
 

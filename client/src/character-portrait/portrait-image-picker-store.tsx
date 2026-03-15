@@ -1,10 +1,11 @@
 import OBR from "@owlbear-rodeo/sdk";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { computeBlurhashFromUrl } from "../utils/blurhash";
 import { useApi } from "../store/settings-store";
 import { isLocalDev } from "../utils/env";
+import type { RoomConnection } from "obr-initiative-tracker-4d-backend/api-client";
 
-const metadataKey = "obr-initiative-tracker-4d-portrait-image-picker-store-metadata";
+const PORTRAIT_STATE_KEY = "portrait-image-picker";
 
 export interface PortraitImage {
     displayName: string;
@@ -57,44 +58,16 @@ export function usePortraitImagePickerStore(): PortraitImagePickerStore {
 }
 
 export function usePortraitImagePickerState(): PortraitImagePickerState | undefined {
-    const store = usePortraitImagePickerStore();
-
-    const [state, setState] = useState<PortraitImagePickerState>();
-
-    useEffect(() => {
-        if (!OBR.isAvailable) return;
-
-        return OBR.onReady(async () => {
-            const metadata = await OBR.room.getMetadata();
-            const portraitImagePickerState = metadata[metadataKey] as PortraitImagePickerState;
-
-            if (portraitImagePickerState && state === undefined) {
-                setState(portraitImagePickerState);
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        if (!OBR.isAvailable) return;
-
-        return OBR.room.onMetadataChange((metadata) => {
-            let portraitImagePickerState = metadata[metadataKey] as PortraitImagePickerState;
-
-            setState(portraitImagePickerState);
-        });
-    }, []);
-
-    if (!OBR.isAvailable) {
-        return store.state;
-    }
-
-    return state;
+    const store = useContext(context);
+    return store.isLoading ? undefined : store.state;
 }
 
 export function PortraitImagePickerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isGM, setIsGM] = useState(false);
     const api = useApi();
+    const roomConnectionRef = useRef<RoomConnection | null>(null);
+    const skipNextSendRef = useRef(false);
 
     const [state, setState] = useState<PortraitImagePickerState>({
         imageSourceUrl: isLocalDev ? "https://dnd.mathiasprisfeldt.me/img/" : "",
@@ -103,41 +76,49 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
     });
 
     useEffect(() => {
-        if (isLoading || !OBR.isAvailable) return;
+        if (isLoading || !isGM) return;
 
-        OBR.room.setMetadata({
-            [metadataKey]: state,
-        });
+        if (skipNextSendRef.current) {
+            skipNextSendRef.current = false;
+            return;
+        }
+
+        roomConnectionRef.current?.updateState(PORTRAIT_STATE_KEY, state);
     }, [state]);
 
+    // Manage WebSocket connection lifecycle
     useEffect(() => {
-        if (isLoading || !api || !OBR.isAvailable) return;
+        if (!api) return;
 
-        api.setRoomState<PortraitImagePickerState>(
-            OBR.room.id,
-            "portrait-image-picker",
-            state,
-        ).catch(console.error);
-    }, [state, api]);
+        const connection = api.connectRoom(OBR.room.id, {
+            onStateChanged: (key, incomingState) => {
+                if (key === PORTRAIT_STATE_KEY) {
+                    skipNextSendRef.current = true;
+                    setState(incomingState as PortraitImagePickerState);
+                    setIsLoading(false);
+                }
+            },
+            onConnected: () => {
+                setIsLoading(false);
+            },
+        });
+        roomConnectionRef.current = connection;
+
+        return () => {
+            connection.close();
+            roomConnectionRef.current = null;
+        };
+    }, [api]);
 
     useEffect(() => {
         if (!OBR.isAvailable) {
-            setIsLoading(false);
+            setIsGM(true);
             return;
         }
 
         OBR.onReady(async () => {
             const role = await OBR.player.getRole();
             setIsGM(role === "GM");
-
-            const metadata = await OBR.room.getMetadata();
-            const state = metadata[metadataKey] as PortraitImagePickerState;
-
-            if (state) {
-                setState(state);
-            }
-
-            setIsLoading(false);
         });
     }, []);
 

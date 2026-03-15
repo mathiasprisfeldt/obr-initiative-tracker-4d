@@ -1,9 +1,10 @@
 import OBR from "@owlbear-rodeo/sdk";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { PortraitImage } from "../character-portrait";
 import { useApi } from "./settings-store";
+import type { RoomConnection } from "obr-initiative-tracker-4d-backend/api-client";
 
-const metadataKey = "obr-initiative-tracker-4d-tracker-store-metadata";
+const TRACKER_STATE_KEY = "tracker";
 
 export interface Character {
     id: string;
@@ -65,26 +66,24 @@ export function useTrackerStore(): TrackerStore {
 }
 
 export function useTrackerState(): TrackerState | undefined {
+    const api = useApi();
     const [state, setState] = useState<TrackerState>();
 
     useEffect(() => {
-        if (!OBR.isAvailable) return;
+        if (!api) return;
 
-        OBR.onReady(async () => {
-            const metadata = await OBR.room.getMetadata();
-            const trackerState = metadata[metadataKey] as TrackerState;
-
-            if (trackerState && state === undefined) {
-                setState(cleanUpStateForClient(trackerState));
-            }
+        const connection = api.connectRoom(OBR.room.id, {
+            onStateChanged: (key, incomingState) => {
+                if (key === TRACKER_STATE_KEY) {
+                    setState(cleanUpStateForClient(incomingState as TrackerState));
+                }
+            },
         });
 
-        OBR.room.onMetadataChange((metadata) => {
-            let trackerState = metadata[metadataKey] as TrackerState;
-
-            setState(cleanUpStateForClient(trackerState));
-        });
-    }, []);
+        return () => {
+            connection.close();
+        };
+    }, [api]);
 
     return state;
 }
@@ -100,6 +99,7 @@ function cleanUpStateForClient(state: TrackerState) {
 export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const api = useApi();
+    const connectionRef = useRef<RoomConnection | null>(null);
 
     const [state, setState] = useState<TrackerState>({
         characters: [
@@ -124,36 +124,33 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
     }, [state.characters.length]);
 
     useEffect(() => {
-        if (isLoading || !OBR.isAvailable) return;
+        if (isLoading) return;
 
-        OBR.room.setMetadata({
-            [metadataKey]: state,
-        });
+        connectionRef.current?.updateState(TRACKER_STATE_KEY, state);
     }, [state]);
 
+    // Manage WebSocket connection lifecycle
     useEffect(() => {
-        if (isLoading || !api || !OBR.isAvailable) return;
+        if (!api) return;
 
-        api.setRoomState<TrackerState>(OBR.room.id, "tracker", state).catch(console.error);
-    }, [state, api]);
-
-    useEffect(() => {
-        if (!OBR.isAvailable) {
-            setIsLoading(false);
-            return;
-        }
-
-        OBR.onReady(async () => {
-            const metadata = await OBR.room.getMetadata();
-            const trackerState = metadata[metadataKey] as TrackerState;
-
-            if (trackerState) {
-                setState(trackerState);
-            }
-
-            setIsLoading(false);
+        const connection = api.connectRoom(OBR.room.id, {
+            onStateChanged: (key, incomingState) => {
+                if (key === TRACKER_STATE_KEY) {
+                    setState(incomingState as TrackerState);
+                    setIsLoading(false);
+                }
+            },
+            onConnected: () => {
+                setIsLoading(false);
+            },
         });
-    }, []);
+        connectionRef.current = connection;
+
+        return () => {
+            connection.close();
+            connectionRef.current = null;
+        };
+    }, [api]);
 
     return (
         <context.Provider

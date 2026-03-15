@@ -49,3 +49,14 @@ export async function upsertRoomState<T>(roomId: string, key: string, state: T):
         [roomId, key, JSON.stringify(state)],
     );
 }
+
+export async function getAllRoomStates(roomId: string): Promise<Map<string, unknown>> {
+    const result = await pool.query("SELECT key, state FROM room_states WHERE room_id = $1", [
+        roomId,
+    ]);
+    const map = new Map<string, unknown>();
+    for (const row of result.rows) {
+        map.set(row.key as string, row.state);
+    }
+    return map;
+}

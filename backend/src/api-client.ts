@@ -26,6 +26,41 @@ export interface HealthResponse {
     status: "ok";
 }
 
+// ---------------------------------------------------------------------------
+// WebSocket message types
+// ---------------------------------------------------------------------------
+
+export enum ClientAction {
+    UpdateState = "update-state",
+}
+
+export enum ServerAction {
+    StateChanged = "state-changed",
+}
+
+export interface ClientMessage {
+    action: ClientAction.UpdateState;
+    key: string;
+    state: unknown;
+}
+
+export interface ServerMessage {
+    action: ServerAction.StateChanged;
+    key: string;
+    state: unknown;
+}
+
+export interface RoomConnection {
+    updateState(key: string, state: unknown): void;
+    close(): void;
+}
+
+export interface RoomConnectionOptions {
+    onStateChanged: (key: string, state: unknown) => void;
+    onConnected?: () => void;
+    onDisconnected?: () => void;
+}
+
 /** Fetch function signature used by client methods. */
 export type FetchFn = typeof globalThis.fetch;
 
@@ -103,6 +138,36 @@ export function createApiClient(options: ApiClientOptions) {
             } catch {
                 return false;
             }
+        },
+
+        connectRoom(roomId: string, options: RoomConnectionOptions): RoomConnection {
+            const wsUrl = baseUrl.replace(/^http/, "ws").replace(/\/+$/, "");
+            const ws = new WebSocket(`${wsUrl}/ws/room/${encodeURIComponent(roomId)}`);
+
+            ws.addEventListener("open", () => options.onConnected?.());
+            ws.addEventListener("close", () => options.onDisconnected?.());
+            ws.addEventListener("message", (event) => {
+                try {
+                    const msg = JSON.parse(event.data as string) as ServerMessage;
+                    if (msg.action === ServerAction.StateChanged) {
+                        options.onStateChanged(msg.key, msg.state);
+                    }
+                } catch {
+                    /* ignore malformed messages */
+                }
+            });
+
+            return {
+                updateState(key: string, state: unknown) {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        const msg: ClientMessage = { action: ClientAction.UpdateState, key, state };
+                        ws.send(JSON.stringify(msg));
+                    }
+                },
+                close() {
+                    ws.close();
+                },
+            };
         },
     };
 }

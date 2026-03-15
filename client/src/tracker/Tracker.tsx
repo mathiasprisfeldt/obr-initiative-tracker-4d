@@ -1,10 +1,9 @@
 import "./tracker.css";
-import { Character, TrackerState, useTrackerState } from "../store/tracker-store";
+import { TrackerState, useTrackerState } from "../store/tracker-store";
 import CharacterRow from "./components/CharacterRow";
 import OBR from "@owlbear-rodeo/sdk";
 import { styled } from "@mui/material";
 import { TextPlate } from "./components/TextPlate";
-import { PortraitImagePickerStoreProvider } from "../character-portrait";
 import { loadEmittersPlugin } from "@tsparticles/plugin-emitters";
 import { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
@@ -29,7 +28,7 @@ export function Tracker() {
 }
 
 function Content({ state }: { state: TrackerState | undefined }) {
-    if (!state?.hasEncounterStarted) return <Preview hasEncounterStarted={false} />;
+    if (!state?.hasEncounterStarted) return null;
 
     return (
         <Container>
@@ -74,79 +73,4 @@ export function OpenTracker() {
         hidePaper: true,
         marginThreshold: 0,
     });
-}
-
-function Preview({ hasEncounterStarted }: { hasEncounterStarted: boolean }) {
-    const characters: Character[] = [
-        {
-            id: "1",
-            properties: {
-                name: "Daggert Skyggestikker",
-                initiative: 0,
-                health: 0,
-                maxHealth: 0,
-                portraitImage: {
-                    displayName: "Daggert Skyggestikker",
-                    url: "https://dnd.mathiasprisfeldt.me/img/Peter.png",
-                    borderId: "portrait_border_hero",
-                },
-                hideName: true,
-            },
-        },
-        {
-            id: "2",
-            properties: {
-                name: "Alaeya",
-                initiative: 0,
-                health: 0,
-                maxHealth: 0,
-                portraitImage: {
-                    displayName: "Alaeya",
-                    url: "https://dnd.mathiasprisfeldt.me/img/Vanessa.png",
-                    blurhash: "LKO2?U%2Tw=^%M%MIVD*9Goe-;WB",
-                },
-                hideName: true,
-            },
-        },
-        {
-            id: "3",
-            properties: {
-                name: "Nadarr",
-                initiative: 0,
-                health: 0,
-                maxHealth: 0,
-                portraitImage: {
-                    displayName: "Nadarr",
-                    url: "https://dnd.mathiasprisfeldt.me/img/Nicholai.png",
-                },
-                hideName: true,
-            },
-        },
-        {
-            id: "4",
-            properties: {
-                name: "Wolf",
-                initiative: 0,
-                health: 0,
-                maxHealth: 0,
-                portraitImage: null,
-                hideName: false,
-            },
-        },
-    ];
-
-    const state: TrackerState = {
-        characters: characters,
-        currentCharacter: characters[1],
-        round: 1,
-        hasEncounterStarted: !hasEncounterStarted,
-    };
-
-    return (
-        <div style={{ width: "300px", height: "100%", background: "gray" }}>
-            <PortraitImagePickerStoreProvider>
-                <Content state={state} />
-            </PortraitImagePickerStoreProvider>
-        </div>
-    );
 }

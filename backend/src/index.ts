@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { createServer } from "http";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { fileURLToPath } from "url";
@@ -8,6 +9,7 @@ import path from "path";
 import getRoomStateRoute from "./routes/get-room-state.js";
 import postRoomStateRoute from "./routes/post-room-state.js";
 import healthRoute from "./routes/health.js";
+import { attachRoomManagerWs } from "./ws/room-manager.js";
 
 // Ensure db module is initialized (creates table, etc.)
 import "./db.js";
@@ -48,7 +50,15 @@ app.use(getRoomStateRoute);
 app.use(postRoomStateRoute);
 app.use(healthRoute);
 
+// ---------------------------------------------------------------------------
+// HTTP + WebSocket server
+// ---------------------------------------------------------------------------
+
+const server = createServer(app);
+
+attachRoomManagerWs(server);
+
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Backend listening on port ${PORT}`);
 });

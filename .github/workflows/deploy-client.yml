@@ -66,18 +66,18 @@ jobs:
           echo "prod_version=$version" >> "$GITHUB_OUTPUT"
           echo "test_version=$version.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
-      # - name: Build prod
-      #   working-directory: repo-prod
-      #   env:
-      #     VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
-      #   run: |
-      #     yarn install --immutable
-      #     yarn workspace obr-initiative-tracker-4d build-prod
-      #     cd client
-      #     rm ./dist/manifest.test.json
-      #     mv ./dist/manifest.prod.json ./dist/manifest.json
-      #     mkdir -p ../../site
-      #     cp -R ./dist/* ../../site
+      - name: Build prod
+        working-directory: repo-prod
+        env:
+          VITE_BUILD_VERSION: ${{ steps.version.outputs.prod_version }}
+        run: |
+          yarn install --immutable
+          yarn workspace obr-initiative-tracker-4d build-prod
+          cd client
+          rm ./dist/manifest.test.json
+          mv ./dist/manifest.prod.json ./dist/manifest.json
+          mkdir -p ../../site
+          cp -R ./dist/* ../../site
 
       - name: Build test
         working-directory: repo-main

@@ -65,6 +65,9 @@ jobs:
           version="${tag#release/}"
           echo "prod_version=$version" >> "$GITHUB_OUTPUT"
           echo "test_version=$version.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "### Build versions" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Prod:** $version" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Test:** $version.${{ github.run_number }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build prod
         working-directory: repo-prod

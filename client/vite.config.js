@@ -13,6 +13,7 @@ export default defineConfig({
     },
     build: {
         sourcemap: true,
+        modulePreload: { polyfill: false },
         rollupOptions: {
             input: {
                 admin: resolve(__dirname, "src/admin/index.html"),

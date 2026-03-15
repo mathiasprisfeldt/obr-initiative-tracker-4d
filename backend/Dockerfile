@@ -3,8 +3,12 @@ FROM node:24-alpine AS base
 WORKDIR /app
 
 COPY package.json .yarnrc.yml yarn.lock ./
+
 COPY backend/ ./backend/
+COPY backend/src/migrations ./backend/dist/migrations/
+
 COPY client/package.json ./client/
+
 RUN corepack enable && yarn install --immutable
 
 RUN yarn workspace obr-initiative-tracker-4d-backend build

@@ -7,12 +7,13 @@ import OBR from "@owlbear-rodeo/sdk";
 import { PluginThemeProvider } from "../PluginThemeProvider";
 import { PortraitImagePickerStoreProvider } from "../character-portrait";
 import { CssBaseline } from "@mui/material";
+import { isLocalDev } from "../utils/env";
 
 const initializeRoot = () => {
     createRoot(document.getElementById("root")!).render(
         <StrictMode>
             <PluginThemeProvider>
-                {/* {import.meta.env.DEV && <CssBaseline />} */}
+                {isLocalDev && <CssBaseline />}
                 <SettingsStoreProvider>
                     <PortraitImagePickerStoreProvider>
                         <TrackerStoreProvider>

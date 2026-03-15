@@ -6,7 +6,7 @@
     "license": "MIT",
     "scripts": {
         "dev": "vite",
-        "build-test": "tsc --noEmit && NODE_ENV=development vite build --mode development --base=/obr-initiative-tracker-4d/test/",
+        "build-test": "tsc --noEmit && vite build --mode staging --base=/obr-initiative-tracker-4d/test/",
         "build-prod": "tsc --noEmit && vite build --base=/obr-initiative-tracker-4d/",
         "preview": "vite preview"
     },

@@ -2,6 +2,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useState } from "react";
 import { computeBlurhashFromUrl } from "../utils/blurhash";
 import { useApi } from "../store/settings-store";
+import { isLocalDev } from "../utils/env";
 
 const metadataKey = "obr-initiative-tracker-4d-portrait-image-picker-store-metadata";
 
@@ -96,10 +97,8 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
     const api = useApi();
 
     const [state, setState] = useState<PortraitImagePickerState>({
-        imageSourceUrl: import.meta.env.DEV ? "https://dnd.mathiasprisfeldt.me/img/" : "",
-        borderSourceUrl: import.meta.env.DEV
-            ? "https://dnd.mathiasprisfeldt.me/portrait_border/"
-            : "",
+        imageSourceUrl: isLocalDev ? "https://dnd.mathiasprisfeldt.me/img/" : "",
+        borderSourceUrl: isLocalDev ? "https://dnd.mathiasprisfeldt.me/portrait_border/" : "",
         images: [],
     });
 

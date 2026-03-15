@@ -49,7 +49,9 @@ const mockOBR = {
     },
 };
 
-const useMock = import.meta.env.DEV && !OBRSdk.isAvailable;
+import { isLocalDev } from "./utils/env";
+
+const useMock = isLocalDev && !OBRSdk.isAvailable;
 
 const OBR = useMock ? mockOBR : OBRSdk;
 

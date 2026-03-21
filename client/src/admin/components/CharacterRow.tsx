@@ -1,4 +1,4 @@
-import { PortraitImage, CharacterPortraitPicker } from "../../character-portrait";
+import { CharacterPortraitPicker } from "../../character-portrait";
 import {
     Checkbox,
     FormControlLabel,
@@ -25,7 +25,7 @@ interface Props {
     onInitiativeSubmit?: () => void;
     onHealthChange?: (health: number) => void;
     onMaxHealthChange?: (maxHealth: number) => void;
-    onPortraitImageChange?: (image: PortraitImage | null) => void;
+    onPortraitImageChange?: (imageId: string | null) => void;
 }
 
 export default function CharacterRow({
@@ -84,7 +84,7 @@ export default function CharacterRow({
             />
             <CharacterPortraitPicker
                 disabled={isDraft}
-                value={character?.properties.portraitImage}
+                value={character?.properties.portraitImageId}
                 onChange={onPortraitImageChange}
             />
             <IconButton

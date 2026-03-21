@@ -1,6 +1,7 @@
 import { Character } from "../../store/tracker-store";
 import { styled } from "@mui/material";
 import { PortraitImageWithPlaceholder } from "../../character-portrait/PortraitImageWithPlaceholder";
+import { usePortraitImage } from "../../character-portrait";
 import { TextPlate } from "./TextPlate";
 import TurnIndicator from "./TurnIndicator";
 import { useEffect, useState } from "react";
@@ -12,15 +13,16 @@ export interface Props {
 }
 
 export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) {
-    const [portraitImage, setPortraitImage] = useState<HTMLImageElement | undefined>(undefined);
+    const portraitImage = usePortraitImage(character.properties.portraitImageId);
+    const [portraitImageEl, setPortraitImageEl] = useState<HTMLImageElement | undefined>(undefined);
     const [portraitPalette, setPortraitPalette] = useState<string[] | undefined>(undefined);
 
     useEffect(() => {
-        if (!portraitImage) return;
+        if (!portraitImageEl) return;
         let ignore = false;
 
         (async () => {
-            const palette = await paletteFromImageElement(portraitImage);
+            const palette = await paletteFromImageElement(portraitImageEl);
 
             if (ignore) return;
             setPortraitPalette(palette);
@@ -29,12 +31,12 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
         return () => {
             ignore = true;
         };
-    }, [portraitImage]);
+    }, [portraitImageEl]);
 
     return (
         <Background {...rest}>
             <PortraitImageWithPlaceholder
-                portraitImage={character.properties.portraitImage}
+                portraitImage={portraitImage}
                 showBorder={true}
                 portraitOverlay={
                     <TurnIndicatorStyled
@@ -48,7 +50,7 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                     height: "100%",
                 }}
                 onImageLoad={(event) => {
-                    setPortraitImage(event);
+                    setPortraitImageEl(event);
                 }}
             />
             {!character.properties.hideName && (

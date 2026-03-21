@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { PortraitImage } from "../character-portrait";
 import { useRoomConnection, type RoomConnectionStatus } from "../hooks/use-room-connection";
 
 const TRACKER_STATE_KEY = "tracker";
@@ -14,7 +13,7 @@ export interface CharacterProperties {
     initiative: number;
     health: number;
     maxHealth: number;
-    portraitImage: PortraitImage | null;
+    portraitImageId: string | null;
     hideName: boolean;
 }
 
@@ -101,7 +100,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                     initiative: 0,
                     health: 0,
                     maxHealth: 0,
-                    portraitImage: null,
+                    portraitImageId: null,
                     hideName: false,
                 },
             },
@@ -169,7 +168,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                                     initiative: 0,
                                     health: 0,
                                     maxHealth: 0,
-                                    portraitImage: null,
+                                    portraitImageId: null,
                                     hideName: false,
                                 },
                             });

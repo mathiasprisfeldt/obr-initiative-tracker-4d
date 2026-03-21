@@ -67,10 +67,10 @@ function Content({
                                 maxHealth,
                             });
                         }}
-                        onPortraitImageChange={(image) => {
+                        onPortraitImageChange={(imageId) => {
                             updateCharacter(character.id, {
                                 ...character.properties,
-                                portraitImage: image,
+                                portraitImageId: imageId,
                             });
                         }}
                     />

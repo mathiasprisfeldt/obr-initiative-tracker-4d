@@ -62,6 +62,12 @@ export function usePortraitImagePickerState(): PortraitImagePickerState | undefi
     return store.isLoading ? undefined : store.state;
 }
 
+export function usePortraitImage(id: string | null | undefined): PortraitImage | null {
+    const { state } = useContext(context);
+    if (!id) return null;
+    return state.images.find((img) => img.displayName === id) ?? null;
+}
+
 export function PortraitImagePickerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isGM, setIsGM] = useState(false);

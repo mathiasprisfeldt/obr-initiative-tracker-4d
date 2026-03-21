@@ -8,20 +8,21 @@ import {
     Typography,
 } from "@mui/material";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
-import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
+import { usePortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
 import { useState, useRef, useMemo, forwardRef, MouseEventHandler } from "react";
 
 export interface Props {
     disabled: boolean;
-    value: PortraitImage | null;
-    onChange?: (image: PortraitImage | null) => void;
+    value: string | null;
+    onChange?: (imageId: string | null) => void;
 }
 
 export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
     const {
         state: { images },
     } = usePortraitImagePickerStore();
+    const portraitImage = usePortraitImage(value);
 
     const [open, setOpen] = useState(false);
     const [inputValue, setInputValue] = useState("");
@@ -119,7 +120,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
             disablePortal
             options={images}
             sx={{ width: pickerIconSize }}
-            value={value ?? { displayName: "", url: "" }}
+            value={portraitImage ?? { displayName: "", url: "" }}
             open={open}
             onOpen={() => {
                 setOpen(true);
@@ -130,7 +131,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                 if (reason !== "blur") setOpen(false);
             }}
             onChange={(_, newValue) => {
-                onChange?.(newValue);
+                onChange?.(newValue?.displayName ?? null);
             }}
             blurOnSelect={false}
             autoHighlight={false}
@@ -201,7 +202,7 @@ export function CharacterPortraitPicker({ disabled, value, onChange }: Props) {
                                     sx={{ m: 0 }}
                                 >
                                     <CharacterPortraitThumbnail
-                                        portraitImage={value}
+                                        portraitImage={portraitImage}
                                         showBorder={false}
                                         aria-disabled={disabled}
                                         sx={{

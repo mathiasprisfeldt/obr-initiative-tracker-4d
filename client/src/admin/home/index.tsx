@@ -160,6 +160,7 @@ function Preview() {
         },
         isLoading: false,
         canStartEncounter: true,
+        roomConnectionStatus: "connected",
         updateCharacter: () => {},
         sortCharacters: () => {},
         previousTurn: () => {},

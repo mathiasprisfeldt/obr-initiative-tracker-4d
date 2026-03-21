@@ -5,6 +5,7 @@ import Tracker from "./home";
 import { SettingsPanel } from "./SettingsPanel";
 import { CharacterPortraitBorderSettings } from "../character-portrait/CharacterPortraitBorderSettings";
 import { CharacterPortraitSettings } from "../character-portrait/CharacterPortraitSettings";
+import { RoomConnectionIndicator } from "./components/RoomConnectionIndicator";
 
 export default function Admin() {
     const [value, setValue] = useState("1");
@@ -12,13 +13,14 @@ export default function Admin() {
     return (
         <Box sx={{ width: "100%", typography: "body1", color: "white" }}>
             <TabContext value={value}>
-                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <Box sx={{ borderBottom: 1, borderColor: "divider", position: "relative" }}>
                     <TabList onChange={(_event, newValue) => setValue(newValue)}>
                         <Tab label="Home" value="1" />
                         <Tab label="Portraits" value="2" />
                         <Tab label="Borders" value="3" />
                         <Tab label="Settings" value="4" />
                     </TabList>
+                    <RoomConnectionIndicator onClick={() => setValue("4")} />
                 </Box>
                 <TabPanel value="1">
                     <Tracker />

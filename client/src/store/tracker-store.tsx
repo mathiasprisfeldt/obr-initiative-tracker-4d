@@ -1,8 +1,6 @@
-import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { PortraitImage } from "../character-portrait";
-import { useApi } from "./settings-store";
-import type { RoomConnection } from "obr-initiative-tracker-4d-backend/api-client";
+import { useRoomConnection, type RoomConnectionStatus } from "../hooks/use-room-connection";
 
 const TRACKER_STATE_KEY = "tracker";
 
@@ -31,6 +29,7 @@ export interface TrackerStore {
     state: TrackerState;
     isLoading: boolean;
     canStartEncounter: boolean;
+    roomConnectionStatus: RoomConnectionStatus;
 
     updateCharacter(id: string, properties: CharacterProperties): void;
     sortCharacters(): void;
@@ -50,6 +49,7 @@ const context = createContext<TrackerStore>({
     },
     isLoading: true,
     canStartEncounter: false,
+    roomConnectionStatus: "idle",
 
     updateCharacter: () => {},
     sortCharacters: () => {},
@@ -66,24 +66,15 @@ export function useTrackerStore(): TrackerStore {
 }
 
 export function useTrackerState(): TrackerState | undefined {
-    const api = useApi();
     const [state, setState] = useState<TrackerState>();
 
-    useEffect(() => {
-        if (!api) return;
-
-        const connection = api.connectRoom(OBR.room.id, {
-            onStateChanged: (key, incomingState) => {
-                if (key === TRACKER_STATE_KEY) {
-                    setState(cleanUpStateForClient(incomingState as TrackerState));
-                }
-            },
-        });
-
-        return () => {
-            connection.close();
-        };
-    }, [api]);
+    useRoomConnection({
+        onStateChanged: (key, incomingState) => {
+            if (key === TRACKER_STATE_KEY) {
+                setState(cleanUpStateForClient(incomingState as TrackerState));
+            }
+        },
+    });
 
     return state;
 }
@@ -98,10 +89,9 @@ function cleanUpStateForClient(state: TrackerState) {
 
 export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
-    const api = useApi();
-    const roomConnectionRef = useRef<RoomConnection | null>(null);
-    const skipNextSendRef = useRef(false);
-
+    const hasConnectedRef = useRef(false);
+    const skipNextStateChangedRef = useRef(false);
+    const stateRef = useRef<TrackerState>(null!);
     const [state, setState] = useState<TrackerState>({
         characters: [
             {
@@ -124,40 +114,33 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         return state.characters.length > 1;
     }, [state.characters.length]);
 
-    useEffect(() => {
-        if (isLoading) return;
+    stateRef.current = state;
 
-        if (skipNextSendRef.current) {
-            skipNextSendRef.current = false;
-            return;
-        }
-
-        roomConnectionRef.current?.updateState(TRACKER_STATE_KEY, state);
-    }, [state]);
-
-    // Manage WebSocket connection lifecycle
-    useEffect(() => {
-        if (!api) return;
-
-        const connection = api.connectRoom(OBR.room.id, {
-            onStateChanged: (key, incomingState) => {
-                if (key === TRACKER_STATE_KEY) {
-                    skipNextSendRef.current = true;
-                    setState(incomingState as TrackerState);
-                    setIsLoading(false);
+    const room = useRoomConnection({
+        onStateChanged: (key, incomingState) => {
+            if (key === TRACKER_STATE_KEY) {
+                if (skipNextStateChangedRef.current) {
+                    skipNextStateChangedRef.current = false;
+                    return;
                 }
-            },
-            onConnected: () => {
+                setState(incomingState as TrackerState);
                 setIsLoading(false);
-            },
-        });
-        roomConnectionRef.current = connection;
+            }
+        },
+        onConnected: () => {
+            if (hasConnectedRef.current) {
+                room.updateState(TRACKER_STATE_KEY, stateRef.current);
+            }
+            hasConnectedRef.current = true;
+        },
+        onDisconnected: () => {
+            skipNextStateChangedRef.current = true;
+        },
+    });
 
-        return () => {
-            connection.close();
-            roomConnectionRef.current = null;
-        };
-    }, [api]);
+    useEffect(() => {
+        room.updateState(TRACKER_STATE_KEY, state);
+    }, [state]);
 
     return (
         <context.Provider
@@ -165,6 +148,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 state,
                 isLoading: isLoading,
                 canStartEncounter: canStartEncounter,
+                roomConnectionStatus: room.status,
 
                 updateCharacter: (id: string, properties: CharacterProperties) => {
                     setState((prevState) => {

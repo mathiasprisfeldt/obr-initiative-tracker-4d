@@ -26,7 +26,6 @@ export class Room {
         for (const [key, state] of this.state) {
             ws.send(JSON.stringify({ action: ServerAction.StateChanged, key, state }));
         }
-
         ws.on("message", (raw) => {
             try {
                 const msg = JSON.parse(raw.toString()) as ClientMessage;

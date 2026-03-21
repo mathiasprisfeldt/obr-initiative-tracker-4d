@@ -85,6 +85,11 @@ export class ApiRequestError extends Error {
 export interface ApiClientOptions {
     /** Base URL of the backend, e.g. "https://your-server.com" (no trailing slash). */
     baseUrl: string;
+    /**
+     * When a WebSocket connection drops unexpectedly, retry reconnecting after this interval.
+     * Defaults to 2000ms.
+     */
+    reconnectIntervalMs?: number;
     /** Optional fetch implementation (useful for testing). */
     fetch?: FetchFn;
 }
@@ -92,6 +97,7 @@ export interface ApiClientOptions {
 export function createApiClient(options: ApiClientOptions) {
     const { baseUrl } = options;
     const _fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
+    const reconnectIntervalMs = options.reconnectIntervalMs ?? 2000;
 
     function url(path: string) {
         return `${baseUrl.replace(/\/+$/, "")}${path}`;
@@ -111,43 +117,102 @@ export function createApiClient(options: ApiClientOptions) {
     }
 
     // Shared WebSocket connections per room
-    const sharedConnections = new Map<
-        string,
-        { ws: WebSocket; subscribers: Set<RoomConnectionOptions> }
-    >();
+    type SharedRoomConnection = {
+        ws: WebSocket | null;
+        subscribers: Set<RoomConnectionOptions>;
+        reconnectTimer: ReturnType<typeof setTimeout> | null;
+        manuallyClosed: boolean;
+    };
 
-    function getOrCreateSharedConnection(roomId: string) {
-        let shared = sharedConnections.get(roomId);
-        if (shared) return shared;
+    const sharedConnections = new Map<string, SharedRoomConnection>();
 
-        const wsUrl = baseUrl.replace(/^http/, "ws").replace(/\/+$/, "");
-        const ws = new WebSocket(`${wsUrl}/ws/room/${encodeURIComponent(roomId)}`);
+    function buildWsUrl(roomId: string) {
+        const wsBase = baseUrl.replace(/^http/, "ws").replace(/\/+$/, "");
+        return `${wsBase}/ws/room/${encodeURIComponent(roomId)}`;
+    }
 
-        shared = { ws, subscribers: new Set() };
-        const ref = shared;
+    function cleanupShared(roomId: string, shared: SharedRoomConnection) {
+        if (shared.reconnectTimer != null) {
+            clearTimeout(shared.reconnectTimer);
+            shared.reconnectTimer = null;
+        }
+        shared.ws = null;
+        sharedConnections.delete(roomId);
+    }
+
+    function scheduleReconnect(roomId: string, shared: SharedRoomConnection) {
+        if (shared.manuallyClosed) return;
+        if (shared.subscribers.size === 0) {
+            cleanupShared(roomId, shared);
+            return;
+        }
+        if (shared.reconnectTimer != null) return;
+
+        shared.reconnectTimer = setTimeout(() => {
+            shared.reconnectTimer = null;
+            if (shared.manuallyClosed) return;
+            if (shared.subscribers.size === 0) {
+                cleanupShared(roomId, shared);
+                return;
+            }
+            connectWs(roomId, shared);
+        }, reconnectIntervalMs);
+    }
+
+    function connectWs(roomId: string, shared: SharedRoomConnection) {
+        if (shared.manuallyClosed) return;
+        if (
+            shared.ws &&
+            (shared.ws.readyState === WebSocket.OPEN ||
+                shared.ws.readyState === WebSocket.CONNECTING)
+        ) {
+            return;
+        }
+
+        const ws = new WebSocket(buildWsUrl(roomId));
+        shared.ws = ws;
+        let didOpen = false;
 
         ws.addEventListener("open", () => {
-            for (const sub of ref.subscribers) sub.onConnected?.();
+            didOpen = true;
+            for (const sub of shared.subscribers) sub.onConnected?.();
         });
 
         ws.addEventListener("close", () => {
-            sharedConnections.delete(roomId);
-            for (const sub of ref.subscribers) sub.onDisconnected?.();
+            if (didOpen) {
+                for (const sub of shared.subscribers) sub.onDisconnected?.();
+            }
+
+            if (shared.manuallyClosed) {
+                cleanupShared(roomId, shared);
+                return;
+            }
+
+            // If no subscribers remain, fully tear down; otherwise retry.
+            if (shared.subscribers.size === 0) {
+                cleanupShared(roomId, shared);
+                return;
+            }
+
+            scheduleReconnect(roomId, shared);
         });
 
         ws.addEventListener("message", (event) => {
             try {
                 const msg = JSON.parse(event.data as string) as ServerMessage;
                 if (msg.action === ServerAction.StateChanged) {
-                    for (const sub of ref.subscribers) sub.onStateChanged(msg.key, msg.state);
+                    for (const sub of shared.subscribers) sub.onStateChanged(msg.key, msg.state);
                 }
             } catch {
                 /* ignore malformed messages */
             }
         });
 
-        sharedConnections.set(roomId, shared);
-        return shared;
+        // Some environments emit "error" without a follow-up "close".
+        // Ensure we eventually attempt reconnect by scheduling one.
+        ws.addEventListener("error", () => {
+            scheduleReconnect(roomId, shared);
+        });
     }
 
     return {
@@ -181,11 +246,24 @@ export function createApiClient(options: ApiClientOptions) {
         },
 
         connectRoom(roomId: string, options: RoomConnectionOptions): RoomConnection {
-            const shared = getOrCreateSharedConnection(roomId);
+            let shared = sharedConnections.get(roomId);
+            if (!shared) {
+                shared = {
+                    ws: null,
+                    subscribers: new Set(),
+                    reconnectTimer: null,
+                    manuallyClosed: false,
+                };
+                sharedConnections.set(roomId, shared);
+            }
+
             shared.subscribers.add(options);
 
+            // Ensure there is an active connection attempt after subscribing.
+            connectWs(roomId, shared);
+
             // If already open, fire onConnected immediately
-            if (shared.ws.readyState === WebSocket.OPEN) {
+            if (shared.ws?.readyState === WebSocket.OPEN) {
                 options.onConnected?.();
             }
 
@@ -200,7 +278,7 @@ export function createApiClient(options: ApiClientOptions) {
                         key,
                         setTimeout(() => {
                             debounceTimers.delete(key);
-                            if (shared.ws.readyState === WebSocket.OPEN) {
+                            if (shared.ws?.readyState === WebSocket.OPEN) {
                                 const msg: ClientMessage = {
                                     action: ClientAction.UpdateState,
                                     key,
@@ -216,8 +294,9 @@ export function createApiClient(options: ApiClientOptions) {
                     debounceTimers.clear();
                     shared.subscribers.delete(options);
                     if (shared.subscribers.size === 0) {
-                        shared.ws.close();
-                        sharedConnections.delete(roomId);
+                        shared.manuallyClosed = true;
+                        shared.ws?.close();
+                        cleanupShared(roomId, shared);
                     }
                 },
             };

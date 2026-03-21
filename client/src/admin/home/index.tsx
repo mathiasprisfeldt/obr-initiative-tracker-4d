@@ -1,6 +1,7 @@
 import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
-import { Typography, Button, Stack, LinearProgress, styled } from "@mui/material";
+import { Typography, Button, Stack, LinearProgress, IconButton, styled } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function Tracker() {
     const trackerStore = useTrackerStore();
@@ -19,6 +20,7 @@ function Content({
         sortCharacters,
         previousTurn,
         nextTurn,
+        toggleDisplay,
     },
 }: {
     trackerStore: TrackerStore;
@@ -117,6 +119,10 @@ function Content({
                     End Encounter
                 </Button>
             )}
+
+            <IconButton size="small" onClick={toggleDisplay} sx={{ ml: 1 }}>
+                {state.isDisplayed ? <Visibility /> : <VisibilityOff />}
+            </IconButton>
         </div>
     );
 }

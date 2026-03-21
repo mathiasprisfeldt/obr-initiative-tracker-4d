@@ -28,10 +28,10 @@ export function Tracker() {
 }
 
 function Content({ state }: { state: TrackerState | undefined }) {
-    if (!state?.hasEncounterStarted) return null;
+    const visible = state?.isDisplayed && state?.hasEncounterStarted;
 
     return (
-        <Container>
+        <Container style={{ visibility: visible ? "visible" : "hidden" }}>
             {state && (
                 <StyledCharacterRow
                     characters={state.characters}

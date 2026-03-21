@@ -15,7 +15,3 @@ const Base = styled(Typography)`
     padding-inline: 1.6rem;
     padding-block: 1rem;
 `;
-
-function Preview() {
-    return <TextPlate />;
-}

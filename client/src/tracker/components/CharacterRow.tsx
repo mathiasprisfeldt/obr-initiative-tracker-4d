@@ -10,14 +10,14 @@ export interface Props {
 export default function CharacterRow({ characters, currentCharacter, ...rest }: Props) {
     return (
         <Container {...rest}>
-            {characters.map((character) => (
-                <CharacterAvatarContainer key={character.id}>
-                    <StyledCharacterAvatar
-                        character={character}
-                        hasTurn={currentCharacter?.id === character.id}
-                    />
-                </CharacterAvatarContainer>
-            ))}
+            {characters.map((character) => {
+                const hasTurn = currentCharacter?.id === character.id;
+                return (
+                    <CharacterAvatarContainer key={character.id} hasTurn={hasTurn}>
+                        <StyledCharacterAvatar character={character} hasTurn={hasTurn} />
+                    </CharacterAvatarContainer>
+                );
+            })}
         </Container>
     );
 }
@@ -27,11 +27,13 @@ const StyledCharacterAvatar = styled(CharacterAvatar)`
     flex-shrink: 1;
 `;
 
-const CharacterAvatarContainer = styled("div")`
+const CharacterAvatarContainer = styled("div")<{ hasTurn: boolean }>`
     display: flex;
     max-height: 200px;
     flex-grow: 1;
     justify-content: center;
+    transition: transform 0.4s ease;
+    transform: scale(${({ hasTurn }) => (hasTurn ? 1.25 : 1)});
 `;
 
 const Container = styled("div")`
@@ -41,4 +43,7 @@ const Container = styled("div")`
     width: 100%;
     height: 100%;
     justify-content: center;
+    overflow: hidden;
+    padding: 16px 0;
+    box-sizing: border-box;
 `;

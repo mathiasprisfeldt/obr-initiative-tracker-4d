@@ -33,6 +33,9 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
         };
     }, [portraitImageEl]);
 
+    const name = character.properties.name;
+    const number = name.match(/\d+/)?.[0];
+
     return (
         <Background {...rest}>
             <PortraitImageWithPlaceholder
@@ -53,17 +56,47 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                     setPortraitImageEl(event);
                 }}
             />
+            {number && <NumberBadge hasTurn={hasTurn}>{number}</NumberBadge>}
             {!character.properties.hideName && (
-                <Name variant="body2">{character.properties.name}</Name>
+                <Name variant="body2" hasTurn={hasTurn}>
+                    {name}
+                </Name>
             )}
         </Background>
     );
 }
-const Name = styled(TextPlate)`
+const Name = styled(TextPlate)<{ hasTurn: boolean }>`
     position: absolute;
-    bottom: 4px;
+    bottom: -12px;
     text-align: center;
     z-index: 10;
+    white-space: nowrap;
+    font-size: clamp(0.6rem, 2.5vw, 1rem);
+    padding-inline: 1.2rem;
+    padding-block: 0.6rem;
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+    opacity: ${({ hasTurn }) => (hasTurn ? 1 : 0)};
+    transform: translateY(${({ hasTurn }) => (hasTurn ? "0" : "8px")});
+    pointer-events: ${({ hasTurn }) => (hasTurn ? "auto" : "none")};
+`;
+
+const NumberBadge = styled("span")<{ hasTurn: boolean }>`
+    position: absolute;
+    z-index: 10;
+    font-size: clamp(1.5rem, 50%, 4rem);
+    font-weight: bold;
+    color: white;
+    text-shadow:
+        0 0 6px rgba(0, 0, 0, 0.8),
+        0 2px 4px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+    opacity: 1;
+    transform: scale(1);
 `;
 
 const Background = styled("div")`

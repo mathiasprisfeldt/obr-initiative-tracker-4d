@@ -34,6 +34,7 @@ const CharacterAvatarContainer = styled("div")<{ hasTurn: boolean }>`
     justify-content: center;
     transition: transform 0.4s ease;
     transform: scale(${({ hasTurn }) => (hasTurn ? 1.25 : 1)});
+    z-index: ${({ hasTurn }) => (hasTurn ? 1 : 0)};
 `;
 
 const Container = styled("div")`

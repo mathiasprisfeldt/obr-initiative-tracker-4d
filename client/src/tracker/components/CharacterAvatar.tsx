@@ -35,6 +35,7 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
 
     const name = character.properties.name;
     const number = name.match(/\d+/)?.[0];
+    const nameWithoutNumber = name.replace(/\d+/, "").trim();
 
     return (
         <Background {...rest}>
@@ -57,9 +58,9 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                 }}
             />
             {number && <NumberBadge hasTurn={hasTurn}>{number}</NumberBadge>}
-            {!character.properties.hideName && (
+            {!character.properties.hideName && nameWithoutNumber && (
                 <Name variant="body2" hasTurn={hasTurn}>
-                    {name}
+                    {nameWithoutNumber}
                 </Name>
             )}
         </Background>

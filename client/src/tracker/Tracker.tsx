@@ -36,6 +36,7 @@ function Content({ state }: { state: TrackerState | undefined }) {
                 <StyledCharacterRow
                     characters={state.characters}
                     currentCharacter={state.currentCharacter}
+                    visibleCount={state.visibleCount}
                 />
             )}
             <RoundText typography="h5">Round {state?.round}</RoundText>

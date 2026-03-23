@@ -1,6 +1,14 @@
 import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
-import { Typography, Button, Stack, LinearProgress, IconButton, styled } from "@mui/material";
+import {
+    Typography,
+    Button,
+    Stack,
+    LinearProgress,
+    IconButton,
+    styled,
+    TextField,
+} from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function Tracker() {
@@ -21,6 +29,7 @@ function Content({
         previousTurn,
         nextTurn,
         toggleDisplay,
+        setVisibleCount,
     },
 }: {
     trackerStore: TrackerStore;
@@ -123,6 +132,16 @@ function Content({
             <IconButton size="small" onClick={toggleDisplay} sx={{ ml: 1 }}>
                 {state.isDisplayed ? <Visibility /> : <VisibilityOff />}
             </IconButton>
+
+            <TextField
+                label="Visible characters"
+                type="number"
+                value={state.visibleCount}
+                onChange={(e) => setVisibleCount(Number(e.target.value))}
+                size="small"
+                slotProps={{ htmlInput: { min: 1, max: 15 } }}
+                sx={{ mt: 2, width: 160 }}
+            />
         </div>
     );
 }

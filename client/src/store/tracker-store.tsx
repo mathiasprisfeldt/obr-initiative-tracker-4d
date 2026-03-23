@@ -23,6 +23,7 @@ export interface TrackerState {
     round: number;
     hasEncounterStarted: boolean;
     isDisplayed: boolean;
+    visibleCount: number;
 }
 
 export interface TrackerStore {
@@ -40,6 +41,7 @@ export interface TrackerStore {
     startEncounter(): void;
     endEncounter(): void;
     toggleDisplay(): void;
+    setVisibleCount(count: number): void;
 }
 
 const context = createContext<TrackerStore>({
@@ -48,6 +50,7 @@ const context = createContext<TrackerStore>({
         round: 1,
         hasEncounterStarted: false,
         isDisplayed: true,
+        visibleCount: 5,
     },
     isLoading: true,
     canStartEncounter: false,
@@ -62,6 +65,7 @@ const context = createContext<TrackerStore>({
     startEncounter: () => {},
     endEncounter: () => {},
     toggleDisplay: () => {},
+    setVisibleCount: () => {},
 });
 
 export function useTrackerStore(): TrackerStore {
@@ -112,6 +116,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         round: 1,
         hasEncounterStarted: false,
         isDisplayed: true,
+        visibleCount: 5,
     });
 
     const canStartEncounter = useMemo(() => {
@@ -268,6 +273,13 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                     setState((prevState) => ({
                         ...prevState,
                         isDisplayed: !prevState.isDisplayed,
+                    }));
+                },
+
+                setVisibleCount: (count: number) => {
+                    setState((prevState) => ({
+                        ...prevState,
+                        visibleCount: Math.max(1, Math.min(15, count)),
                     }));
                 },
             }}

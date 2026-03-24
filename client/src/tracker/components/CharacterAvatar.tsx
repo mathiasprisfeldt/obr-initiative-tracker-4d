@@ -66,7 +66,9 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
         </Background>
     );
 }
-const Name = styled(TextPlate)<{ hasTurn: boolean }>`
+const Name = styled(TextPlate, {
+    shouldForwardProp: (prop) => prop !== "hasTurn",
+})<{ hasTurn: boolean }>`
     position: absolute;
     bottom: -12px;
     text-align: center;

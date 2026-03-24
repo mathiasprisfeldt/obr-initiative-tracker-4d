@@ -2,12 +2,12 @@ import "./tracker.css";
 import { TrackerState, useTrackerState } from "../store/tracker-store";
 import CharacterRow from "./components/CharacterRow";
 import OBR from "@owlbear-rodeo/sdk";
-import { styled, Typography, keyframes } from "@mui/material";
-import { TextPlate } from "./components/TextPlate";
+import { styled, Typography } from "@mui/material";
 import { loadEmittersPlugin } from "@tsparticles/plugin-emitters";
 import { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 export function Tracker() {
     const state = useTrackerState();
@@ -31,26 +31,52 @@ function Content({ state }: { state: TrackerState | undefined }) {
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
 
     return (
-        <Container style={{ visibility: visible ? "visible" : "hidden" }}>
+        <Container style={{ pointerEvents: visible ? "auto" : "none" }}>
             {state && (
-                <StyledCharacterRow
-                    characters={state.characters}
-                    currentCharacter={state.currentCharacter}
-                />
+                <>
+                    <StyledCharacterRow
+                        characters={state.characters}
+                        currentCharacter={state.currentCharacter}
+                        visible={!!visible}
+                    />
+                    <AnimatePresence mode="popLayout">
+                        <RoundBadge
+                            key={`${state.round}-${visible}`}
+                            layout
+                            initial={{ x: 200, opacity: 0 }}
+                            animate={{
+                                x: visible ? 0 : 200,
+                                scale: 1,
+                                opacity: visible ? 1 : 0,
+                                boxShadow: "0 0 8px rgba(200, 170, 110, 0.3)",
+                            }}
+                            exit={{
+                                x: 200,
+                                opacity: 0,
+                                scale: 0.3,
+                            }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 20,
+                            }}
+                        >
+                            <RoundNumber variant="h4">{state.round}</RoundNumber>
+                        </RoundBadge>
+                    </AnimatePresence>
+                </>
             )}
-            <RoundBadge key={state?.round}>
-                <RoundNumber variant="h4">{state?.round}</RoundNumber>
-            </RoundBadge>
         </Container>
     );
 }
 
-const Container = styled("div")`
+const Container = styled(motion.div)`
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    height: 100%;
+    position: fixed;
+    inset: 0;
     overflow: hidden;
 `;
 
@@ -58,25 +84,7 @@ const StyledCharacterRow = styled(CharacterRow)`
     flex-grow: 1;
 `;
 
-const roundPulse = keyframes`
-    0% {
-        transform: scale(0.5);
-        opacity: 0;
-        box-shadow: 0 0 0 rgba(200, 170, 110, 0);
-    }
-    50% {
-        transform: scale(1.15);
-        opacity: 1;
-        box-shadow: 0 0 20px rgba(200, 170, 110, 0.6);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-        box-shadow: 0 0 8px rgba(200, 170, 110, 0.3);
-    }
-`;
-
-const RoundBadge = styled("div")`
+const RoundBadge = styled(motion.div)`
     display: grid;
     place-items: center;
     aspect-ratio: 1 / 1;
@@ -88,7 +96,6 @@ const RoundBadge = styled("div")`
     flex-shrink: 0;
     margin-right: 4px;
     writing-mode: sideways-lr;
-    animation: ${roundPulse} 0.5s ease-out;
 `;
 
 const RoundNumber = styled(Typography)`

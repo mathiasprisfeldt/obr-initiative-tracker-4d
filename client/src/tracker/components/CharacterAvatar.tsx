@@ -72,9 +72,9 @@ const Name = styled(TextPlate)<{ hasTurn: boolean }>`
     text-align: center;
     z-index: 10;
     white-space: nowrap;
-    font-size: clamp(0.6rem, 2.5vw, 1rem);
-    padding-inline: 1.2rem;
-    padding-block: 0.6rem;
+    font-size: clamp(0.75rem, 3.5vw, 1.25rem);
+    padding-inline: 1.6rem;
+    padding-block: 0.8rem;
     transition:
         opacity 0.3s ease,
         transform 0.3s ease;

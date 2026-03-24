@@ -14,7 +14,7 @@ const theme = createTheme({
         background: isLocalDev ? { default: "#1E1E2E", paper: "#222639" } : undefined,
     },
     typography: {
-        fontFamily: "cursive, " + baseTheme.typography.fontFamily,
+        fontFamily: "'Cinzel Decorative', cursive, " + baseTheme.typography.fontFamily,
     },
 });
 

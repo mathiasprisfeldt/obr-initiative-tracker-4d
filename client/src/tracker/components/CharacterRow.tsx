@@ -1,7 +1,7 @@
 import { styled } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import CharacterAvatar from "./CharacterAvatar";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, Variants } from "motion/react";
 
 export interface Props {
     characters: Character[];
@@ -9,7 +9,7 @@ export interface Props {
     visible?: boolean;
 }
 
-const containerVariants = {
+const containerVariants: Variants = {
     show: {
         transition: {
             staggerChildren: 0.08,
@@ -23,7 +23,7 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     show: {
         opacity: 1,
         scale: 1,

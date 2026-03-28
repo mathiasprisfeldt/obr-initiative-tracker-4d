@@ -1,5 +1,5 @@
 import "./tracker.css";
-import { TrackerState, useTrackerState } from "../store/tracker-store";
+import { type TrackerResult, useTracker } from "../store/tracker-store";
 import CharacterRow from "./components/CharacterRow";
 import OBR from "@owlbear-rodeo/sdk";
 import { styled, Typography } from "@mui/material";
@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 export function Tracker() {
-    const state = useTrackerState();
+    const tracker = useTracker();
     const [particleEngineReady, setParticleEngineReady] = useState(false);
 
     useEffect(() => {
@@ -24,11 +24,13 @@ export function Tracker() {
 
     if (!particleEngineReady) return null;
 
-    return <Content state={state} />;
+    return <Content tracker={tracker} />;
 }
 
-function Content({ state }: { state: TrackerState | undefined }) {
+function Content({ tracker }: { tracker: TrackerResult }) {
+    const { state, connectionStatus } = tracker;
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
+    const showDisconnected = connectionStatus === "disconnected";
 
     return (
         <Container style={{ pointerEvents: visible ? "auto" : "none" }}>
@@ -66,6 +68,16 @@ function Content({ state }: { state: TrackerState | undefined }) {
                     </AnimatePresence>
                 </>
             )}
+            <AnimatePresence>
+                {showDisconnected && (
+                    <DisconnectedDot
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        title="Connection lost"
+                    />
+                )}
+            </AnimatePresence>
         </Container>
     );
 }
@@ -102,6 +114,17 @@ const RoundNumber = styled(Typography)`
     color: rgba(230, 200, 140, 1);
     font-weight: bold;
     line-height: 1;
+`;
+
+const DisconnectedDot = styled(motion.div)`
+    position: fixed;
+    bottom: 6px;
+    left: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(220, 80, 80, 0.7);
+    pointer-events: none;
 `;
 
 export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";

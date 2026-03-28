@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRoomConnection, type RoomConnectionStatus } from "../hooks/use-room-connection";
+import { useApi } from "./settings-store";
 
 const TRACKER_STATE_KEY = "tracker";
 
@@ -64,14 +65,19 @@ const context = createContext<TrackerStore>({
     toggleDisplay: () => {},
 });
 
+export interface TrackerResult {
+    state: TrackerState | undefined;
+    connectionStatus: RoomConnectionStatus;
+}
+
 export function useTrackerStore(): TrackerStore {
     return useContext(context);
 }
 
-export function useTrackerState(): TrackerState | undefined {
+export function useTracker(): TrackerResult {
     const [state, setState] = useState<TrackerState>();
 
-    useRoomConnection({
+    const room = useRoomConnection({
         onStateChanged: (key, incomingState) => {
             if (key === TRACKER_STATE_KEY) {
                 setState(cleanUpStateForClient(incomingState as TrackerState));
@@ -79,7 +85,7 @@ export function useTrackerState(): TrackerState | undefined {
         },
     });
 
-    return state;
+    return { state, connectionStatus: room.status };
 }
 
 function cleanUpStateForClient(state: TrackerState) {
@@ -141,6 +147,16 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             skipNextStateChangedRef.current = true;
         },
     });
+
+    // Keepalive: ping the backend health endpoint every 10 minutes
+    // to prevent the service from shutting down due to inactivity.
+    const api = useApi();
+    useEffect(() => {
+        if (!api) return;
+        const intervalMs = 10 * 60 * 1000;
+        const id = setInterval(() => api.isHealthy(), intervalMs);
+        return () => clearInterval(id);
+    }, [api]);
 
     useEffect(() => {
         room.updateState(TRACKER_STATE_KEY, state);

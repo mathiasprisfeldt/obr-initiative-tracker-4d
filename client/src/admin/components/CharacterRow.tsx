@@ -16,7 +16,7 @@ import { Character } from "../../store/tracker-store";
 import HealthInput from "./HealthInput";
 import { useState } from "react";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Delete, Circle } from "@mui/icons-material";
 
 interface Props {
     hasTurn: boolean;
@@ -28,6 +28,7 @@ interface Props {
     onHealthChange?: (health: number) => void;
     onMaxHealthChange?: (maxHealth: number) => void;
     onPortraitImageChange?: (imageId: string | null) => void;
+    onDelete?: () => void;
 }
 
 export default function CharacterRow({
@@ -40,17 +41,32 @@ export default function CharacterRow({
     onHealthChange,
     onMaxHealthChange,
     onPortraitImageChange,
+    onDelete,
 }: Props) {
     const isDraft = character.properties.name === "";
 
     const [contextMenu, setContextMenu] = useState<null | HTMLElement>(null);
     const isContextMenuOpen = Boolean(contextMenu);
+    const [deleteHovered, setDeleteHovered] = useState(false);
+
+    const turnColor = isDraft ? "disabled" : hasTurn ? "success" : "warning";
 
     return (
         <Stack direction="row" alignItems="center" spacing={1}>
-            {!isDraft && hasTurn && <span>🟢</span>}
-            {!isDraft && !hasTurn && <span>🟡</span>}
-            {isDraft && <span>⚪️</span>}
+            <IconButton
+                size="small"
+                disabled={isDraft}
+                onMouseEnter={() => setDeleteHovered(true)}
+                onMouseLeave={() => setDeleteHovered(false)}
+                onClick={onDelete}
+                sx={{ width: 24, height: 24, p: 0 }}
+            >
+                {deleteHovered && !isDraft ? (
+                    <Delete fontSize="small" color="error" />
+                ) : (
+                    <Circle fontSize="small" color={turnColor} />
+                )}
+            </IconButton>
 
             <TextField
                 size="small"

@@ -44,6 +44,9 @@ function Content({
                         onNameChange={(name) => {
                             updateCharacter(character.id, { ...character.properties, name });
                         }}
+                        onDelete={() => {
+                            updateCharacter(character.id, { ...character.properties, name: "" });
+                        }}
                         onHideNameChange={(hideName) => {
                             updateCharacter(character.id, {
                                 ...character.properties,

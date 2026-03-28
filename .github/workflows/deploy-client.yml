@@ -13,6 +13,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -31,6 +35,12 @@ jobs:
         working-directory: repo-main
         shell: bash
         run: |
+          # If triggered by a release tag, use it directly
+          if [[ "${{ github.ref_type }}" == "tag" && "${{ github.ref_name }}" == release/* ]]; then
+            echo "release_tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Otherwise, discover the latest release tag
           git fetch --tags --force
           tag=$(git for-each-ref --format="%(refname:short)" --sort=-version:refname refs/tags/release/* | head -n1)
           if [ -z "$tag" ]; then

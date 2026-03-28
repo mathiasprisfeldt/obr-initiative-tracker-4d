@@ -79,6 +79,7 @@ jobs:
           cd client
           rm ./dist/manifest.test.json
           mv ./dist/manifest.prod.json ./dist/manifest.json
+          jq --arg v "$VITE_BUILD_VERSION" '.version = $v' ./dist/manifest.json > ./dist/manifest.tmp && mv ./dist/manifest.tmp ./dist/manifest.json
           mkdir -p ../../site
           cp -R ./dist/* ../../site
 
@@ -92,6 +93,7 @@ jobs:
           cd client
           rm ./dist/manifest.prod.json
           mv ./dist/manifest.test.json ./dist/manifest.json
+          jq --arg v "$VITE_BUILD_VERSION" '.version = $v' ./dist/manifest.json > ./dist/manifest.tmp && mv ./dist/manifest.tmp ./dist/manifest.json
           mkdir -p ../../site/test
           cp -R ./dist/* ../../site/test
 

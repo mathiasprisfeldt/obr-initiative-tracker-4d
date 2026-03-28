@@ -1,5 +1,6 @@
 import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
+import { CharacterRowHeader } from "../components/CharacterRow";
 import { Typography, Button, Stack, LinearProgress, IconButton, styled } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
@@ -34,6 +35,7 @@ function Content({
             </Typography>
 
             <CharacterTable>
+                <CharacterRowHeader />
                 {state.characters.map((character) => (
                     <CharacterRow
                         key={character.id}

@@ -1,5 +1,6 @@
 import { CharacterPortraitPicker } from "../../character-portrait";
 import {
+    Box,
     Checkbox,
     FormControlLabel,
     IconButton,
@@ -9,6 +10,7 @@ import {
     MenuItem,
     Stack,
     TextField,
+    Typography,
 } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import HealthInput from "./HealthInput";
@@ -51,14 +53,12 @@ export default function CharacterRow({
             {isDraft && <span>⚪️</span>}
 
             <TextField
-                label="Name"
                 size="small"
                 value={character?.properties.name}
                 onChange={(e) => onNameChange?.(e.target.value)}
                 sx={{ mr: 1, flex: 1, minWidth: 0 }}
             />
             <TextField
-                label="INI"
                 size="small"
                 disabled={isDraft}
                 value={character?.properties.initiative}
@@ -122,6 +122,35 @@ export default function CharacterRow({
                     </ListItemText>
                 </MenuItem>
             </Menu>
+        </Stack>
+    );
+}
+
+export function CharacterRowHeader() {
+    return (
+        <Stack direction="row" alignItems="center" spacing={1}>
+            <Box sx={{ width: 24 }} />
+            <Typography variant="caption" sx={{ flex: 1, minWidth: 0, mr: 1 }}>
+                Name
+            </Typography>
+            <Typography variant="caption" sx={{ width: 60, mr: 1, textAlign: "center" }}>
+                INI
+            </Typography>
+            <Typography
+                variant="caption"
+                sx={{ maxWidth: 60, width: 60, mr: 1, textAlign: "center" }}
+            >
+                HP
+            </Typography>
+            <Typography
+                variant="caption"
+                sx={{ maxWidth: 60, width: 60, ml: 1, textAlign: "center" }}
+            >
+                Max HP
+            </Typography>
+            {/* Spacers for portrait picker and menu button columns */}
+            <Box sx={{ width: 40 }} />
+            <Box sx={{ width: 40 }} />
         </Stack>
     );
 }

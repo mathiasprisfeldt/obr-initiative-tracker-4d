@@ -22,7 +22,6 @@ export default function HealthInput({
     return (
         <>
             <MaxHealthAwareMathField
-                label="HP"
                 size="small"
                 disabled={disabled}
                 value={health}
@@ -31,7 +30,6 @@ export default function HealthInput({
                 maxhealth={maxHealth}
             />
             <MathField
-                label="Max HP"
                 size="small"
                 disabled={disabled}
                 value={maxHealth}

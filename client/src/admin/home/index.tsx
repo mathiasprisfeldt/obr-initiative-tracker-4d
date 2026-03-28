@@ -79,9 +79,24 @@ function Content({
                 ))}
             </CharacterTable>
 
-            <br />
+            <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                {!state.hasEncounterStarted && (
+                    <Button
+                        variant="contained"
+                        size="small"
+                        disabled={!canStartEncounter}
+                        onClick={startEncounter}
+                    >
+                        Start Encounter
+                    </Button>
+                )}
 
-            <Stack direction="row" spacing={1}>
+                {state.hasEncounterStarted && (
+                    <Button variant="contained" color="error" size="small" onClick={endEncounter}>
+                        End Encounter
+                    </Button>
+                )}
+
                 <Button
                     variant="outlined"
                     size="small"
@@ -98,31 +113,11 @@ function Content({
                 >
                     Next Turn
                 </Button>
+
+                <IconButton size="small" onClick={toggleDisplay}>
+                    {state.isDisplayed ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
             </Stack>
-
-            <br />
-            <br />
-
-            {!state.hasEncounterStarted && (
-                <Button
-                    variant="contained"
-                    size="small"
-                    disabled={!canStartEncounter}
-                    onClick={startEncounter}
-                >
-                    Start Encounter
-                </Button>
-            )}
-
-            {state.hasEncounterStarted && (
-                <Button variant="contained" color="error" size="small" onClick={endEncounter}>
-                    End Encounter
-                </Button>
-            )}
-
-            <IconButton size="small" onClick={toggleDisplay} sx={{ ml: 1 }}>
-                {state.isDisplayed ? <Visibility /> : <VisibilityOff />}
-            </IconButton>
         </div>
     );
 }

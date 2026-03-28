@@ -55,7 +55,7 @@ export default function CharacterRow({
                 size="small"
                 value={character?.properties.name}
                 onChange={(e) => onNameChange?.(e.target.value)}
-                sx={{ mr: 1, width: 200 }}
+                sx={{ mr: 1, flex: 1, minWidth: 0 }}
             />
             <TextField
                 label="INI"

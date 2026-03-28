@@ -27,7 +27,7 @@ export default function HealthInput({
                 disabled={disabled}
                 value={health}
                 onValueChange={onHealthChange}
-                sx={{ maxWidth: 75, mr: 1 }}
+                sx={{ maxWidth: 60, mr: 1 }}
                 maxhealth={maxHealth}
             />
             <MathField
@@ -36,7 +36,7 @@ export default function HealthInput({
                 disabled={disabled}
                 value={maxHealth}
                 onValueChange={onMaxHealthChange}
-                sx={{ maxWidth: 75, ml: 1 }}
+                sx={{ maxWidth: 60, ml: 1 }}
             />
         </>
     );

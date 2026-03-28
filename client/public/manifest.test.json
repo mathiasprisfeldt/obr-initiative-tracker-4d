@@ -2,9 +2,11 @@
     "name": "Initiative Tracker 4D (TEST)",
     "version": "1.0.0",
     "manifest_version": 1,
+    "homepage_url": "https://github.com/mathiasprisfeldt/obr-initiative-tracker-4d",
+    "icon": "/obr-initiative-tracker-4d/test/icon.png",
     "action": {
         "title": "Initiative Tracker 4D (TEST)",
-        "icon": "/obr-initiative-tracker-4d/test/icon.png",
+        "icon": "/obr-initiative-tracker-4d/test/icon.svg",
         "popover": "/obr-initiative-tracker-4d/test/src/admin/index.html",
         "height": 600,
         "width": 600

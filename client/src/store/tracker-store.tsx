@@ -104,8 +104,12 @@ export function useTracker(): TrackerResult {
 function cleanUpStateForClient(state: TrackerState) {
     return {
         ...state,
-        // remove draft characters
-        characters: state.characters.filter((c) => c.properties.name.trim() !== ""),
+        // remove draft characters and dead characters
+        characters: state.characters.filter(
+            (c) =>
+                c.properties.name.trim() !== "" &&
+                !(c.properties.maxHealth > 0 && c.properties.health <= 0),
+        ),
     };
 }
 

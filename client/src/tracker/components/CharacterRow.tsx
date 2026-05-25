@@ -60,10 +60,23 @@ export default function CharacterRow({
                             layout
                             variants={itemVariants}
                             exit={{
-                                opacity: 0,
-                                scale: 0.3,
-                                x: -200,
-                                transition: { type: "spring", stiffness: 300, damping: 25 },
+                                opacity: [1, 1, 1, 0],
+                                scale: [1, 1.05, 1.05, 0.3],
+                                rotate: [0, -3, 3, -2, 3, -1, 10],
+                                filter: [
+                                    "grayscale(0)",
+                                    "grayscale(0.5)",
+                                    "grayscale(1) brightness(0.3)",
+                                    "grayscale(1) brightness(0)",
+                                ],
+                                transition: {
+                                    duration: 0.8,
+                                    times: [0, 0.4, 0.7, 1],
+                                    rotate: {
+                                        duration: 0.6,
+                                        times: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 1],
+                                    },
+                                },
                             }}
                             style={{
                                 display: "flex",

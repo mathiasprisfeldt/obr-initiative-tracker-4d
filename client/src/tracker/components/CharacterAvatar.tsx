@@ -4,6 +4,8 @@ import { PortraitImageWithPlaceholder } from "../../character-portrait/PortraitI
 import { usePortraitImage } from "../../character-portrait";
 import { TextPlate } from "./TextPlate";
 import TurnIndicator from "./TurnIndicator";
+import { DamageOverlay } from "./DamageOverlay";
+import { getDamageLevel } from "../../utils/damage-level";
 import { useEffect, useState } from "react";
 import { paletteFromImageElement } from "../../utils/palette";
 
@@ -36,6 +38,7 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
     const name = character.properties.name;
     const number = name.match(/\d+/)?.[0];
     const nameWithoutNumber = name.replace(/\d+/, "").trim();
+    const damageLevel = getDamageLevel(character.properties.health, character.properties.maxHealth);
 
     return (
         <Background {...rest}>
@@ -43,11 +46,14 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                 portraitImage={portraitImage}
                 showBorder={true}
                 portraitOverlay={
-                    <TurnIndicatorStyled
-                        id={character.id}
-                        hasTurn={hasTurn}
-                        palette={portraitPalette}
-                    />
+                    <>
+                        <DamageOverlay damageLevel={damageLevel} seed={name} />
+                        <TurnIndicatorStyled
+                            id={character.id}
+                            hasTurn={hasTurn}
+                            palette={portraitPalette}
+                        />
+                    </>
                 }
                 style={{
                     width: "100%",

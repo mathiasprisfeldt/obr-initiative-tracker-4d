@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { simpleMathEval } from "../../utils/simple-math-eval";
 import { orange, red, yellow } from "@mui/material/colors";
 import { styled } from "@mui/material/styles";
+import { getDamageLevel } from "../../utils/damage-level";
 
 export interface Props {
     disabled: boolean;
@@ -91,24 +92,16 @@ const MaxHealthAwareMathField = styled(MathField)<{
     & .MuiOutlinedInput-root {
         & fieldset {
             ${(props) => {
-                if (props.maxhealth <= 0) {
-                    return;
-                }
+                const level = getDamageLevel(props.value, props.maxhealth);
+                if (level === "none") return;
 
-                const percentage = (props.value / props.maxhealth) * 100;
-                if (percentage >= 50) {
-                    return;
-                }
+                const colorMap = {
+                    yellow: yellow[700],
+                    orange: orange[700],
+                    red: red[700],
+                } as const;
 
-                let color: string = red[700];
-                if (percentage >= 25) {
-                    color = yellow[700];
-                }
-                if (percentage >= 15) {
-                    color = orange[700];
-                }
-
-                return `border-color: ${color};`;
+                return `border-color: ${colorMap[level]};`;
             }}
         }
     }

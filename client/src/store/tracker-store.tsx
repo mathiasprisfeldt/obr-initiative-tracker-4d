@@ -18,12 +18,19 @@ export interface CharacterProperties {
     hideName: boolean;
 }
 
+export interface CombatHistoryEntry {
+    participants: string[];
+    rounds: number;
+    endedAt: string;
+}
+
 export interface TrackerState {
     characters: Character[];
     currentCharacter?: Character;
     round: number;
     hasEncounterStarted: boolean;
     isDisplayed: boolean;
+    previousEncounters?: CombatHistoryEntry[];
 }
 
 export interface TrackerStore {
@@ -41,6 +48,7 @@ export interface TrackerStore {
     startEncounter(): void;
     endEncounter(): void;
     toggleDisplay(): void;
+    clearPreviousEncounters(): void;
 }
 
 const context = createContext<TrackerStore>({
@@ -63,6 +71,7 @@ const context = createContext<TrackerStore>({
     startEncounter: () => {},
     endEncounter: () => {},
     toggleDisplay: () => {},
+    clearPreviousEncounters: () => {},
 });
 
 export interface TrackerResult {
@@ -274,18 +283,39 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 },
 
                 endEncounter: () => {
-                    setState((prevState) => ({
-                        ...prevState,
-                        hasEncounterStarted: false,
-                        currentCharacter: undefined,
-                        round: 1,
-                    }));
+                    setState((prevState) => {
+                        const entry: CombatHistoryEntry = {
+                            participants: prevState.characters
+                                .filter((c) => c.properties.name.trim() !== "")
+                                .map((c) => c.properties.name),
+                            rounds: prevState.round,
+                            endedAt: new Date().toISOString(),
+                        };
+                        const history = [entry, ...(prevState.previousEncounters ?? [])].slice(
+                            0,
+                            3,
+                        );
+                        return {
+                            ...prevState,
+                            hasEncounterStarted: false,
+                            currentCharacter: undefined,
+                            round: 1,
+                            previousEncounters: history,
+                        };
+                    });
                 },
 
                 toggleDisplay: () => {
                     setState((prevState) => ({
                         ...prevState,
                         isDisplayed: !prevState.isDisplayed,
+                    }));
+                },
+
+                clearPreviousEncounters: () => {
+                    setState((prevState) => ({
+                        ...prevState,
+                        previousEncounters: [],
                     }));
                 },
             }}

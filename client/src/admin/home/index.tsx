@@ -1,7 +1,17 @@
-import { useTrackerStore, TrackerStore } from "../../store/tracker-store";
+import { useTrackerStore, TrackerStore, type CombatHistoryEntry } from "../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
 import { CharacterRowHeader } from "../components/CharacterRow";
-import { Typography, Button, Stack, LinearProgress, IconButton, styled } from "@mui/material";
+import {
+    Typography,
+    Button,
+    Stack,
+    LinearProgress,
+    IconButton,
+    styled,
+    List,
+    ListItem,
+    ListItemText,
+} from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function Tracker() {
@@ -22,6 +32,7 @@ function Content({
         previousTurn,
         nextTurn,
         toggleDisplay,
+        clearPreviousEncounters: clearHistory,
     },
 }: {
     trackerStore: TrackerStore;
@@ -123,6 +134,27 @@ function Content({
                     {state.isDisplayed ? <Visibility /> : <VisibilityOff />}
                 </IconButton>
             </Stack>
+
+            {state.previousEncounters && state.previousEncounters.length > 0 && (
+                <Stack sx={{ mt: 3 }}>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Typography variant="h6">History</Typography>
+                        <Button size="small" onClick={clearHistory}>
+                            Clear
+                        </Button>
+                    </Stack>
+                    <List dense disablePadding>
+                        {state.previousEncounters.map((entry, i) => (
+                            <ListItem key={i} disableGutters>
+                                <ListItemText
+                                    primary={entry.participants.join(", ")}
+                                    secondary={`${entry.rounds} ${entry.rounds !== 1 ? "rounds" : "round"} · ${new Date(entry.endedAt).toLocaleString()}`}
+                                />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Stack>
+            )}
         </div>
     );
 }

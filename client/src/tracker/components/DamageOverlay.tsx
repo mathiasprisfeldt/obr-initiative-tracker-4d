@@ -87,12 +87,13 @@ export function DamageOverlay({ damageLevel, seed }: Props) {
 
     const crackCount = isRed ? 5 : isSevere ? 4 : 3;
     const cracks = useMemo(() => generateCracks(seed, crackCount), [seed, crackCount]);
+    const filterId = useMemo(() => `crack-filter-${hashCode(seed)}`, [seed]);
 
     return (
         <Overlay>
             <svg width="0" height="0" style={{ position: "absolute" }}>
                 <defs>
-                    <filter id={`crack-filter-${damageLevel}`}>
+                    <filter id={filterId}>
                         <feTurbulence
                             type="fractalNoise"
                             baseFrequency={turbulenceFrequency}
@@ -110,7 +111,7 @@ export function DamageOverlay({ damageLevel, seed }: Props) {
                     </filter>
                 </defs>
             </svg>
-            <CrackLines opacity={crackOpacity} damageLevel={damageLevel}>
+            <CrackLines opacity={crackOpacity} filterId={filterId}>
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     {cracks.map((crack, i) => (
                         <path
@@ -137,19 +138,15 @@ const Overlay = styled("div")`
     z-index: 5;
 `;
 
-const CrackLines = styled("div")<{ opacity: number; damageLevel: DamageLevel }>`
+const CrackLines = styled("div")<{ opacity: number; filterId: string }>`
     position: absolute;
     inset: 0;
     border-radius: inherit;
     overflow: hidden;
     opacity: ${({ opacity }) => opacity};
-    color: ${({ damageLevel }) =>
-        damageLevel === "red"
-            ? "rgba(60, 0, 0, 0.9)"
-            : damageLevel === "orange"
-              ? "rgba(80, 30, 0, 0.8)"
-              : "rgba(80, 60, 20, 0.7)"};
-    filter: ${({ damageLevel }) => `url(#crack-filter-${damageLevel})`};
+    color: rgba(40, 0, 0, 0.85);
+    filter: ${({ filterId }) => `url(#${filterId})`};
+    will-change: filter;
 
     & svg {
         width: 100%;

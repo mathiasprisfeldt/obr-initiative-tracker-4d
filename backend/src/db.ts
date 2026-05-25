@@ -1,7 +1,6 @@
 import { drizzle } from "drizzle-orm/node-mssql";
 import { eq, and, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-mssql/migrator";
-import mssql from "mssql";
 import path from "path";
 import { fileURLToPath } from "url";
 import { roomStates } from "./schema.js";
@@ -11,24 +10,6 @@ if (!connectionString) {
     console.error("DATABASE_CONNECTION_STRING env var is required");
     process.exit(1);
 }
-
-// Ensure the database exists before connecting to it
-const masterConn = connectionString.replace(/Database=[^;]+/, "Database=master");
-let masterPool: mssql.ConnectionPool;
-while (true) {
-    try {
-        masterPool = await new mssql.ConnectionPool(masterConn).connect();
-        break;
-    } catch (e) {
-        console.log("Waiting for database to be ready...", (e as Error).message);
-        await new Promise((r) => setTimeout(r, 2000));
-    }
-}
-await masterPool.request().query(`
-    IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'obr-initiative-tracker-4d')
-    CREATE DATABASE [obr-initiative-tracker-4d]
-`);
-await masterPool.close();
 
 export const db = drizzle(connectionString);
 

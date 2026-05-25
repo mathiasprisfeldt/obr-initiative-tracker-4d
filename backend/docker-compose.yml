@@ -8,8 +8,8 @@ services:
         environment:
             DATABASE_CONNECTION_STRING: Server=db,1433;Database=obr-initiative-tracker-4d;User Id=sa;Password=Tracker@123;TrustServerCertificate=true;Encrypt=false
         depends_on:
-            db:
-                condition: service_healthy
+            db-init:
+                condition: service_completed_successfully
         restart: unless-stopped
 
     db:
@@ -27,6 +27,17 @@ services:
             timeout: 5s
             retries: 10
         restart: unless-stopped
+
+    db-init:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            MSSQL_SA_PASSWORD: "Tracker@123"
+        entrypoint: /opt/mssql-tools18/bin/sqlcmd
+        command: -S localhost -U sa -P "Tracker@123" -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'obr-initiative-tracker-4d') CREATE DATABASE [obr-initiative-tracker-4d]"
+        network_mode: "service:db"
 
 volumes:
     mssqldata:

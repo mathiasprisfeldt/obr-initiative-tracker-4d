@@ -6,7 +6,7 @@ install:
 
 dev:
     docker compose -f backend/docker-compose.yml up -d db
-    DATABASE_CONNECTION_STRING=postgresql://tracker:tracker@localhost:5432/tracker yarn workspace obr-initiative-tracker-4d-backend dev &
+    DATABASE_CONNECTION_STRING="Server=localhost,1433;Database=obr-initiative-tracker-4d;User Id=sa;Password=Tracker@123;TrustServerCertificate=true;Encrypt=false" yarn workspace obr-initiative-tracker-4d-backend dev &
     yarn workspace obr-initiative-tracker-4d dev
 
 dev-compose:
@@ -19,4 +19,4 @@ dev-client:
 
 dev-backend:
     docker compose -f backend/docker-compose.yml up -d db
-    DATABASE_CONNECTION_STRING=postgresql://tracker:tracker@localhost:5432/tracker yarn workspace obr-initiative-tracker-4d-backend dev
+    DATABASE_CONNECTION_STRING="Server=localhost,1433;Database=obr-initiative-tracker-4d;User Id=sa;Password=Tracker@123;TrustServerCertificate=true;Encrypt=false" yarn workspace obr-initiative-tracker-4d-backend dev

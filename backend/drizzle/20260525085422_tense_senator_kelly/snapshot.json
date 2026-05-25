@@ -1,0 +1,66 @@
+{
+  "version": "2",
+  "dialect": "mssql",
+  "id": "f1403fd2-2df9-4f80-99c6-56c16806f684",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "name": "room_states",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "type": "nvarchar(450)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "room_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "room_states"
+    },
+    {
+      "type": "nvarchar(450)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "key",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "room_states"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "state",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "room_states"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "room_id",
+        "key"
+      ],
+      "name": "room_states_pkey",
+      "entityType": "pks",
+      "table": "room_states",
+      "schema": "dbo"
+    },
+    {
+      "column": "state",
+      "nameExplicit": false,
+      "default": "('{}')",
+      "name": "room_states_state_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "room_states"
+    }
+  ],
+  "renames": []
+}

@@ -11,7 +11,7 @@
  *   const healthy = await client.isHealthy();
  *
  * This module is browser-safe — it must not import any server-side code
- * (Express, pg, etc.).
+ * (Express, mssql, etc.).
  */
 
 // ---------------------------------------------------------------------------

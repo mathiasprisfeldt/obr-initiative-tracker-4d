@@ -1,9 +1,8 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { computeBlurhashFromUrl } from "../utils/blurhash";
-import { useApi } from "../store/settings-store";
 import { isLocalDev } from "../utils/env";
-import type { RoomConnection } from "obr-initiative-tracker-4d-backend/api-client";
+import { useRoomConnection } from "../hooks/use-room-connection";
 
 const PORTRAIT_STATE_KEY = "portrait-image-picker";
 
@@ -71,9 +70,8 @@ export function usePortraitImage(id: string | null | undefined): PortraitImage |
 export function PortraitImagePickerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isGM, setIsGM] = useState(false);
-    const api = useApi();
-    const roomConnectionRef = useRef<RoomConnection | null>(null);
-    const skipNextSendRef = useRef(false);
+    const hasReceivedInitialStateRef = useRef(false);
+    const stateRef = useRef<PortraitImagePickerState>(null!);
 
     const [state, setState] = useState<PortraitImagePickerState>({
         imageSourceUrl: isLocalDev ? "https://dnd.mathiasprisfeldt.me/img/" : "",
@@ -81,40 +79,34 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         images: [],
     });
 
-    useEffect(() => {
-        if (isLoading || !isGM) return;
+    stateRef.current = state;
 
-        if (skipNextSendRef.current) {
-            skipNextSendRef.current = false;
-            return;
-        }
-
-        roomConnectionRef.current?.updateState(PORTRAIT_STATE_KEY, state);
-    }, [state]);
-
-    // Manage WebSocket connection lifecycle
-    useEffect(() => {
-        if (!api) return;
-
-        const connection = api.connectRoom(OBR.room.id, {
-            onStateChanged: (key, incomingState) => {
-                if (key === PORTRAIT_STATE_KEY) {
-                    skipNextSendRef.current = true;
-                    setState(incomingState as PortraitImagePickerState);
-                    setIsLoading(false);
+    const room = useRoomConnection<PortraitImagePickerState>({
+        key: PORTRAIT_STATE_KEY,
+        onInitialState: (serverState) => {
+            if (hasReceivedInitialStateRef.current) {
+                if (isGM) {
+                    room.updateState(stateRef.current);
                 }
-            },
-            onConnected: () => {
-                setIsLoading(false);
-            },
-        });
-        roomConnectionRef.current = connection;
+            } else {
+                hasReceivedInitialStateRef.current = true;
+                if (serverState) {
+                    setState(serverState);
+                } else if (isGM) {
+                    room.updateState(stateRef.current);
+                }
+            }
+            setIsLoading(false);
+        },
+        onStateChanged: (incomingState) => {
+            setState(incomingState);
+        },
+    });
 
-        return () => {
-            connection.close();
-            roomConnectionRef.current = null;
-        };
-    }, [api]);
+    useEffect(() => {
+        if (!isGM) return;
+        room.updateState(state);
+    }, [state]);
 
     useEffect(() => {
         if (!OBR.isAvailable) {

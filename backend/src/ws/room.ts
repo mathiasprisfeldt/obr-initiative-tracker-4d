@@ -23,9 +23,8 @@ export class Room {
         console.log(`[room=${this.roomId}] Client connected (${this.clients.size} total)`);
         await this.ensureLoaded();
 
-        for (const [key, state] of this.state) {
-            ws.send(JSON.stringify({ action: ServerAction.StateChanged, key, state }));
-        }
+        const states = Object.fromEntries(this.state);
+        ws.send(JSON.stringify({ action: ServerAction.StateSync, states }));
         ws.on("message", (raw) => {
             try {
                 const msg = JSON.parse(raw.toString()) as ClientMessage;

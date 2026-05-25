@@ -5,18 +5,22 @@ import { useApi } from "../store/settings-store";
 
 export type RoomConnectionStatus = "idle" | "connecting" | "connected" | "disconnected";
 
-export interface UseRoomConnectionResult {
+export interface UseRoomConnectionResult<T> {
     status: RoomConnectionStatus;
-    updateState(key: string, state: unknown): void;
+    updateState(state: T): void;
 }
 
-export interface UseRoomConnectionOptions {
-    onStateChanged: (key: string, state: unknown) => void;
+export interface UseRoomConnectionOptions<T> {
+    key: string;
+    onInitialState: (state: T | undefined) => void;
+    onStateChanged: (state: T) => void;
     onConnected?: () => void;
     onDisconnected?: () => void;
 }
 
-export function useRoomConnection(options: UseRoomConnectionOptions): UseRoomConnectionResult {
+export function useRoomConnection<T>(
+    options: UseRoomConnectionOptions<T>,
+): UseRoomConnectionResult<T> {
     const api = useApi();
     const connectionRef = useRef<RoomConnection | null>(null);
     const [status, setStatus] = useState<RoomConnectionStatus>(api ? "connecting" : "idle");
@@ -34,7 +38,15 @@ export function useRoomConnection(options: UseRoomConnectionOptions): UseRoomCon
         setStatus("connecting");
 
         const connection = api.connectRoom(OBR.room.id, {
-            onStateChanged: (key, state) => optionsRef.current.onStateChanged(key, state),
+            onInitialState: (states) => {
+                const state = states.get(optionsRef.current.key) as T | undefined;
+                optionsRef.current.onInitialState(state);
+            },
+            onStateChanged: (key, state) => {
+                if (key === optionsRef.current.key) {
+                    optionsRef.current.onStateChanged(state as T);
+                }
+            },
             onConnected: () => {
                 setStatus("connected");
                 optionsRef.current.onConnected?.();
@@ -55,6 +67,6 @@ export function useRoomConnection(options: UseRoomConnectionOptions): UseRoomCon
 
     return {
         status,
-        updateState: (key, state) => connectionRef.current?.updateState(key, state),
+        updateState: (state) => connectionRef.current?.updateState(optionsRef.current.key, state),
     };
 }

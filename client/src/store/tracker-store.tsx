@@ -77,11 +77,15 @@ export function useTrackerStore(): TrackerStore {
 export function useTracker(): TrackerResult {
     const [state, setState] = useState<TrackerState>();
 
-    const room = useRoomConnection({
-        onStateChanged: (key, incomingState) => {
-            if (key === TRACKER_STATE_KEY) {
-                setState(cleanUpStateForClient(incomingState as TrackerState));
+    const room = useRoomConnection<TrackerState>({
+        key: TRACKER_STATE_KEY,
+        onInitialState: (serverState) => {
+            if (serverState) {
+                setState(cleanUpStateForClient(serverState));
             }
+        },
+        onStateChanged: (incomingState) => {
+            setState(cleanUpStateForClient(incomingState));
         },
     });
 
@@ -98,8 +102,7 @@ function cleanUpStateForClient(state: TrackerState) {
 
 export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
-    const hasConnectedRef = useRef(false);
-    const skipNextStateChangedRef = useRef(false);
+    const hasReceivedInitialStateRef = useRef(false);
     const stateRef = useRef<TrackerState>(null!);
     const [state, setState] = useState<TrackerState>({
         characters: [
@@ -126,25 +129,24 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
 
     stateRef.current = state;
 
-    const room = useRoomConnection({
-        onStateChanged: (key, incomingState) => {
-            if (key === TRACKER_STATE_KEY) {
-                if (skipNextStateChangedRef.current) {
-                    skipNextStateChangedRef.current = false;
-                    return;
+    const room = useRoomConnection<TrackerState>({
+        key: TRACKER_STATE_KEY,
+        onInitialState: (serverState) => {
+            if (hasReceivedInitialStateRef.current) {
+                // Reconnect — local state takes priority over stale server state
+                room.updateState(stateRef.current);
+            } else {
+                hasReceivedInitialStateRef.current = true;
+                if (serverState) {
+                    setState(serverState);
+                } else {
+                    room.updateState(stateRef.current);
                 }
-                setState(incomingState as TrackerState);
-                setIsLoading(false);
             }
+            setIsLoading(false);
         },
-        onConnected: () => {
-            if (hasConnectedRef.current) {
-                room.updateState(TRACKER_STATE_KEY, stateRef.current);
-            }
-            hasConnectedRef.current = true;
-        },
-        onDisconnected: () => {
-            skipNextStateChangedRef.current = true;
+        onStateChanged: (incomingState) => {
+            setState(incomingState);
         },
     });
 
@@ -159,7 +161,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
     }, [api]);
 
     useEffect(() => {
-        room.updateState(TRACKER_STATE_KEY, state);
+        room.updateState(state);
     }, [state]);
 
     return (

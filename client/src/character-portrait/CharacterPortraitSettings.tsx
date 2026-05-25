@@ -1,4 +1,5 @@
 import {
+    Box,
     Button,
     Grid,
     LinearProgress,
@@ -29,6 +30,13 @@ export function CharacterPortraitSettings() {
     );
     const [currentCharacterPortraitElement, setCurrentCharacterPortraitElement] =
         useState<HTMLElement | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const filteredImages = searchQuery.trim()
+        ? images.filter((img) =>
+              img.displayName.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+          )
+        : images;
 
     if (isLoading) return <LinearProgress />;
 
@@ -43,9 +51,28 @@ export function CharacterPortraitSettings() {
                 fullWidth
             />
             <TableContainer component={Paper} sx={{ mt: 2 }}>
+                <Box
+                    sx={{
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 1,
+                        bgcolor: "background.paper",
+                        p: 1,
+                        borderBottom: 1,
+                        borderColor: "divider",
+                    }}
+                >
+                    <TextField
+                        label="Search"
+                        size="small"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        fullWidth
+                    />
+                </Box>
                 <Table size="small">
                     <TableBody>
-                        {images.map((image) => (
+                        {filteredImages.map((image) => (
                             <CharacterPortraitProperties
                                 key={image.url}
                                 portraitImage={image}

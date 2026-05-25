@@ -19,7 +19,10 @@ export function CharacterPortraitProperties({
     onPortraitClicked,
 }: Props) {
     return (
-        <TableRow>
+        <TableRow
+            key={portraitImage.url}
+            sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+        >
             <TableCell>
                 <Button onClick={onPortraitClicked} disabled={!portraitClickEnabled}>
                     <Tooltip title={portraitTooltip}>

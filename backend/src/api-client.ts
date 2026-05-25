@@ -36,6 +36,7 @@ export enum ClientAction {
 
 export enum ServerAction {
     StateChanged = "state-changed",
+    StateSync = "state-sync",
 }
 
 export interface ClientMessage {
@@ -44,10 +45,17 @@ export interface ClientMessage {
     state: unknown;
 }
 
-export interface ServerMessage {
+export type ServerMessage = ServerStateChangedMessage | ServerStateSyncMessage;
+
+export interface ServerStateChangedMessage {
     action: ServerAction.StateChanged;
     key: string;
     state: unknown;
+}
+
+export interface ServerStateSyncMessage {
+    action: ServerAction.StateSync;
+    states: Record<string, unknown>;
 }
 
 export interface RoomConnection {
@@ -56,6 +64,7 @@ export interface RoomConnection {
 }
 
 export interface RoomConnectionOptions {
+    onInitialState: (states: Map<string, unknown>) => void;
     onStateChanged: (key: string, state: unknown) => void;
     onConnected?: () => void;
     onDisconnected?: () => void;
@@ -172,6 +181,7 @@ export function createApiClient(options: ApiClientOptions) {
         const ws = new WebSocket(buildWsUrl(roomId));
         shared.ws = ws;
         let didOpen = false;
+        let synced = false;
 
         ws.addEventListener("open", () => {
             didOpen = true;
@@ -201,7 +211,14 @@ export function createApiClient(options: ApiClientOptions) {
             try {
                 const msg = JSON.parse(event.data as string) as ServerMessage;
                 if (msg.action === ServerAction.StateChanged) {
-                    for (const sub of shared.subscribers) sub.onStateChanged(msg.key, msg.state);
+                    if (synced) {
+                        for (const sub of shared.subscribers)
+                            sub.onStateChanged(msg.key, msg.state);
+                    }
+                } else if (msg.action === ServerAction.StateSync) {
+                    synced = true;
+                    const states = new Map(Object.entries(msg.states));
+                    for (const sub of shared.subscribers) sub.onInitialState(states);
                 }
             } catch {
                 /* ignore malformed messages */

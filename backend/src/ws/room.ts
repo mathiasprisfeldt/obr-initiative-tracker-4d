@@ -2,9 +2,15 @@ import { WebSocket } from "ws";
 import { getAllRoomStates, upsertRoomState } from "../db.js";
 import { ClientAction, ServerAction, type ClientMessage } from "../api-client.js";
 
+export interface ClientInfo {
+    connectedAt: string;
+    lastPong: string | null;
+}
+
 export class Room {
     private state = new Map<string, unknown>();
     private clients = new Set<WebSocket>();
+    private clientInfoMap = new Map<WebSocket, ClientInfo>();
     private dirtyKeys = new Set<string>();
     private loaded = false;
 
@@ -14,12 +20,41 @@ export class Room {
         return this.clients.size === 0;
     }
 
+    get clientCount(): number {
+        return this.clients.size;
+    }
+
     get hasDirtyKeys(): boolean {
         return this.dirtyKeys.size > 0;
     }
 
+    getClientInfos(): ClientInfo[] {
+        return [...this.clientInfoMap.values()];
+    }
+
+    pingAll(): void {
+        for (const client of this.clients) {
+            if (client.readyState === WebSocket.OPEN) {
+                client.ping();
+            }
+        }
+    }
+
     async addClient(ws: WebSocket): Promise<void> {
         this.clients.add(ws);
+        const info: ClientInfo = {
+            connectedAt: new Date().toISOString(),
+            lastPong: null,
+        };
+        this.clientInfoMap.set(ws, info);
+
+        ws.on("pong", () => {
+            const clientInfo = this.clientInfoMap.get(ws);
+            if (clientInfo) {
+                clientInfo.lastPong = new Date().toISOString();
+            }
+        });
+
         console.log(`[room=${this.roomId}] Client connected (${this.clients.size} total)`);
         await this.ensureLoaded();
 
@@ -40,6 +75,7 @@ export class Room {
 
         ws.on("close", () => {
             this.clients.delete(ws);
+            this.clientInfoMap.delete(ws);
             console.log(
                 `[room=${this.roomId}] Client disconnected (${this.clients.size} remaining)`,
             );

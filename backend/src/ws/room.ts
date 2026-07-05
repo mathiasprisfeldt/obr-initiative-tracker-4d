@@ -4,7 +4,7 @@ import { ClientAction, ServerAction, type ClientMessage } from "../api-client.js
 
 export interface ClientInfo {
     connectedAt: string;
-    lastPong: string | null;
+    lastPing: string | null;
 }
 
 export class Room {
@@ -32,28 +32,13 @@ export class Room {
         return [...this.clientInfoMap.values()];
     }
 
-    pingAll(): void {
-        for (const client of this.clients) {
-            if (client.readyState === WebSocket.OPEN) {
-                client.ping();
-            }
-        }
-    }
-
     async addClient(ws: WebSocket): Promise<void> {
         this.clients.add(ws);
         const info: ClientInfo = {
             connectedAt: new Date().toISOString(),
-            lastPong: null,
+            lastPing: null,
         };
         this.clientInfoMap.set(ws, info);
-
-        ws.on("pong", () => {
-            const clientInfo = this.clientInfoMap.get(ws);
-            if (clientInfo) {
-                clientInfo.lastPong = new Date().toISOString();
-            }
-        });
 
         console.log(`[room=${this.roomId}] Client connected (${this.clients.size} total)`);
         await this.ensureLoaded();
@@ -67,6 +52,14 @@ export class Room {
                     this.state.set(msg.key, msg.state);
                     this.dirtyKeys.add(msg.key);
                     this.broadcast(msg.key, msg.state, ws);
+                } else if (msg.action === ClientAction.Ping) {
+                    const clientInfo = this.clientInfoMap.get(ws);
+                    if (clientInfo) {
+                        clientInfo.lastPing = new Date().toISOString();
+                    }
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ action: ServerAction.Pong }));
+                    }
                 }
             } catch (e) {
                 console.error("Invalid WebSocket message:", e);

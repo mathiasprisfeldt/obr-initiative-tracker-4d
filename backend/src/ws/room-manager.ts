@@ -3,7 +3,6 @@ import { WebSocketServer } from "ws";
 import { Room, type ClientInfo } from "./room.js";
 
 const PERSIST_INTERVAL_MS = 30_000;
-const PING_INTERVAL_MS = 1_000;
 
 const rooms = new Map<string, Room>();
 
@@ -64,11 +63,4 @@ export function attachRoomManagerWs(server: Server): void {
             }
         }
     }, PERSIST_INTERVAL_MS);
-
-    // Ping all clients every second to keep connections alive
-    setInterval(() => {
-        for (const [, room] of rooms) {
-            room.pingAll();
-        }
-    }, PING_INTERVAL_MS);
 }

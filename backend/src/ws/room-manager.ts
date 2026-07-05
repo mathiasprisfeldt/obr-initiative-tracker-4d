@@ -49,7 +49,16 @@ export function attachRoomManagerWs(server: Server): void {
 
             ws.on("close", () => {
                 if (room.isEmpty) {
-                    room.persist().then(() => rooms.delete(roomId));
+                    room.persist().then(() => {
+                        // A new client may have reconnected to this room while
+                        // persist() was in flight. Only delete the room if it is
+                        // still empty and still the instance we hold, otherwise
+                        // we would drop an active room from the map and it would
+                        // vanish from the connected-clients list.
+                        if (room.isEmpty && rooms.get(roomId) === room) {
+                            rooms.delete(roomId);
+                        }
+                    });
                 }
             });
         });

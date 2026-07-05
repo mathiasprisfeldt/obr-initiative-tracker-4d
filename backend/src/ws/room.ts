@@ -41,10 +41,12 @@ export class Room {
         this.clientInfoMap.set(ws, info);
 
         console.log(`[room=${this.roomId}] Client connected (${this.clients.size} total)`);
-        await this.ensureLoaded();
 
-        const states = Object.fromEntries(this.state);
-        ws.send(JSON.stringify({ action: ServerAction.StateSync, states }));
+        // Attach the message/close listeners synchronously, before any `await`.
+        // The `ws` library does not buffer messages that arrive before a
+        // "message" listener exists, so registering them after an async DB load
+        // would silently drop any client messages (e.g. pings) sent during that
+        // window — the client would send pings but never receive pongs.
         ws.on("message", (raw) => {
             try {
                 const msg = JSON.parse(raw.toString()) as ClientMessage;
@@ -73,6 +75,15 @@ export class Room {
                 `[room=${this.roomId}] Client disconnected (${this.clients.size} remaining)`,
             );
         });
+
+        // Load persisted state, then send the initial sync. Any messages that
+        // arrive while loading are already handled by the listener above.
+        await this.ensureLoaded();
+
+        if (ws.readyState === WebSocket.OPEN) {
+            const states = Object.fromEntries(this.state);
+            ws.send(JSON.stringify({ action: ServerAction.StateSync, states }));
+        }
     }
 
     async persist(): Promise<void> {

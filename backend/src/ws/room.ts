@@ -78,7 +78,14 @@ export class Room {
 
         // Load persisted state, then send the initial sync. Any messages that
         // arrive while loading are already handled by the listener above.
-        await this.ensureLoaded();
+        // A DB failure here must not crash the connection: the client should
+        // still be able to exchange ping/pong and updates. We log and continue
+        // with whatever state is currently in memory.
+        try {
+            await this.ensureLoaded();
+        } catch (e) {
+            console.error(`[room=${this.roomId}] Failed to load persisted state:`, e);
+        }
 
         if (ws.readyState === WebSocket.OPEN) {
             const states = Object.fromEntries(this.state);

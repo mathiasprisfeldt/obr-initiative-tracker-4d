@@ -45,22 +45,39 @@ export function attachRoomManagerWs(server: Server): void {
 
         wss.handleUpgrade(req, socket, head, async (ws) => {
             const room = getOrCreateRoom(roomId);
-            await room.addClient(ws);
 
+            // Attach the room-cleanup handler before awaiting addClient so it is
+            // always registered, even if state loading is slow or fails.
             ws.on("close", () => {
                 if (room.isEmpty) {
-                    room.persist().then(() => {
-                        // A new client may have reconnected to this room while
-                        // persist() was in flight. Only delete the room if it is
-                        // still empty and still the instance we hold, otherwise
-                        // we would drop an active room from the map and it would
-                        // vanish from the connected-clients list.
-                        if (room.isEmpty && rooms.get(roomId) === room) {
-                            rooms.delete(roomId);
-                        }
-                    });
+                    room
+                        .persist()
+                        .then(() => {
+                            // A new client may have reconnected to this room
+                            // while persist() was in flight. Only delete the
+                            // room if it is still empty and still the instance
+                            // we hold, otherwise we would drop an active room
+                            // from the map and it would vanish from the
+                            // connected-clients list.
+                            if (room.isEmpty && rooms.get(roomId) === room) {
+                                rooms.delete(roomId);
+                            }
+                        })
+                        .catch((e) => {
+                            console.error(`[room=${roomId}] Failed to persist on close:`, e);
+                        });
                 }
             });
+
+            // A failure while adding the client (e.g. a transient DB error while
+            // loading state) must never bubble up as an unhandled rejection —
+            // that would crash the entire server process and drop every other
+            // connection. Log it and let the connection continue / close normally.
+            try {
+                await room.addClient(ws);
+            } catch (e) {
+                console.error(`[room=${roomId}] Failed to add client:`, e);
+            }
         });
     });
 

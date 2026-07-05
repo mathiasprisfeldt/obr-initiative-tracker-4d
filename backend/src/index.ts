@@ -9,6 +9,7 @@ import path from "path";
 import getRoomStateRoute from "./routes/get-room-state.js";
 import postRoomStateRoute from "./routes/post-room-state.js";
 import healthRoute from "./routes/health.js";
+import getConnectedClientsRoute from "./routes/get-connected-clients.js";
 import { attachRoomManagerWs } from "./ws/room-manager.js";
 
 // Ensure db module is initialized (creates table, etc.)
@@ -49,6 +50,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(getRoomStateRoute);
 app.use(postRoomStateRoute);
 app.use(healthRoute);
+app.use(getConnectedClientsRoute);
 
 // ---------------------------------------------------------------------------
 // HTTP + WebSocket server

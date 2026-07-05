@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Button, Divider, IconButton, Skeleton, Stack, TextField } from "@mui/material";
+import { Alert, Button, Divider, IconButton, List, ListItem, ListItemText, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useTrackerStore } from "../store/tracker-store";
 import { usePortraitImagePickerStore } from "../character-portrait/portrait-image-picker-store";
 import { useApi, useSettingsStore } from "../store/settings-store";
+import type { ConnectedClientInfo } from "obr-initiative-tracker-4d-backend/api-client";
 import OBR from "@owlbear-rodeo/sdk";
 
 export function SettingsPanel() {
@@ -14,6 +15,8 @@ export function SettingsPanel() {
     const [loading, setLoading] = useState(false);
     const [healthStatus, setHealthStatus] = useState<"idle" | "ok" | "unhealthy" | "error">("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [connectedClients, setConnectedClients] = useState<ConnectedClientInfo[]>([]);
+    const [clientsLoading, setClientsLoading] = useState(false);
 
     const checkHealth = useCallback(async () => {
         if (!api) {
@@ -36,6 +39,22 @@ export function SettingsPanel() {
         }
     }, [api]);
 
+    const fetchClients = useCallback(async () => {
+        if (!api) {
+            setConnectedClients([]);
+            return;
+        }
+        setClientsLoading(true);
+        try {
+            const res = await api.getConnectedClients();
+            setConnectedClients(res.clients);
+        } catch {
+            setConnectedClients([]);
+        } finally {
+            setClientsLoading(false);
+        }
+    }, [api]);
+
     const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     useEffect(() => {
         clearTimeout(debounceTimer.current);
@@ -48,6 +67,17 @@ export function SettingsPanel() {
         return () => clearTimeout(debounceTimer.current);
     }, [api, checkHealth]);
 
+    // Poll connected clients every 2 seconds when api is available
+    useEffect(() => {
+        if (!api) {
+            setConnectedClients([]);
+            return;
+        }
+        fetchClients();
+        const interval = setInterval(fetchClients, 2000);
+        return () => clearInterval(interval);
+    }, [api, fetchClients]);
+
     const healthSeverity =
         healthStatus === "ok" ? "success" : healthStatus === "idle" ? "info" : "error";
     const healthMessage =
@@ -58,6 +88,13 @@ export function SettingsPanel() {
             : healthStatus === "ok"
               ? "Backend is healthy"
               : (errorMessage ?? "Unknown error");
+
+    function formatLastPong(lastPong: string | null): string {
+        if (!lastPong) return "Never";
+        const diff = Date.now() - new Date(lastPong).getTime();
+        if (diff < 1000) return "Just now";
+        return `${Math.round(diff / 1000)}s ago`;
+    }
 
     return (
         <Stack spacing={2}>
@@ -86,6 +123,40 @@ export function SettingsPanel() {
             >
                 {loading ? <Skeleton variant="text" width={150} animation="wave" /> : healthMessage}
             </Alert>
+            <Divider />
+            <Stack spacing={1}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="subtitle2">Connected Clients</Typography>
+                    <IconButton
+                        size="small"
+                        onClick={fetchClients}
+                        loading={clientsLoading}
+                    >
+                        <RefreshIcon fontSize="small" />
+                    </IconButton>
+                </Stack>
+                {connectedClients.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                        {api ? "No clients connected" : "Set backend URL to view clients"}
+                    </Typography>
+                ) : (
+                    <List dense disablePadding>
+                        {connectedClients.map((room) => (
+                            <ListItem key={room.roomId} disableGutters sx={{ flexDirection: "column", alignItems: "flex-start" }}>
+                                <ListItemText
+                                    primary={`Room: ${room.roomId}`}
+                                    secondary={`${room.clientCount} client(s)`}
+                                />
+                                {room.clients.map((client, idx) => (
+                                    <Typography key={idx} variant="caption" color="text.secondary" sx={{ pl: 2 }}>
+                                        Client {idx + 1}: connected {new Date(client.connectedAt).toLocaleTimeString()} — last ping: {formatLastPong(client.lastPong)}
+                                    </Typography>
+                                ))}
+                            </ListItem>
+                        ))}
+                    </List>
+                )}
+            </Stack>
             <Divider />
             <Stack direction="row" spacing={2} alignItems="center">
                 <Button

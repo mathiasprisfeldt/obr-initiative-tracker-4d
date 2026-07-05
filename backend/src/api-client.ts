@@ -26,6 +26,19 @@ export interface HealthResponse {
     status: "ok";
 }
 
+export interface ConnectedClientInfo {
+    roomId: string;
+    clientCount: number;
+    clients: {
+        connectedAt: string;
+        lastPong: string | null;
+    }[];
+}
+
+export interface ConnectedClientsResponse {
+    clients: ConnectedClientInfo[];
+}
+
 // ---------------------------------------------------------------------------
 // WebSocket message types
 // ---------------------------------------------------------------------------
@@ -260,6 +273,11 @@ export function createApiClient(options: ApiClientOptions) {
             } catch {
                 return false;
             }
+        },
+
+        async getConnectedClients(): Promise<ConnectedClientsResponse> {
+            const res = await _fetch(url("/api/clients"));
+            return handleResponse<ConnectedClientsResponse>(res);
         },
 
         connectRoom(roomId: string, options: RoomConnectionOptions): RoomConnection {

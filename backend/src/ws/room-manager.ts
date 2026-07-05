@@ -1,8 +1,9 @@
 import { Server } from "http";
 import { WebSocketServer } from "ws";
-import { Room } from "./room.js";
+import { Room, type ClientInfo } from "./room.js";
 
 const PERSIST_INTERVAL_MS = 30_000;
+const PING_INTERVAL_MS = 1_000;
 
 const rooms = new Map<string, Room>();
 
@@ -13,6 +14,20 @@ function getOrCreateRoom(roomId: string): Room {
         rooms.set(roomId, room);
     }
     return room;
+}
+
+export interface ConnectedClientInfo {
+    roomId: string;
+    clientCount: number;
+    clients: ClientInfo[];
+}
+
+export function getConnectedClients(): ConnectedClientInfo[] {
+    const result: ConnectedClientInfo[] = [];
+    for (const [roomId, room] of rooms) {
+        result.push({ roomId, clientCount: room.clientCount, clients: room.getClientInfos() });
+    }
+    return result;
 }
 
 export function attachRoomManagerWs(server: Server): void {
@@ -41,6 +56,7 @@ export function attachRoomManagerWs(server: Server): void {
         });
     });
 
+    // Periodically persist dirty state
     setInterval(async () => {
         for (const [, room] of rooms) {
             if (room.hasDirtyKeys) {
@@ -48,4 +64,11 @@ export function attachRoomManagerWs(server: Server): void {
             }
         }
     }, PERSIST_INTERVAL_MS);
+
+    // Ping all clients every second to keep connections alive
+    setInterval(() => {
+        for (const [, room] of rooms) {
+            room.pingAll();
+        }
+    }, PING_INTERVAL_MS);
 }

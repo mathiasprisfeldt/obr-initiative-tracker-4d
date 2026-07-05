@@ -31,7 +31,7 @@ export interface ConnectedClientInfo {
     clientCount: number;
     clients: {
         connectedAt: string;
-        lastPong: string | null;
+        lastPing: string | null;
     }[];
 }
 
@@ -45,20 +45,31 @@ export interface ConnectedClientsResponse {
 
 export enum ClientAction {
     UpdateState = "update-state",
+    Ping = "ping",
 }
 
 export enum ServerAction {
     StateChanged = "state-changed",
     StateSync = "state-sync",
+    Pong = "pong",
 }
 
-export interface ClientMessage {
+export interface ClientUpdateStateMessage {
     action: ClientAction.UpdateState;
     key: string;
     state: unknown;
 }
 
-export type ServerMessage = ServerStateChangedMessage | ServerStateSyncMessage;
+export interface ClientPingMessage {
+    action: ClientAction.Ping;
+}
+
+export type ClientMessage = ClientUpdateStateMessage | ClientPingMessage;
+
+export type ServerMessage =
+    | ServerStateChangedMessage
+    | ServerStateSyncMessage
+    | ServerPongMessage;
 
 export interface ServerStateChangedMessage {
     action: ServerAction.StateChanged;
@@ -69,6 +80,10 @@ export interface ServerStateChangedMessage {
 export interface ServerStateSyncMessage {
     action: ServerAction.StateSync;
     states: Record<string, unknown>;
+}
+
+export interface ServerPongMessage {
+    action: ServerAction.Pong;
 }
 
 export interface RoomConnection {
@@ -112,6 +127,12 @@ export interface ApiClientOptions {
      * Defaults to 2000ms.
      */
     reconnectIntervalMs?: number;
+    /**
+     * How often the client sends a `ping` message over an open WebSocket so the server
+     * can reply with a `pong`. These are application-level JSON messages (visible in the
+     * browser network console), not protocol-level ping/pong frames. Defaults to 1000ms.
+     */
+    pingIntervalMs?: number;
     /** Optional fetch implementation (useful for testing). */
     fetch?: FetchFn;
 }
@@ -120,6 +141,7 @@ export function createApiClient(options: ApiClientOptions) {
     const { baseUrl } = options;
     const _fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
     const reconnectIntervalMs = options.reconnectIntervalMs ?? 2000;
+    const pingIntervalMs = options.pingIntervalMs ?? 1000;
 
     function url(path: string) {
         return `${baseUrl.replace(/\/+$/, "")}${path}`;
@@ -143,6 +165,7 @@ export function createApiClient(options: ApiClientOptions) {
         ws: WebSocket | null;
         subscribers: Set<RoomConnectionOptions>;
         reconnectTimer: ReturnType<typeof setTimeout> | null;
+        pingTimer: ReturnType<typeof setInterval> | null;
         manuallyClosed: boolean;
     };
 
@@ -153,11 +176,29 @@ export function createApiClient(options: ApiClientOptions) {
         return `${wsBase}/ws/room/${encodeURIComponent(roomId)}`;
     }
 
+    function stopPing(shared: SharedRoomConnection) {
+        if (shared.pingTimer != null) {
+            clearInterval(shared.pingTimer);
+            shared.pingTimer = null;
+        }
+    }
+
+    function startPing(shared: SharedRoomConnection) {
+        stopPing(shared);
+        shared.pingTimer = setInterval(() => {
+            if (shared.ws?.readyState === WebSocket.OPEN) {
+                const msg: ClientPingMessage = { action: ClientAction.Ping };
+                shared.ws.send(JSON.stringify(msg));
+            }
+        }, pingIntervalMs);
+    }
+
     function cleanupShared(roomId: string, shared: SharedRoomConnection) {
         if (shared.reconnectTimer != null) {
             clearTimeout(shared.reconnectTimer);
             shared.reconnectTimer = null;
         }
+        stopPing(shared);
         shared.ws = null;
         sharedConnections.delete(roomId);
     }
@@ -198,10 +239,12 @@ export function createApiClient(options: ApiClientOptions) {
 
         ws.addEventListener("open", () => {
             didOpen = true;
+            startPing(shared);
             for (const sub of shared.subscribers) sub.onConnected?.();
         });
 
         ws.addEventListener("close", () => {
+            stopPing(shared);
             if (didOpen) {
                 for (const sub of shared.subscribers) sub.onDisconnected?.();
             }
@@ -232,6 +275,8 @@ export function createApiClient(options: ApiClientOptions) {
                     synced = true;
                     const states = new Map(Object.entries(msg.states));
                     for (const sub of shared.subscribers) sub.onInitialState(states);
+                } else if (msg.action === ServerAction.Pong) {
+                    /* keep-alive acknowledgement from server */
                 }
             } catch {
                 /* ignore malformed messages */
@@ -287,6 +332,7 @@ export function createApiClient(options: ApiClientOptions) {
                     ws: null,
                     subscribers: new Set(),
                     reconnectTimer: null,
+                    pingTimer: null,
                     manuallyClosed: false,
                 };
                 sharedConnections.set(roomId, shared);

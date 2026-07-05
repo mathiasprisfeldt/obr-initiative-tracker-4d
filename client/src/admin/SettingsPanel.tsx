@@ -89,9 +89,9 @@ export function SettingsPanel() {
               ? "Backend is healthy"
               : (errorMessage ?? "Unknown error");
 
-    function formatLastPong(lastPong: string | null): string {
-        if (!lastPong) return "Never";
-        const diff = Date.now() - new Date(lastPong).getTime();
+    function formatLastPing(lastPing: string | null): string {
+        if (!lastPing) return "Never";
+        const diff = Date.now() - new Date(lastPing).getTime();
         if (diff < 1000) return "Just now";
         return `${Math.round(diff / 1000)}s ago`;
     }
@@ -149,7 +149,7 @@ export function SettingsPanel() {
                                 />
                                 {room.clients.map((client, idx) => (
                                     <Typography key={idx} variant="caption" color="text.secondary" sx={{ pl: 2 }}>
-                                        Client {idx + 1}: connected {new Date(client.connectedAt).toLocaleTimeString()} — last ping: {formatLastPong(client.lastPong)}
+                                        Client {idx + 1}: connected {new Date(client.connectedAt).toLocaleTimeString()} — last ping: {formatLastPing(client.lastPing)}
                                     </Typography>
                                 ))}
                             </ListItem>

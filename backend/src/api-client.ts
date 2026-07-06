@@ -134,10 +134,11 @@ export interface ApiClientOptions {
      */
     pingIntervalMs?: number;
     /**
-     * How long to wait for a `pong` reply before considering the connection dead.
-     * If no `pong` is received within this window, the WebSocket is treated as
-     * disconnected (subscribers are notified and a reconnect is attempted) even if
-     * the socket still reports itself as open. Defaults to 5000ms.
+     * How long to wait for a `pong` reply before considering the connection stale.
+     * If no `pong` is received within this window, subscribers are shown as
+     * disconnected (the status indicator appears) but the WebSocket is left open in
+     * the hope that it recovers. If a later `pong` arrives, the connection flips
+     * back to connected. Defaults to 5000ms.
      */
     pongTimeoutMs?: number;
     /** Optional fetch implementation (useful for testing). */
@@ -177,6 +178,13 @@ export function createApiClient(options: ApiClientOptions) {
         manuallyClosed: boolean;
         /** Timestamp (ms) of the last `pong` received from the server. */
         lastPongAt: number;
+        /**
+         * Whether the connection is currently considered stale (pings are being
+         * sent but no `pong` has been received within the timeout). While stale,
+         * subscribers are shown as disconnected but the socket is kept open in the
+         * hope that it recovers.
+         */
+        stale: boolean;
     };
 
     const sharedConnections = new Map<string, SharedRoomConnection>();
@@ -199,12 +207,12 @@ export function createApiClient(options: ApiClientOptions) {
             if (shared.ws?.readyState !== WebSocket.OPEN) return;
 
             // If we haven't heard a `pong` back within the timeout window, the
-            // connection is dead even though the socket still reports itself as
-            // open. Force a close so subscribers are notified (disconnected
-            // indicator) and a reconnect is attempted.
-            if (Date.now() - shared.lastPongAt > pongTimeoutMs) {
-                shared.ws.close();
-                return;
+            // connection looks stale. Don't close it — the socket may still
+            // recover — just surface it as disconnected so the status indicator
+            // shows. If a `pong` arrives later, we flip back to connected.
+            if (!shared.stale && Date.now() - shared.lastPongAt > pongTimeoutMs) {
+                shared.stale = true;
+                for (const sub of shared.subscribers) sub.onDisconnected?.();
             }
 
             const msg: ClientPingMessage = { action: ClientAction.Ping };
@@ -261,6 +269,7 @@ export function createApiClient(options: ApiClientOptions) {
             // Treat the connection as healthy on open; the pong watchdog measures
             // the gap since this moment.
             shared.lastPongAt = Date.now();
+            shared.stale = false;
             startPing(shared);
             for (const sub of shared.subscribers) sub.onConnected?.();
         });
@@ -300,6 +309,11 @@ export function createApiClient(options: ApiClientOptions) {
                 } else if (msg.action === ServerAction.Pong) {
                     /* keep-alive acknowledgement from server */
                     shared.lastPongAt = Date.now();
+                    // Recovered from a stale period — flip back to connected.
+                    if (shared.stale) {
+                        shared.stale = false;
+                        for (const sub of shared.subscribers) sub.onConnected?.();
+                    }
                 }
             } catch {
                 /* ignore malformed messages */
@@ -358,6 +372,7 @@ export function createApiClient(options: ApiClientOptions) {
                     pingTimer: null,
                     manuallyClosed: false,
                     lastPongAt: 0,
+                    stale: false,
                 };
                 sharedConnections.set(roomId, shared);
             }

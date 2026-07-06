@@ -46,6 +46,11 @@ const mockOBR = {
     },
     popover: {
         open: async (_config: unknown) => {},
+        close: async (_id: string) => {},
+        getWidth: async (_id: string) => undefined,
+        setWidth: async (_id: string, _width: number) => {},
+        getHeight: async (_id: string) => undefined,
+        setHeight: async (_id: string, _height: number) => {},
     },
 };
 

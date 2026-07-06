@@ -8,6 +8,7 @@ import { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useTrackerLayout } from "./tracker-layout";
 
 export function Tracker() {
     const tracker = useTracker();
@@ -31,6 +32,12 @@ function Content({ tracker }: { tracker: TrackerResult }) {
     const { state, connectionStatus } = tracker;
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
     const showDisconnected = connectionStatus === "disconnected";
+    const layout = useTrackerLayout(state?.characters.length ?? 0);
+
+    // Widen the popover so extra portrait columns are fully visible.
+    useEffect(() => {
+        OBR.popover.setWidth?.(PopoverId, layout.popoverWidth).catch(() => {});
+    }, [layout.popoverWidth]);
 
     return (
         <Container style={{ pointerEvents: visible ? "auto" : "none" }}>
@@ -40,6 +47,7 @@ function Content({ tracker }: { tracker: TrackerResult }) {
                         characters={state.characters}
                         currentCharacter={state.currentCharacter}
                         visible={!!visible}
+                        itemSize={layout.itemSize}
                     />
                     <AnimatePresence mode="popLayout">
                         <RoundBadge

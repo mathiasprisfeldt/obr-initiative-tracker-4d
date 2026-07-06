@@ -1,9 +1,9 @@
 import { TextField, TextFieldProps } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
-import { simpleMathEval } from "../../utils/simple-math-eval";
+import { simpleMathEval } from "../../../utils/simple-math-eval";
 import { orange, red, yellow } from "@mui/material/colors";
 import { styled } from "@mui/material/styles";
-import { getDamageLevel } from "../../utils/damage-level";
+import { getDamageLevel } from "../../../utils/damage-level";
 
 export interface Props {
     disabled: boolean;

@@ -2,14 +2,15 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { TrackerStoreProvider } from "../store/tracker-store";
 import { SettingsStoreProvider } from "../store/settings-store";
-import Admin from "./Admin";
+import Admin from "./gm/Admin";
+import Player from "./player/Player";
 import OBR from "@owlbear-rodeo/sdk";
 import { PluginThemeProvider } from "../PluginThemeProvider";
 import { PortraitImagePickerStoreProvider } from "../character-portrait";
 import { CssBaseline } from "@mui/material";
 import { isLocalDev } from "../utils/env";
 
-const initializeRoot = () => {
+const initializeGmRoot = () => {
     createRoot(document.getElementById("root")!).render(
         <StrictMode>
             <PluginThemeProvider>
@@ -26,12 +27,28 @@ const initializeRoot = () => {
     );
 };
 
+const initializePlayerRoot = () => {
+    createRoot(document.getElementById("root")!).render(
+        <StrictMode>
+            <PluginThemeProvider>
+                {isLocalDev && <CssBaseline />}
+                <SettingsStoreProvider>
+                    <Player />
+                </SettingsStoreProvider>
+            </PluginThemeProvider>
+        </StrictMode>,
+    );
+};
+
 if (OBR.isAvailable) {
     OBR.onReady(async () => {
-        if ((await OBR.player.getRole()) === "PLAYER") return;
-        initializeRoot();
+        if ((await OBR.player.getRole()) === "PLAYER") {
+            initializePlayerRoot();
+        } else {
+            initializeGmRoot();
+        }
     });
 } else {
     // Fallback for development or testing without OBR
-    initializeRoot();
+    initializeGmRoot();
 }

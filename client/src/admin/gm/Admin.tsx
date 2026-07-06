@@ -3,8 +3,8 @@ import { Box, Tab, Typography } from "@mui/material";
 import { useState } from "react";
 import Tracker from "./home";
 import { SettingsPanel } from "./SettingsPanel";
-import { CharacterPortraitBorderSettings } from "../character-portrait/CharacterPortraitBorderSettings";
-import { CharacterPortraitSettings } from "../character-portrait/CharacterPortraitSettings";
+import { CharacterPortraitBorderSettings } from "../../character-portrait/CharacterPortraitBorderSettings";
+import { CharacterPortraitSettings } from "../../character-portrait/CharacterPortraitSettings";
 import { RoomConnectionIndicator } from "./components/RoomConnectionIndicator";
 
 export default function Admin() {

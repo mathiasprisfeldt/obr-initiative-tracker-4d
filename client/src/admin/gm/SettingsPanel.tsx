@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Divider, IconButton, List, ListItem, ListItemText, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { useTrackerStore } from "../store/tracker-store";
-import { usePortraitImagePickerStore } from "../character-portrait/portrait-image-picker-store";
-import { useApi, useSettingsStore } from "../store/settings-store";
+import { useTrackerStore } from "../../store/tracker-store";
+import { usePortraitImagePickerStore } from "../../character-portrait/portrait-image-picker-store";
+import { useApi, useSettingsStore } from "../../store/settings-store";
 import type { ConnectedClientInfo } from "obr-initiative-tracker-4d-backend/api-client";
 import OBR from "@owlbear-rodeo/sdk";
 

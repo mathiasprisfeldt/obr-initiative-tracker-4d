@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRoomConnection, type RoomConnectionStatus } from "../hooks/use-room-connection";
+import type { RoomConnectionLogEntry } from "obr-initiative-tracker-4d-backend/api-client";
 import { useApi } from "./settings-store";
 
 const TRACKER_STATE_KEY = "tracker";
@@ -77,6 +78,8 @@ const context = createContext<TrackerStore>({
 export interface TrackerResult {
     state: TrackerState | undefined;
     connectionStatus: RoomConnectionStatus;
+    logs: RoomConnectionLogEntry[];
+    reconnect(): void;
 }
 
 export function useTrackerStore(): TrackerStore {
@@ -98,7 +101,12 @@ export function useTracker(): TrackerResult {
         },
     });
 
-    return { state, connectionStatus: room.status };
+    return {
+        state,
+        connectionStatus: room.status,
+        logs: room.logs,
+        reconnect: room.reconnect,
+    };
 }
 
 function cleanUpStateForClient(state: TrackerState) {

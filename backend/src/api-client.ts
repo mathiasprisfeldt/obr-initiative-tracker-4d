@@ -133,6 +133,13 @@ export interface ApiClientOptions {
      * browser network console), not protocol-level ping/pong frames. Defaults to 1000ms.
      */
     pingIntervalMs?: number;
+    /**
+     * How long to wait for a `pong` reply before considering the connection dead.
+     * If no `pong` is received within this window, the WebSocket is treated as
+     * disconnected (subscribers are notified and a reconnect is attempted) even if
+     * the socket still reports itself as open. Defaults to 5000ms.
+     */
+    pongTimeoutMs?: number;
     /** Optional fetch implementation (useful for testing). */
     fetch?: FetchFn;
 }
@@ -142,6 +149,7 @@ export function createApiClient(options: ApiClientOptions) {
     const _fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
     const reconnectIntervalMs = options.reconnectIntervalMs ?? 2000;
     const pingIntervalMs = options.pingIntervalMs ?? 1000;
+    const pongTimeoutMs = options.pongTimeoutMs ?? 5000;
 
     function url(path: string) {
         return `${baseUrl.replace(/\/+$/, "")}${path}`;
@@ -167,6 +175,8 @@ export function createApiClient(options: ApiClientOptions) {
         reconnectTimer: ReturnType<typeof setTimeout> | null;
         pingTimer: ReturnType<typeof setInterval> | null;
         manuallyClosed: boolean;
+        /** Timestamp (ms) of the last `pong` received from the server. */
+        lastPongAt: number;
     };
 
     const sharedConnections = new Map<string, SharedRoomConnection>();
@@ -186,10 +196,19 @@ export function createApiClient(options: ApiClientOptions) {
     function startPing(shared: SharedRoomConnection) {
         stopPing(shared);
         shared.pingTimer = setInterval(() => {
-            if (shared.ws?.readyState === WebSocket.OPEN) {
-                const msg: ClientPingMessage = { action: ClientAction.Ping };
-                shared.ws.send(JSON.stringify(msg));
+            if (shared.ws?.readyState !== WebSocket.OPEN) return;
+
+            // If we haven't heard a `pong` back within the timeout window, the
+            // connection is dead even though the socket still reports itself as
+            // open. Force a close so subscribers are notified (disconnected
+            // indicator) and a reconnect is attempted.
+            if (Date.now() - shared.lastPongAt > pongTimeoutMs) {
+                shared.ws.close();
+                return;
             }
+
+            const msg: ClientPingMessage = { action: ClientAction.Ping };
+            shared.ws.send(JSON.stringify(msg));
         }, pingIntervalMs);
     }
 
@@ -239,6 +258,9 @@ export function createApiClient(options: ApiClientOptions) {
 
         ws.addEventListener("open", () => {
             didOpen = true;
+            // Treat the connection as healthy on open; the pong watchdog measures
+            // the gap since this moment.
+            shared.lastPongAt = Date.now();
             startPing(shared);
             for (const sub of shared.subscribers) sub.onConnected?.();
         });
@@ -277,6 +299,7 @@ export function createApiClient(options: ApiClientOptions) {
                     for (const sub of shared.subscribers) sub.onInitialState(states);
                 } else if (msg.action === ServerAction.Pong) {
                     /* keep-alive acknowledgement from server */
+                    shared.lastPongAt = Date.now();
                 }
             } catch {
                 /* ignore malformed messages */
@@ -334,6 +357,7 @@ export function createApiClient(options: ApiClientOptions) {
                     reconnectTimer: null,
                     pingTimer: null,
                     manuallyClosed: false,
+                    lastPongAt: 0,
                 };
                 sharedConnections.set(roomId, shared);
             }

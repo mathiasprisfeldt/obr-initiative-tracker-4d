@@ -2,11 +2,13 @@ import { styled } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import CharacterAvatar from "./CharacterAvatar";
 import { AnimatePresence, motion, Variants } from "motion/react";
+import { MAX_PORTRAIT_SIZE } from "../tracker-layout";
 
 export interface Props {
     characters: Character[];
     currentCharacter?: Character;
     visible?: boolean;
+    itemSize?: number;
 }
 
 const containerVariants: Variants = {
@@ -42,6 +44,7 @@ export default function CharacterRow({
     characters,
     currentCharacter,
     visible = true,
+    itemSize = MAX_PORTRAIT_SIZE,
     ...rest
 }: Props) {
     return (
@@ -80,8 +83,9 @@ export default function CharacterRow({
                             }}
                             style={{
                                 display: "flex",
-                                maxHeight: 150,
-                                flexGrow: 1,
+                                width: itemSize,
+                                height: itemSize,
+                                flexShrink: 0,
                                 justifyContent: "center",
                             }}
                         >
@@ -120,11 +124,13 @@ const StyledCharacterAvatar = styled(CharacterAvatar)`
 const StaggerContainer = styled(motion.div)`
     display: flex;
     flex-direction: column-reverse;
+    flex-wrap: wrap;
     gap: 16px;
     width: 100%;
     height: 100%;
     justify-content: center;
-    overflow: hidden;
+    align-content: center;
+    overflow: visible;
     padding: 16px 0;
     box-sizing: border-box;
 `;

@@ -6,12 +6,23 @@ import { fileURLToPath } from "url";
 import { roomStates } from "./schema.js";
 
 const connectionString = process.env.DATABASE_CONNECTION_STRING;
-if (!connectionString) {
-    console.error("DATABASE_CONNECTION_STRING env var is required");
-    process.exit(1);
+export const isInMemoryMode = process.env.BACKEND_NO_DB === "1";
+
+type RoomStateKey = `${string}::${string}`;
+const memoryStore = new Map<RoomStateKey, unknown>();
+
+export const db = connectionString ? drizzle(connectionString) : null;
+
+if (isInMemoryMode) {
+    console.warn(
+        "Starting backend without database persistence (set DATABASE_CONNECTION_STRING to enable DB)",
+    );
 }
 
-export const db = drizzle(connectionString);
+if (!isInMemoryMode && !connectionString) {
+    console.error("DATABASE_CONNECTION_STRING env var is required unless BACKEND_NO_DB=1");
+    process.exit(1);
+}
 
 // ---------------------------------------------------------------------------
 // Run migrations
@@ -20,13 +31,20 @@ export const db = drizzle(connectionString);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-await migrate(db, { migrationsFolder: path.join(__dirname, "..", "drizzle") });
+if (db) {
+    await migrate(db, { migrationsFolder: path.join(__dirname, "..", "drizzle") });
+}
 
 // ---------------------------------------------------------------------------
 // Room-state helpers
 // ---------------------------------------------------------------------------
 
 export async function getRoomState<T>(roomId: string, key: string): Promise<T | null> {
+    if (!db) {
+        const state = memoryStore.get(`${roomId}::${key}`);
+        return state === undefined ? null : (state as T);
+    }
+
     const rows = await db
         .select({ state: roomStates.state })
         .from(roomStates)
@@ -36,6 +54,11 @@ export async function getRoomState<T>(roomId: string, key: string): Promise<T | 
 }
 
 export async function upsertRoomState<T>(roomId: string, key: string, state: T): Promise<void> {
+    if (!db) {
+        memoryStore.set(`${roomId}::${key}`, state);
+        return;
+    }
+
     const stateJson = JSON.stringify(state);
     await db.execute(sql`
         MERGE ${roomStates} WITH (HOLDLOCK) AS target
@@ -47,6 +70,17 @@ export async function upsertRoomState<T>(roomId: string, key: string, state: T):
 }
 
 export async function getAllRoomStates(roomId: string): Promise<Map<string, unknown>> {
+    if (!db) {
+        const map = new Map<string, unknown>();
+        const prefix = `${roomId}::`;
+        for (const [combinedKey, state] of memoryStore.entries()) {
+            if (combinedKey.startsWith(prefix)) {
+                map.set(combinedKey.slice(prefix.length), state);
+            }
+        }
+        return map;
+    }
+
     const rows = await db
         .select({ key: roomStates.key, state: roomStates.state })
         .from(roomStates)

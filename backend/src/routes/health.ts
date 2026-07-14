@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "../db.js";
+import { db, isInMemoryMode } from "../db.js";
 import { sql } from "drizzle-orm";
 
 const router = Router();
@@ -26,8 +26,16 @@ const router = Router();
  */
 router.get("/api/health", async (_req, res) => {
     try {
+        if (!db) {
+            res.status(503).json({
+                status: "unhealthy",
+                database: isInMemoryMode ? "disabled" : "unavailable",
+            });
+            return;
+        }
+
         await db.execute(sql`SELECT 1`);
-        res.json({ status: "ok" });
+        res.json({ status: "ok", database: "connected" });
     } catch {
         res.status(503).json({ status: "unhealthy" });
     }

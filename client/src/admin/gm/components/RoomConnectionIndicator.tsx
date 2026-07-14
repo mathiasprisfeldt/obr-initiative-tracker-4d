@@ -2,7 +2,7 @@ import { IconButton } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import { useTrackerStore } from "../../store/tracker-store";
+import { useTrackerStore } from "../../../store/tracker-store";
 
 export function RoomConnectionIndicator({ onClick }: { onClick?: () => void }) {
     const { roomConnectionStatus } = useTrackerStore();

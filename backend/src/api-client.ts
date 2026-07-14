@@ -88,7 +88,24 @@ export interface ServerPongMessage {
 
 export interface RoomConnection {
     updateState(key: string, state: unknown): void;
+    /**
+     * Force the shared WebSocket to reconnect immediately. Useful for a manual
+     * "reconnect" action in the UI. Any pending automatic reconnect is cancelled
+     * and a fresh connection attempt starts right away.
+     */
+    reconnect(): void;
     close(): void;
+}
+
+/** Severity of a connection log entry. */
+export type RoomConnectionLogLevel = "info" | "warn" | "error";
+
+/** A single connection lifecycle log entry, surfaced to the UI. */
+export interface RoomConnectionLogEntry {
+    /** Epoch milliseconds when the entry was created. */
+    timestamp: number;
+    level: RoomConnectionLogLevel;
+    message: string;
 }
 
 export interface RoomConnectionOptions {
@@ -96,6 +113,8 @@ export interface RoomConnectionOptions {
     onStateChanged: (key: string, state: unknown) => void;
     onConnected?: () => void;
     onDisconnected?: () => void;
+    /** Called for each connection lifecycle event (connecting, connected, retrying, ...). */
+    onLog?: (entry: RoomConnectionLogEntry) => void;
 }
 
 /** Fetch function signature used by client methods. */
@@ -133,6 +152,14 @@ export interface ApiClientOptions {
      * browser network console), not protocol-level ping/pong frames. Defaults to 1000ms.
      */
     pingIntervalMs?: number;
+    /**
+     * How long to wait for a `pong` reply before considering the connection stale.
+     * If no `pong` is received within this window, subscribers are shown as
+     * disconnected (the status indicator appears) but the WebSocket is left open in
+     * the hope that it recovers. If a later `pong` arrives, the connection flips
+     * back to connected. Defaults to 5000ms.
+     */
+    pongTimeoutMs?: number;
     /** Optional fetch implementation (useful for testing). */
     fetch?: FetchFn;
 }
@@ -142,6 +169,7 @@ export function createApiClient(options: ApiClientOptions) {
     const _fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
     const reconnectIntervalMs = options.reconnectIntervalMs ?? 2000;
     const pingIntervalMs = options.pingIntervalMs ?? 1000;
+    const pongTimeoutMs = options.pongTimeoutMs ?? 5000;
 
     function url(path: string) {
         return `${baseUrl.replace(/\/+$/, "")}${path}`;
@@ -167,6 +195,15 @@ export function createApiClient(options: ApiClientOptions) {
         reconnectTimer: ReturnType<typeof setTimeout> | null;
         pingTimer: ReturnType<typeof setInterval> | null;
         manuallyClosed: boolean;
+        /** Timestamp (ms) of the last `pong` received from the server. */
+        lastPongAt: number;
+        /**
+         * Whether the connection is currently considered stale (pings are being
+         * sent but no `pong` has been received within the timeout). While stale,
+         * subscribers are shown as disconnected but the socket is kept open in the
+         * hope that it recovers.
+         */
+        stale: boolean;
     };
 
     const sharedConnections = new Map<string, SharedRoomConnection>();
@@ -174,6 +211,11 @@ export function createApiClient(options: ApiClientOptions) {
     function buildWsUrl(roomId: string) {
         const wsBase = baseUrl.replace(/^http/, "ws").replace(/\/+$/, "");
         return `${wsBase}/ws/room/${encodeURIComponent(roomId)}`;
+    }
+
+    function log(shared: SharedRoomConnection, level: RoomConnectionLogLevel, message: string) {
+        const entry: RoomConnectionLogEntry = { timestamp: Date.now(), level, message };
+        for (const sub of shared.subscribers) sub.onLog?.(entry);
     }
 
     function stopPing(shared: SharedRoomConnection) {
@@ -186,10 +228,20 @@ export function createApiClient(options: ApiClientOptions) {
     function startPing(shared: SharedRoomConnection) {
         stopPing(shared);
         shared.pingTimer = setInterval(() => {
-            if (shared.ws?.readyState === WebSocket.OPEN) {
-                const msg: ClientPingMessage = { action: ClientAction.Ping };
-                shared.ws.send(JSON.stringify(msg));
+            if (shared.ws?.readyState !== WebSocket.OPEN) return;
+
+            // If we haven't heard a `pong` back within the timeout window, the
+            // connection looks stale. Don't close it — the socket may still
+            // recover — just surface it as disconnected so the status indicator
+            // shows. If a `pong` arrives later, we flip back to connected.
+            if (!shared.stale && Date.now() - shared.lastPongAt > pongTimeoutMs) {
+                shared.stale = true;
+                log(shared, "warn", "No pong received — connection looks stale, waiting to recover");
+                for (const sub of shared.subscribers) sub.onDisconnected?.();
             }
+
+            const msg: ClientPingMessage = { action: ClientAction.Ping };
+            shared.ws.send(JSON.stringify(msg));
         }, pingIntervalMs);
     }
 
@@ -211,6 +263,7 @@ export function createApiClient(options: ApiClientOptions) {
         }
         if (shared.reconnectTimer != null) return;
 
+        log(shared, "info", `Reconnecting in ${Math.round(reconnectIntervalMs / 1000)}s...`);
         shared.reconnectTimer = setTimeout(() => {
             shared.reconnectTimer = null;
             if (shared.manuallyClosed) return;
@@ -220,6 +273,29 @@ export function createApiClient(options: ApiClientOptions) {
             }
             connectWs(roomId, shared);
         }, reconnectIntervalMs);
+    }
+
+    /** Cancel any pending reconnect and start a fresh connection attempt immediately. */
+    function reconnectNow(roomId: string, shared: SharedRoomConnection) {
+        if (shared.manuallyClosed) return;
+        if (shared.reconnectTimer != null) {
+            clearTimeout(shared.reconnectTimer);
+            shared.reconnectTimer = null;
+        }
+        log(shared, "info", "Manual reconnect requested");
+        const old = shared.ws;
+        // Detach the current socket so its late close/error events are ignored
+        // (connectWs and the listeners guard on `shared.ws === ws`).
+        shared.ws = null;
+        stopPing(shared);
+        if (old && old.readyState !== WebSocket.CLOSED) {
+            try {
+                old.close();
+            } catch {
+                /* ignore */
+            }
+        }
+        connectWs(roomId, shared);
     }
 
     function connectWs(roomId: string, shared: SharedRoomConnection) {
@@ -232,21 +308,32 @@ export function createApiClient(options: ApiClientOptions) {
             return;
         }
 
+        log(shared, "info", "Connecting...");
         const ws = new WebSocket(buildWsUrl(roomId));
         shared.ws = ws;
         let didOpen = false;
         let synced = false;
 
         ws.addEventListener("open", () => {
+            if (shared.ws !== ws) return;
             didOpen = true;
+            // Treat the connection as healthy on open; the pong watchdog measures
+            // the gap since this moment.
+            shared.lastPongAt = Date.now();
+            shared.stale = false;
             startPing(shared);
+            log(shared, "info", "Connected");
             for (const sub of shared.subscribers) sub.onConnected?.();
         });
 
         ws.addEventListener("close", () => {
+            if (shared.ws !== ws) return;
             stopPing(shared);
             if (didOpen) {
+                log(shared, "warn", "Connection closed");
                 for (const sub of shared.subscribers) sub.onDisconnected?.();
+            } else {
+                log(shared, "warn", "Connection attempt failed");
             }
 
             if (shared.manuallyClosed) {
@@ -264,6 +351,7 @@ export function createApiClient(options: ApiClientOptions) {
         });
 
         ws.addEventListener("message", (event) => {
+            if (shared.ws !== ws) return;
             try {
                 const msg = JSON.parse(event.data as string) as ServerMessage;
                 if (msg.action === ServerAction.StateChanged) {
@@ -273,10 +361,18 @@ export function createApiClient(options: ApiClientOptions) {
                     }
                 } else if (msg.action === ServerAction.StateSync) {
                     synced = true;
+                    log(shared, "info", "State synced");
                     const states = new Map(Object.entries(msg.states));
                     for (const sub of shared.subscribers) sub.onInitialState(states);
                 } else if (msg.action === ServerAction.Pong) {
                     /* keep-alive acknowledgement from server */
+                    shared.lastPongAt = Date.now();
+                    // Recovered from a stale period — flip back to connected.
+                    if (shared.stale) {
+                        shared.stale = false;
+                        log(shared, "info", "Connection recovered");
+                        for (const sub of shared.subscribers) sub.onConnected?.();
+                    }
                 }
             } catch {
                 /* ignore malformed messages */
@@ -286,6 +382,8 @@ export function createApiClient(options: ApiClientOptions) {
         // Some environments emit "error" without a follow-up "close".
         // Ensure we eventually attempt reconnect by scheduling one.
         ws.addEventListener("error", () => {
+            if (shared.ws !== ws) return;
+            log(shared, "error", "Connection error");
             scheduleReconnect(roomId, shared);
         });
     }
@@ -334,6 +432,8 @@ export function createApiClient(options: ApiClientOptions) {
                     reconnectTimer: null,
                     pingTimer: null,
                     manuallyClosed: false,
+                    lastPongAt: 0,
+                    stale: false,
                 };
                 sharedConnections.set(roomId, shared);
             }
@@ -369,6 +469,9 @@ export function createApiClient(options: ApiClientOptions) {
                             }
                         }, 100),
                     );
+                },
+                reconnect() {
+                    reconnectNow(roomId, shared);
                 },
                 close() {
                     for (const timer of debounceTimers.values()) clearTimeout(timer);

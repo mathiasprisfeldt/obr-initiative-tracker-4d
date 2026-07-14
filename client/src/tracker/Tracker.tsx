@@ -1,6 +1,7 @@
 import "./tracker.css";
 import { type TrackerResult, useTracker } from "../store/tracker-store";
 import CharacterRow from "./components/CharacterRow";
+import { ConnectionStatus } from "./components/ConnectionStatus";
 import OBR from "@owlbear-rodeo/sdk";
 import { styled, Typography } from "@mui/material";
 import { loadEmittersPlugin } from "@tsparticles/plugin-emitters";
@@ -32,7 +33,6 @@ export function Tracker() {
 function Content({ tracker }: { tracker: TrackerResult }) {
     const { state, connectionStatus } = tracker;
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
-    const showDisconnected = connectionStatus === "disconnected";
     const layout = useTrackerLayout(state?.characters.length ?? 0);
 
     // Widen the popover so extra portrait columns are fully visible.
@@ -82,16 +82,7 @@ function Content({ tracker }: { tracker: TrackerResult }) {
                         </AnimatePresence>
                     </>
                 )}
-                <AnimatePresence>
-                    {showDisconnected && (
-                        <DisconnectedDot
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0 }}
-                            title="Connection lost"
-                        />
-                    )}
-                </AnimatePresence>
+                <ConnectionStatus status={connectionStatus} />
             </Container>
         </Viewport>
     );
@@ -151,17 +142,6 @@ const RoundNumber = styled(Typography)`
     color: rgba(230, 200, 140, 1);
     font-weight: bold;
     line-height: 1;
-`;
-
-const DisconnectedDot = styled(motion.div)`
-    position: fixed;
-    bottom: 6px;
-    left: 6px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(220, 80, 80, 0.7);
-    pointer-events: none;
 `;
 
 export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";

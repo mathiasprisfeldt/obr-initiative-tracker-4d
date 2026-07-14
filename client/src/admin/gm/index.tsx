@@ -1,11 +1,34 @@
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { Box, Tab, Typography } from "@mui/material";
-import { useState } from "react";
+import { Box, CssBaseline, Tab, Typography } from "@mui/material";
+import { StrictMode, useState } from "react";
+import { createRoot } from "react-dom/client";
 import Tracker from "./home";
 import { SettingsPanel } from "./SettingsPanel";
 import { CharacterPortraitBorderSettings } from "../../character-portrait/CharacterPortraitBorderSettings";
 import { CharacterPortraitSettings } from "../../character-portrait/CharacterPortraitSettings";
 import { RoomConnectionIndicator } from "./components/RoomConnectionIndicator";
+import { PluginThemeProvider } from "../../PluginThemeProvider";
+import { PortraitImagePickerStoreProvider } from "../../character-portrait";
+import { SettingsStoreProvider } from "../../store/settings-store";
+import { TrackerStoreProvider } from "../../store/tracker-store";
+import { isLocalDev } from "../../utils/env";
+
+export function initializeGmRoot() {
+    createRoot(document.getElementById("root")!).render(
+        <StrictMode>
+            <PluginThemeProvider>
+                {isLocalDev && <CssBaseline />}
+                <SettingsStoreProvider>
+                    <PortraitImagePickerStoreProvider>
+                        <TrackerStoreProvider>
+                            <Admin />
+                        </TrackerStoreProvider>
+                    </PortraitImagePickerStoreProvider>
+                </SettingsStoreProvider>
+            </PluginThemeProvider>
+        </StrictMode>,
+    );
+}
 
 export default function Admin() {
     const [value, setValue] = useState("1");

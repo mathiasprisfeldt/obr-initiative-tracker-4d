@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { StrictMode, useMemo } from "react";
+import { createRoot } from "react-dom/client";
 import {
     Box,
     Button,
+    CssBaseline,
     Divider,
     Paper,
     Stack,
@@ -15,6 +17,9 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import type { RoomConnectionLogEntry } from "obr-initiative-tracker-4d-backend/api-client";
 import { useTracker } from "../../store/tracker-store";
 import type { RoomConnectionStatus } from "../../hooks/use-room-connection";
+import { PluginThemeProvider } from "../../PluginThemeProvider";
+import { SettingsStoreProvider } from "../../store/settings-store";
+import { isLocalDev } from "../../utils/env";
 
 const STATUS_LABEL: Record<RoomConnectionStatus, string> = {
     idle: "Not connected",
@@ -22,6 +27,19 @@ const STATUS_LABEL: Record<RoomConnectionStatus, string> = {
     connected: "Connected",
     disconnected: "Disconnected",
 };
+
+export function initializePlayerRoot() {
+    createRoot(document.getElementById("root")!).render(
+        <StrictMode>
+            <PluginThemeProvider>
+                {isLocalDev && <CssBaseline />}
+                <SettingsStoreProvider>
+                    <Player />
+                </SettingsStoreProvider>
+            </PluginThemeProvider>
+        </StrictMode>,
+    );
+}
 
 export default function Player() {
     const theme = useTheme();

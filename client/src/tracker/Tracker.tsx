@@ -29,7 +29,7 @@ export function Tracker() {
 }
 
 function Content({ tracker }: { tracker: TrackerResult }) {
-    const { state, connectionStatus, logs, reconnect } = tracker;
+    const { state, connectionStatus } = tracker;
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
 
     return (
@@ -68,7 +68,7 @@ function Content({ tracker }: { tracker: TrackerResult }) {
                     </AnimatePresence>
                 </>
             )}
-            <ConnectionStatus status={connectionStatus} logs={logs} onReconnect={reconnect} />
+            <ConnectionStatus status={connectionStatus} />
         </Container>
     );
 }

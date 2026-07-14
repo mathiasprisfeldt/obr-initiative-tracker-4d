@@ -1,4 +1,4 @@
-import { useTrackerStore, TrackerStore, type CombatHistoryEntry } from "../../store/tracker-store";
+import { useTrackerStore, TrackerStore, type CombatHistoryEntry } from "../../../store/tracker-store";
 import CharacterRow from "../components/CharacterRow";
 import { CharacterRowHeader } from "../components/CharacterRow";
 import {

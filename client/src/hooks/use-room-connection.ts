@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import OBR from "@owlbear-rodeo/sdk";
-import type { RoomConnection } from "obr-initiative-tracker-4d-backend/api-client";
+import type {
+    RoomConnection,
+    RoomConnectionLogEntry,
+} from "obr-initiative-tracker-4d-backend/api-client";
 import { useApi } from "../store/settings-store";
 
 export type RoomConnectionStatus = "idle" | "connecting" | "connected" | "disconnected";
 
+/** Maximum number of connection log entries retained in memory. */
+const MAX_LOG_ENTRIES = 100;
+
 export interface UseRoomConnectionResult<T> {
     status: RoomConnectionStatus;
+    logs: RoomConnectionLogEntry[];
     updateState(state: T): void;
+    reconnect(): void;
 }
 
 export interface UseRoomConnectionOptions<T> {
@@ -24,6 +32,7 @@ export function useRoomConnection<T>(
     const api = useApi();
     const connectionRef = useRef<RoomConnection | null>(null);
     const [status, setStatus] = useState<RoomConnectionStatus>(api ? "connecting" : "idle");
+    const [logs, setLogs] = useState<RoomConnectionLogEntry[]>([]);
 
     // Keep callbacks in refs so effect doesn't re-run on every render
     const optionsRef = useRef(options);
@@ -55,6 +64,14 @@ export function useRoomConnection<T>(
                 setStatus("disconnected");
                 optionsRef.current.onDisconnected?.();
             },
+            onLog: (entry) => {
+                setLogs((prev) => {
+                    const next = [...prev, entry];
+                    return next.length > MAX_LOG_ENTRIES
+                        ? next.slice(next.length - MAX_LOG_ENTRIES)
+                        : next;
+                });
+            },
         });
         connectionRef.current = connection;
 
@@ -67,6 +84,8 @@ export function useRoomConnection<T>(
 
     return {
         status,
+        logs,
         updateState: (state) => connectionRef.current?.updateState(optionsRef.current.key, state),
+        reconnect: () => connectionRef.current?.reconnect(),
     };
 }

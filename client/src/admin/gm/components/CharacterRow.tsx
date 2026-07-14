@@ -1,4 +1,4 @@
-import { CharacterPortraitPicker } from "../../character-portrait";
+import { CharacterPortraitPicker } from "../../../character-portrait";
 import {
     Box,
     Checkbox,
@@ -12,7 +12,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { Character } from "../../store/tracker-store";
+import { Character } from "../../../store/tracker-store";
 import HealthInput from "./HealthInput";
 import { useState } from "react";
 import MoreVertIcon from "@mui/icons-material/MoreVert";

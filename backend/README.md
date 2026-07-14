@@ -30,7 +30,7 @@ Removes a single key from the room state. Returns the updated state.
 
 ### `GET /api/health`
 
-Health check endpoint. Returns `{ "status": "ok" }`.
+Health check endpoint. Returns `200` only when the database connection is available. Local in-memory development mode still returns `503` because persistence is unavailable.
 
 ## Development
 
@@ -41,6 +41,14 @@ npm run dev
 ```
 
 The server runs on port 3001 by default. Set `PORT` env var to change.
+
+For local development without SQL Server, use the root workspace command:
+
+```bash
+just dev-backend-no-db
+```
+
+This runs with in-memory state only and does not persist data across backend restarts.
 
 ## Production
 

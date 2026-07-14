@@ -130,7 +130,7 @@ const StaggerContainer = styled(motion.div)`
     height: 100%;
     justify-content: center;
     align-content: center;
-    overflow: hidden;
+    overflow: visible;
     padding: 16px 0;
     box-sizing: border-box;
 `;

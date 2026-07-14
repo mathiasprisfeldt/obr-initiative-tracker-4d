@@ -9,6 +9,7 @@ import { loadSlim } from "@tsparticles/slim";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTrackerLayout } from "./tracker-layout";
+import { isLocalDev } from "../utils/env";
 
 export function Tracker() {
     const tracker = useTracker();
@@ -40,65 +41,93 @@ function Content({ tracker }: { tracker: TrackerResult }) {
     }, [layout.popoverWidth]);
 
     return (
-        <Container style={{ pointerEvents: visible ? "auto" : "none" }}>
-            {state && (
-                <>
-                    <StyledCharacterRow
-                        characters={state.characters}
-                        currentCharacter={state.currentCharacter}
-                        visible={!!visible}
-                        itemSize={layout.itemSize}
-                    />
-                    <AnimatePresence mode="popLayout">
-                        <RoundBadge
-                            key={`${state.round}-${visible}`}
-                            layout
-                            initial={{ x: 200, opacity: 0 }}
-                            animate={{
-                                x: visible ? 0 : 200,
-                                scale: 1,
-                                opacity: visible ? 1 : 0,
-                                boxShadow: "0 0 8px rgba(200, 170, 110, 0.3)",
-                            }}
-                            exit={{
-                                x: 200,
-                                opacity: 0,
-                                scale: 0.3,
-                            }}
-                            transition={{
-                                type: "spring",
-                                stiffness: 300,
-                                damping: 20,
-                            }}
-                        >
-                            <RoundNumber variant="h4">{state.round}</RoundNumber>
-                        </RoundBadge>
-                    </AnimatePresence>
-                </>
-            )}
-            <AnimatePresence>
-                {showDisconnected && (
-                    <DisconnectedDot
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0 }}
-                        title="Connection lost"
-                    />
+        <Viewport width={layout.popoverWidth} localDev={isLocalDev}>
+            <Container
+                width={layout.popoverWidth}
+                localDev={isLocalDev}
+                style={{ pointerEvents: visible ? "auto" : "none" }}
+            >
+                {state && (
+                    <>
+                        <StyledCharacterRow
+                            characters={state.characters}
+                            currentCharacter={state.currentCharacter}
+                            visible={!!visible}
+                            itemSize={layout.itemSize}
+                        />
+                        <AnimatePresence mode="popLayout">
+                            <RoundBadge
+                                key={`${state.round}-${visible}`}
+                                layout
+                                initial={{ x: 200, opacity: 0 }}
+                                animate={{
+                                    x: visible ? 0 : 200,
+                                    scale: 1,
+                                    opacity: visible ? 1 : 0,
+                                    boxShadow: "0 0 8px rgba(200, 170, 110, 0.3)",
+                                }}
+                                exit={{
+                                    x: 200,
+                                    opacity: 0,
+                                    scale: 0.3,
+                                }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 20,
+                                }}
+                            >
+                                <RoundNumber variant="h4">{state.round}</RoundNumber>
+                            </RoundBadge>
+                        </AnimatePresence>
+                    </>
                 )}
-            </AnimatePresence>
-        </Container>
+                <AnimatePresence>
+                    {showDisconnected && (
+                        <DisconnectedDot
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0 }}
+                            title="Connection lost"
+                        />
+                    )}
+                </AnimatePresence>
+            </Container>
+        </Viewport>
     );
 }
 
-const Container = styled(motion.div)`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-`;
+const Viewport = styled("div", {
+    shouldForwardProp: (prop) => prop !== "width" && prop !== "localDev",
+})<{ width: number; localDev: boolean }>(({ width, localDev, theme }) => ({
+    position: "fixed",
+    inset: 0,
+    display: "flex",
+    justifyContent: localDev ? "flex-start" : "stretch",
+    alignItems: "stretch",
+    width: "100%",
+    overflow: "visible",
+    ...(localDev
+        ? {
+              background: `linear-gradient(90deg, ${theme.palette.background.paper} 0, ${theme.palette.background.paper} ${Math.round(width)}px, transparent ${Math.round(width)}px)`,
+          }
+        : undefined),
+}));
+
+const Container = styled(motion.div, {
+    shouldForwardProp: (prop) => prop !== "width" && prop !== "localDev",
+})<{ width: number; localDev: boolean }>(({ width, localDev }) => ({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    width: localDev ? Math.round(width) : "100%",
+    maxWidth: "100%",
+    height: "100%",
+    overflow: "visible",
+    flexShrink: 0,
+}));
 
 const StyledCharacterRow = styled(CharacterRow)`
     flex-grow: 1;

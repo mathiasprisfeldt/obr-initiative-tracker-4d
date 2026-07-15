@@ -4,12 +4,14 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import Tracker from "./home";
 import { SettingsPanel } from "./SettingsPanel";
+import { LayoutSettingsPanel } from "./LayoutSettingsPanel";
 import { CharacterPortraitBorderSettings } from "../../character-portrait/CharacterPortraitBorderSettings";
 import { CharacterPortraitSettings } from "../../character-portrait/CharacterPortraitSettings";
 import { RoomConnectionIndicator } from "./components/RoomConnectionIndicator";
 import { PluginThemeProvider } from "../../PluginThemeProvider";
 import { PortraitImagePickerStoreProvider } from "../../character-portrait";
 import { SettingsStoreProvider } from "../../store/settings-store";
+import { LayoutSettingsStoreProvider } from "../../store/layout-settings-store";
 import { TrackerStoreProvider } from "../../store/tracker-store";
 import { isLocalDev } from "../../utils/env";
 
@@ -19,11 +21,13 @@ export function initializeGmRoot() {
             <PluginThemeProvider>
                 {isLocalDev && <CssBaseline />}
                 <SettingsStoreProvider>
-                    <PortraitImagePickerStoreProvider>
-                        <TrackerStoreProvider>
-                            <Admin />
-                        </TrackerStoreProvider>
-                    </PortraitImagePickerStoreProvider>
+                    <LayoutSettingsStoreProvider>
+                        <PortraitImagePickerStoreProvider>
+                            <TrackerStoreProvider>
+                                <Admin />
+                            </TrackerStoreProvider>
+                        </PortraitImagePickerStoreProvider>
+                    </LayoutSettingsStoreProvider>
                 </SettingsStoreProvider>
             </PluginThemeProvider>
         </StrictMode>,
@@ -41,9 +45,10 @@ export default function Admin() {
                         <Tab label="Home" value="1" />
                         <Tab label="Portraits" value="2" />
                         <Tab label="Borders" value="3" />
-                        <Tab label="Settings" value="4" />
+                        <Tab label="Layout" value="4" />
+                        <Tab label="Settings" value="5" />
                     </TabList>
-                    <RoomConnectionIndicator onClick={() => setValue("4")} />
+                    <RoomConnectionIndicator onClick={() => setValue("5")} />
                 </Box>
                 <TabPanel value="1">
                     <Tracker />
@@ -55,6 +60,9 @@ export default function Admin() {
                     <CharacterPortraitBorderSettings />
                 </TabPanel>
                 <TabPanel value="4">
+                    <LayoutSettingsPanel />
+                </TabPanel>
+                <TabPanel value="5">
                     <SettingsPanel />
                 </TabPanel>
             </TabContext>

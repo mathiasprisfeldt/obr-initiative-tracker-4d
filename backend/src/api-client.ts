@@ -30,6 +30,7 @@ export interface ConnectedClientInfo {
     roomId: string;
     clientCount: number;
     clients: {
+        id: string;
         connectedAt: string;
         lastPing: string | null;
     }[];
@@ -52,6 +53,7 @@ export enum ServerAction {
     StateChanged = "state-changed",
     StateSync = "state-sync",
     Pong = "pong",
+    Welcome = "welcome",
 }
 
 export interface ClientUpdateStateMessage {
@@ -69,7 +71,8 @@ export type ClientMessage = ClientUpdateStateMessage | ClientPingMessage;
 export type ServerMessage =
     | ServerStateChangedMessage
     | ServerStateSyncMessage
-    | ServerPongMessage;
+    | ServerPongMessage
+    | ServerWelcomeMessage;
 
 export interface ServerStateChangedMessage {
     action: ServerAction.StateChanged;
@@ -84,6 +87,13 @@ export interface ServerStateSyncMessage {
 
 export interface ServerPongMessage {
     action: ServerAction.Pong;
+}
+
+/** Sent by the server right after a connection is established, carrying the id
+ * assigned to this specific WebSocket connection. */
+export interface ServerWelcomeMessage {
+    action: ServerAction.Welcome;
+    clientId: string;
 }
 
 export interface RoomConnection {
@@ -204,6 +214,10 @@ export function createApiClient(options: ApiClientOptions) {
          * hope that it recovers.
          */
         stale: boolean;
+        /** Id assigned by the server to this connection, captured from the
+         * `welcome` message. Used to identify our own connection in the
+         * connected-clients list. Null until the welcome message arrives. */
+        clientId: string | null;
     };
 
     const sharedConnections = new Map<string, SharedRoomConnection>();
@@ -311,6 +325,7 @@ export function createApiClient(options: ApiClientOptions) {
         log(shared, "info", "Connecting...");
         const ws = new WebSocket(buildWsUrl(roomId));
         shared.ws = ws;
+        shared.clientId = null;
         let didOpen = false;
         let synced = false;
 
@@ -373,6 +388,8 @@ export function createApiClient(options: ApiClientOptions) {
                         log(shared, "info", "Connection recovered");
                         for (const sub of shared.subscribers) sub.onConnected?.();
                     }
+                } else if (msg.action === ServerAction.Welcome) {
+                    shared.clientId = msg.clientId;
                 }
             } catch {
                 /* ignore malformed messages */
@@ -423,6 +440,19 @@ export function createApiClient(options: ApiClientOptions) {
             return handleResponse<ConnectedClientsResponse>(res);
         },
 
+        /**
+         * Ids of the WebSocket connections opened by this client (one per active
+         * room connection). Useful to filter our own connection(s) out of the
+         * list returned by `getConnectedClients()`.
+         */
+        getOwnClientIds(): string[] {
+            const ids: string[] = [];
+            for (const shared of sharedConnections.values()) {
+                if (shared.clientId) ids.push(shared.clientId);
+            }
+            return ids;
+        },
+
         connectRoom(roomId: string, options: RoomConnectionOptions): RoomConnection {
             let shared = sharedConnections.get(roomId);
             if (!shared) {
@@ -434,6 +464,7 @@ export function createApiClient(options: ApiClientOptions) {
                     manuallyClosed: false,
                     lastPongAt: 0,
                     stale: false,
+                    clientId: null,
                 };
                 sharedConnections.set(roomId, shared);
             }

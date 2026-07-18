@@ -2,7 +2,12 @@ import { styled } from "@mui/material";
 import { Character } from "../../store/tracker-store";
 import CharacterAvatar from "./CharacterAvatar";
 import { AnimatePresence, motion, Variants } from "motion/react";
-import { MAX_PORTRAIT_SIZE, PORTRAIT_GAP, VERTICAL_PADDING } from "../tracker-layout";
+import {
+    MAX_PORTRAIT_SIZE,
+    PORTRAIT_GAP,
+    VERTICAL_PADDING,
+    HORIZONTAL_PADDING,
+} from "../tracker-layout";
 
 export interface Props {
     characters: Character[];
@@ -13,6 +18,8 @@ export interface Props {
     gap?: number;
     /** Combined top + bottom padding of the portrait column. */
     verticalPadding?: number;
+    /** Combined left + right padding of the portrait column. */
+    horizontalPadding?: number;
 }
 
 const containerVariants: Variants = {
@@ -51,6 +58,7 @@ export default function CharacterRow({
     itemSize = MAX_PORTRAIT_SIZE,
     gap = PORTRAIT_GAP,
     verticalPadding = VERTICAL_PADDING,
+    horizontalPadding = HORIZONTAL_PADDING,
     ...rest
 }: Props) {
     return (
@@ -58,6 +66,7 @@ export default function CharacterRow({
             {...rest}
             gap={gap}
             verticalPadding={verticalPadding}
+            horizontalPadding={horizontalPadding}
             variants={containerVariants}
             initial="hide"
             animate={visible ? "show" : "hide"}
@@ -130,17 +139,20 @@ const StyledCharacterAvatar = styled(CharacterAvatar)`
 `;
 
 const StaggerContainer = styled(motion.div, {
-    shouldForwardProp: (prop) => prop !== "gap" && prop !== "verticalPadding",
-})<{ gap: number; verticalPadding: number }>(({ gap, verticalPadding }) => ({
-    display: "flex",
-    flexDirection: "column-reverse",
-    flexWrap: "wrap",
-    gap: `${gap}px`,
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignContent: "center",
-    overflow: "visible",
-    padding: `${verticalPadding / 2}px 0`,
-    boxSizing: "border-box",
-}));
+    shouldForwardProp: (prop) =>
+        prop !== "gap" && prop !== "verticalPadding" && prop !== "horizontalPadding",
+})<{ gap: number; verticalPadding: number; horizontalPadding: number }>(
+    ({ gap, verticalPadding, horizontalPadding }) => ({
+        display: "flex",
+        flexDirection: "column-reverse",
+        flexWrap: "wrap",
+        gap: `${gap}px`,
+        width: "100%",
+        height: "100%",
+        justifyContent: "center",
+        alignContent: "center",
+        overflow: "visible",
+        padding: `${verticalPadding}px ${horizontalPadding}px`,
+        boxSizing: "border-box",
+    }),
+);

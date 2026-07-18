@@ -14,7 +14,14 @@ export const VERTICAL_PADDING = DEFAULT_LAYOUT_SETTINGS.verticalPadding;
 export const MAX_PORTRAIT_SIZE = DEFAULT_LAYOUT_SETTINGS.maxPortraitSize;
 export const MIN_PORTRAIT_SIZE = DEFAULT_LAYOUT_SETTINGS.minPortraitSize;
 export const HORIZONTAL_PADDING = DEFAULT_LAYOUT_SETTINGS.horizontalPadding;
-export const MIN_POPOVER_WIDTH = DEFAULT_LAYOUT_SETTINGS.minPopoverWidth;
+
+/**
+ * Approximate rendered width of the round badge (a flex sibling of the portrait
+ * column). Reserved in the popover width so it never eats into the padded
+ * portrait area. The badge uses sideways text, so its width stays constant
+ * regardless of the round number's digit count.
+ */
+export const ROUND_BADGE_WIDTH = 64;
 
 export interface TrackerLayout {
     /** Number of portrait columns to render. */
@@ -27,8 +34,10 @@ export interface TrackerLayout {
     popoverWidth: number;
     /** Vertical gap between portraits within a column. */
     portraitGap: number;
-    /** Combined top + bottom padding of the portrait column. */
+    /** Padding on the top and bottom of the portrait column. */
     verticalPadding: number;
+    /** Padding on the left and right of the portrait columns. */
+    horizontalPadding: number;
 }
 
 /**
@@ -48,11 +57,10 @@ export function computeTrackerLayout(
         maxPortraitSize,
         minPortraitSize,
         horizontalPadding,
-        minPopoverWidth,
     } = settings;
 
     const safeCount = Math.max(1, count);
-    const available = Math.max(1, viewportHeight - verticalPadding);
+    const available = Math.max(1, viewportHeight - verticalPadding * 2);
 
     // How many portraits fit in one column before they would drop below the
     // minimum readable size.
@@ -69,12 +77,19 @@ export function computeTrackerLayout(
         (available - (itemsPerColumn - 1) * portraitGap) / itemsPerColumn,
     );
 
-    const popoverWidth = Math.max(
-        minPopoverWidth,
-        Math.round(columns * itemSize + (columns - 1) * columnGap + horizontalPadding),
+    const popoverWidth = Math.round(
+        columns * itemSize + (columns - 1) * columnGap + horizontalPadding * 2 + ROUND_BADGE_WIDTH,
     );
 
-    return { columns, itemsPerColumn, itemSize, popoverWidth, portraitGap, verticalPadding };
+    return {
+        columns,
+        itemsPerColumn,
+        itemSize,
+        popoverWidth,
+        portraitGap,
+        verticalPadding,
+        horizontalPadding,
+    };
 }
 
 /** Reactively computes the tracker layout from the creature count and window height. */

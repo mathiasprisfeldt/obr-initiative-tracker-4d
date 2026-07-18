@@ -11,26 +11,23 @@ export interface LayoutSettings {
     portraitGap: number;
     /** Horizontal gap between portrait columns. */
     columnGap: number;
-    /** Combined top + bottom padding of the portrait column. */
+    /** Padding applied to the top and bottom of the portrait column. */
     verticalPadding: number;
     /** Largest a portrait is allowed to grow to. */
     maxPortraitSize: number;
     /** Once portraits would shrink below this, add another column instead. */
     minPortraitSize: number;
-    /** Extra horizontal room reserved for the round badge and breathing space. */
+    /** Padding applied to the left and right of the portrait columns. */
     horizontalPadding: number;
-    /** Never make the popover narrower than this. */
-    minPopoverWidth: number;
 }
 
 export const DEFAULT_LAYOUT_SETTINGS: LayoutSettings = {
     portraitGap: 16,
     columnGap: 16,
-    verticalPadding: 32,
+    verticalPadding: 16,
     maxPortraitSize: 150,
     minPortraitSize: 110,
-    horizontalPadding: 80,
-    minPopoverWidth: 300,
+    horizontalPadding: 40,
 };
 
 export interface LayoutSettingField {
@@ -80,26 +77,18 @@ export const LAYOUT_SETTING_FIELDS: LayoutSettingField[] = [
     {
         key: "verticalPadding",
         label: "Vertical padding",
-        description: "Combined top and bottom padding of the portrait column.",
+        description: "Padding on the top and bottom of the portrait column.",
         min: 0,
-        max: 128,
-        step: 2,
+        max: 64,
+        step: 1,
     },
     {
         key: "horizontalPadding",
         label: "Horizontal padding",
-        description: "Extra horizontal room reserved for the round badge and breathing space.",
+        description: "Padding on the left and right of the portrait columns.",
         min: 0,
-        max: 200,
-        step: 5,
-    },
-    {
-        key: "minPopoverWidth",
-        label: "Min popover width",
-        description: "Never make the tracker popover narrower than this.",
-        min: 100,
-        max: 800,
-        step: 10,
+        max: 100,
+        step: 1,
     },
 ];
 
@@ -107,6 +96,7 @@ export interface LayoutSettingsStore {
     settings: LayoutSettings;
 
     setSetting(key: keyof LayoutSettings, value: number): void;
+    resetSetting(key: keyof LayoutSettings): void;
     reset(): void;
 }
 
@@ -139,6 +129,7 @@ function loadSettings(): LayoutSettings {
 const context = createContext<LayoutSettingsStore>({
     settings: DEFAULT_LAYOUT_SETTINGS,
     setSetting: () => {},
+    resetSetting: () => {},
     reset: () => {},
 });
 
@@ -169,7 +160,11 @@ export function LayoutSettingsStoreProvider({ children }: { children: React.Reac
         if (typeof window === "undefined") return;
         const onStorage = (event: StorageEvent) => {
             if (event.key !== STORAGE_KEY) return;
-            setSettings(event.newValue ? sanitize(JSON.parse(event.newValue)) : { ...DEFAULT_LAYOUT_SETTINGS });
+            setSettings(
+                event.newValue
+                    ? sanitize(JSON.parse(event.newValue))
+                    : { ...DEFAULT_LAYOUT_SETTINGS },
+            );
         };
         window.addEventListener("storage", onStorage);
         return () => window.removeEventListener("storage", onStorage);
@@ -179,13 +174,17 @@ export function LayoutSettingsStoreProvider({ children }: { children: React.Reac
         setSettings((prev) => ({ ...prev, [key]: value }));
     }, []);
 
+    const resetSetting = useCallback((key: keyof LayoutSettings) => {
+        setSettings((prev) => ({ ...prev, [key]: DEFAULT_LAYOUT_SETTINGS[key] }));
+    }, []);
+
     const reset = useCallback(() => {
         setSettings({ ...DEFAULT_LAYOUT_SETTINGS });
     }, []);
 
     const store = useMemo<LayoutSettingsStore>(
-        () => ({ settings, setSetting, reset }),
-        [settings, setSetting, reset],
+        () => ({ settings, setSetting, resetSetting, reset }),
+        [settings, setSetting, resetSetting, reset],
     );
 
     return <context.Provider value={store}>{children}</context.Provider>;

@@ -4,7 +4,6 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import Tracker from "./home";
 import { SettingsPanel } from "./SettingsPanel";
-import { LayoutSettingsPanel } from "./LayoutSettingsPanel";
 import { CharacterPortraitBorderSettings } from "../../character-portrait/CharacterPortraitBorderSettings";
 import { CharacterPortraitSettings } from "../../character-portrait/CharacterPortraitSettings";
 import { RoomConnectionIndicator } from "./components/RoomConnectionIndicator";
@@ -45,10 +44,9 @@ export default function Admin() {
                         <Tab label="Home" value="1" />
                         <Tab label="Portraits" value="2" />
                         <Tab label="Borders" value="3" />
-                        <Tab label="Layout" value="4" />
-                        <Tab label="Settings" value="5" />
+                        <Tab label="Settings" value="4" />
                     </TabList>
-                    <RoomConnectionIndicator onClick={() => setValue("5")} />
+                    <RoomConnectionIndicator onClick={() => setValue("4")} />
                 </Box>
                 <TabPanel value="1">
                     <Tracker />
@@ -60,9 +58,6 @@ export default function Admin() {
                     <CharacterPortraitBorderSettings />
                 </TabPanel>
                 <TabPanel value="4">
-                    <LayoutSettingsPanel />
-                </TabPanel>
-                <TabPanel value="5">
                     <SettingsPanel />
                 </TabPanel>
             </TabContext>

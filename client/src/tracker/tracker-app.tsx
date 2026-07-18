@@ -4,6 +4,7 @@ import { Tracker } from "./Tracker";
 import "./index.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { SettingsStoreProvider } from "../store/settings-store";
+import { LayoutSettingsStoreProvider } from "../store/layout-settings-store";
 import { PortraitImagePickerStoreProvider } from "../character-portrait";
 import { isLocalDev } from "../utils/env";
 
@@ -23,9 +24,11 @@ createRoot(document.getElementById("root")!).render(
         <ThemeProvider theme={theme}>
             {isLocalDev && <CssBaseline />}
             <SettingsStoreProvider>
-                <PortraitImagePickerStoreProvider>
-                    <Tracker />
-                </PortraitImagePickerStoreProvider>
+                <LayoutSettingsStoreProvider>
+                    <PortraitImagePickerStoreProvider>
+                        <Tracker />
+                    </PortraitImagePickerStoreProvider>
+                </LayoutSettingsStoreProvider>
             </SettingsStoreProvider>
         </ThemeProvider>
     </StrictMode>,

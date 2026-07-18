@@ -11,8 +11,13 @@ import {
     List,
     ListItem,
     ListItemText,
+    Popover,
+    Tooltip,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import TuneIcon from "@mui/icons-material/Tune";
+import { useState } from "react";
+import { LayoutSettingsPanel } from "../LayoutSettingsPanel";
 
 export default function Tracker() {
     const trackerStore = useTrackerStore();
@@ -37,13 +42,36 @@ function Content({
 }: {
     trackerStore: TrackerStore;
 }) {
+    const [layoutAnchor, setLayoutAnchor] = useState<HTMLElement | null>(null);
+
     if (isLoading) return <LinearProgress />;
 
     return (
         <div>
-            <Typography variant="h5" gutterBottom>
-                Round: {state.round}
-            </Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="h5" gutterBottom>
+                    Round: {state.round}
+                </Typography>
+                <Tooltip title="Layout settings">
+                    <IconButton
+                        size="small"
+                        onClick={(e) => setLayoutAnchor(e.currentTarget)}
+                        aria-label="Layout settings"
+                    >
+                        <TuneIcon />
+                    </IconButton>
+                </Tooltip>
+            </Stack>
+            <Popover
+                open={Boolean(layoutAnchor)}
+                anchorEl={layoutAnchor}
+                onClose={() => setLayoutAnchor(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                slotProps={{ paper: { sx: { p: 2, width: 320, maxWidth: "90vw" } } }}
+            >
+                <LayoutSettingsPanel />
+            </Popover>
 
             <CharacterTable>
                 <CharacterRowHeader />

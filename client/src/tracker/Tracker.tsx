@@ -54,6 +54,9 @@ function Content({ tracker }: { tracker: TrackerResult }) {
                             currentCharacter={state.currentCharacter}
                             visible={!!visible}
                             itemSize={layout.itemSize}
+                            gap={layout.portraitGap}
+                            verticalPadding={layout.verticalPadding}
+                            horizontalPadding={layout.horizontalPadding}
                         />
                         <AnimatePresence mode="popLayout">
                             <RoundBadge

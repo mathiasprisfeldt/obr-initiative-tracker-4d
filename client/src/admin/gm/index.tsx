@@ -10,6 +10,7 @@ import { RoomConnectionIndicator } from "./components/RoomConnectionIndicator";
 import { PluginThemeProvider } from "../../PluginThemeProvider";
 import { PortraitImagePickerStoreProvider } from "../../character-portrait";
 import { SettingsStoreProvider } from "../../store/settings-store";
+import { LayoutSettingsStoreProvider } from "../../store/layout-settings-store";
 import { TrackerStoreProvider } from "../../store/tracker-store";
 import { isLocalDev } from "../../utils/env";
 
@@ -19,11 +20,13 @@ export function initializeGmRoot() {
             <PluginThemeProvider>
                 {isLocalDev && <CssBaseline />}
                 <SettingsStoreProvider>
-                    <PortraitImagePickerStoreProvider>
-                        <TrackerStoreProvider>
-                            <Admin />
-                        </TrackerStoreProvider>
-                    </PortraitImagePickerStoreProvider>
+                    <LayoutSettingsStoreProvider>
+                        <PortraitImagePickerStoreProvider>
+                            <TrackerStoreProvider>
+                                <Admin />
+                            </TrackerStoreProvider>
+                        </PortraitImagePickerStoreProvider>
+                    </LayoutSettingsStoreProvider>
                 </SettingsStoreProvider>
             </PluginThemeProvider>
         </StrictMode>,

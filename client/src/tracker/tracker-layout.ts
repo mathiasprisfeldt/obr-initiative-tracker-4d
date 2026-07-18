@@ -1,19 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+    DEFAULT_LAYOUT_SETTINGS,
+    type LayoutSettings,
+    useLayoutSettings,
+} from "../store/layout-settings-store";
 
-// Vertical gap between portraits within a column (matches StaggerContainer gap).
-export const PORTRAIT_GAP = 16;
-// Horizontal gap between portrait columns.
-export const COLUMN_GAP = 16;
-// Combined top + bottom padding of the portrait column (matches StaggerContainer padding).
-export const VERTICAL_PADDING = 32;
-// Largest a portrait is allowed to grow to.
-export const MAX_PORTRAIT_SIZE = 150;
-// Once portraits would shrink below this in a single column, add another column instead.
-export const MIN_PORTRAIT_SIZE = 110;
-// Extra horizontal room reserved for the round badge and breathing space.
-export const HORIZONTAL_PADDING = 80;
-// Never make the popover narrower than its original width.
-export const MIN_POPOVER_WIDTH = 300;
+// Default layout parameters. These remain exported for backwards compatibility
+// and as fallbacks; the live values come from the layout settings store so each
+// user can tweak them on the fly.
+export const PORTRAIT_GAP = DEFAULT_LAYOUT_SETTINGS.portraitGap;
+export const COLUMN_GAP = DEFAULT_LAYOUT_SETTINGS.columnGap;
+export const VERTICAL_PADDING = DEFAULT_LAYOUT_SETTINGS.verticalPadding;
+export const MAX_PORTRAIT_SIZE = DEFAULT_LAYOUT_SETTINGS.maxPortraitSize;
+export const MIN_PORTRAIT_SIZE = DEFAULT_LAYOUT_SETTINGS.minPortraitSize;
+export const HORIZONTAL_PADDING = DEFAULT_LAYOUT_SETTINGS.horizontalPadding;
+
+/**
+ * Approximate rendered width of the round badge (a flex sibling of the portrait
+ * column). Reserved in the popover width so it never eats into the padded
+ * portrait area. The badge uses sideways text, so its width stays constant
+ * regardless of the round number's digit count.
+ */
+export const ROUND_BADGE_WIDTH = 64;
 
 export interface TrackerLayout {
     /** Number of portrait columns to render. */
@@ -24,6 +32,12 @@ export interface TrackerLayout {
     itemSize: number;
     /** Width the popover should be resized to in order to fit every column. */
     popoverWidth: number;
+    /** Vertical gap between portraits within a column. */
+    portraitGap: number;
+    /** Padding on the top and bottom of the portrait column. */
+    verticalPadding: number;
+    /** Padding on the left and right of the portrait columns. */
+    horizontalPadding: number;
 }
 
 /**
@@ -31,35 +45,56 @@ export interface TrackerLayout {
  * see. When many creatures are present the portraits are wrapped into multiple
  * columns instead of shrinking a single column indefinitely.
  */
-export function computeTrackerLayout(count: number, viewportHeight: number): TrackerLayout {
+export function computeTrackerLayout(
+    count: number,
+    viewportHeight: number,
+    settings: LayoutSettings = DEFAULT_LAYOUT_SETTINGS,
+): TrackerLayout {
+    const {
+        portraitGap,
+        columnGap,
+        verticalPadding,
+        maxPortraitSize,
+        minPortraitSize,
+        horizontalPadding,
+    } = settings;
+
     const safeCount = Math.max(1, count);
-    const available = Math.max(1, viewportHeight - VERTICAL_PADDING);
+    const available = Math.max(1, viewportHeight - verticalPadding * 2);
 
     // How many portraits fit in one column before they would drop below the
     // minimum readable size.
     const perColumnMax = Math.max(
         1,
-        Math.floor((available + PORTRAIT_GAP) / (MIN_PORTRAIT_SIZE + PORTRAIT_GAP)),
+        Math.floor((available + portraitGap) / (minPortraitSize + portraitGap)),
     );
 
     const columns = Math.max(1, Math.ceil(safeCount / perColumnMax));
     const itemsPerColumn = Math.max(1, Math.ceil(safeCount / columns));
 
     const itemSize = Math.min(
-        MAX_PORTRAIT_SIZE,
-        (available - (itemsPerColumn - 1) * PORTRAIT_GAP) / itemsPerColumn,
+        maxPortraitSize,
+        (available - (itemsPerColumn - 1) * portraitGap) / itemsPerColumn,
     );
 
-    const popoverWidth = Math.max(
-        MIN_POPOVER_WIDTH,
-        Math.round(columns * itemSize + (columns - 1) * COLUMN_GAP + HORIZONTAL_PADDING),
+    const popoverWidth = Math.round(
+        columns * itemSize + (columns - 1) * columnGap + horizontalPadding * 2 + ROUND_BADGE_WIDTH,
     );
 
-    return { columns, itemsPerColumn, itemSize, popoverWidth };
+    return {
+        columns,
+        itemsPerColumn,
+        itemSize,
+        popoverWidth,
+        portraitGap,
+        verticalPadding,
+        horizontalPadding,
+    };
 }
 
 /** Reactively computes the tracker layout from the creature count and window height. */
 export function useTrackerLayout(count: number): TrackerLayout {
+    const settings = useLayoutSettings();
     const [viewportHeight, setViewportHeight] = useState(() =>
         typeof window === "undefined" ? 0 : window.innerHeight,
     );
@@ -71,7 +106,7 @@ export function useTrackerLayout(count: number): TrackerLayout {
     }, []);
 
     return useMemo(
-        () => computeTrackerLayout(count, viewportHeight),
-        [count, viewportHeight],
+        () => computeTrackerLayout(count, viewportHeight, settings),
+        [count, viewportHeight, settings],
     );
 }

@@ -47,7 +47,15 @@ export function SettingsPanel() {
         setClientsLoading(true);
         try {
             const res = await api.getConnectedClients();
-            setConnectedClients(res.clients);
+            const ownIds = new Set(api.getOwnClientIds());
+            // Hide our own connection(s) — we already know we're connected.
+            const filtered = res.clients
+                .map((room) => {
+                    const clients = room.clients.filter((c) => !ownIds.has(c.id));
+                    return { ...room, clients, clientCount: clients.length };
+                })
+                .filter((room) => room.clients.length > 0);
+            setConnectedClients(filtered);
         } catch {
             setConnectedClients([]);
         } finally {

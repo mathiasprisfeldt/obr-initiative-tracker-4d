@@ -1,8 +1,10 @@
+import { randomUUID } from "crypto";
 import { WebSocket } from "ws";
 import { getAllRoomStates, upsertRoomState } from "../db.js";
 import { ClientAction, ServerAction, type ClientMessage } from "../api-client.js";
 
 export interface ClientInfo {
+    id: string;
     connectedAt: string;
     lastPing: string | null;
 }
@@ -35,6 +37,7 @@ export class Room {
     async addClient(ws: WebSocket): Promise<void> {
         this.clients.add(ws);
         const info: ClientInfo = {
+            id: randomUUID(),
             connectedAt: new Date().toISOString(),
             lastPing: null,
         };
@@ -44,6 +47,7 @@ export class Room {
         await this.ensureLoaded();
 
         const states = Object.fromEntries(this.state);
+        ws.send(JSON.stringify({ action: ServerAction.Welcome, clientId: info.id }));
         ws.send(JSON.stringify({ action: ServerAction.StateSync, states }));
         ws.on("message", (raw) => {
             try {

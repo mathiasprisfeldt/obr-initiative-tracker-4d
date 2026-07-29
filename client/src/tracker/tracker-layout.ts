@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DEFAULT_LAYOUT_SETTINGS, type LayoutSettings } from "../store/layout-settings-store";
+import { DEFAULT_LAYOUT_SETTINGS, type LayoutSettings } from "./layout-settings";
 
 // Default layout parameters. These remain exported for backwards compatibility
 // and as fallbacks while room state is loading or when an older saved room state

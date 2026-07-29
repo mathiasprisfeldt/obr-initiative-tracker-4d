@@ -1,18 +1,10 @@
-/**
- * All tunable tracker layout parameters. Stored in the shared tracker room state.
- */
+/** All tunable tracker layout parameters stored in the shared room state. */
 export interface LayoutSettings {
-    /** Vertical gap between portraits within a column. */
     portraitGap: number;
-    /** Horizontal gap between portrait columns. */
     columnGap: number;
-    /** Padding applied to the top and bottom of the portrait column. */
     verticalPadding: number;
-    /** Largest a portrait is allowed to grow to. */
     maxPortraitSize: number;
-    /** Once portraits would shrink below this, add another column instead. */
     minPortraitSize: number;
-    /** Padding applied to the left and right of the portrait columns. */
     horizontalPadding: number;
 }
 
@@ -28,14 +20,13 @@ export const DEFAULT_LAYOUT_SETTINGS: LayoutSettings = {
 export interface LayoutSettingField {
     key: keyof LayoutSettings;
     label: string;
-    /** Human readable explanation of what the parameter controls. */
     description: string;
     min: number;
     max: number;
     step: number;
 }
 
-/** Metadata used to drive the settings UI (sliders, ranges, labels). */
+/** Metadata used to drive the settings UI. */
 export const LAYOUT_SETTING_FIELDS: LayoutSettingField[] = [
     {
         key: "maxPortraitSize",

@@ -13,7 +13,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
     DEFAULT_LAYOUT_SETTINGS,
     LAYOUT_SETTING_FIELDS,
-} from "../../store/layout-settings-store";
+} from "../../tracker/layout-settings";
 import { useTrackerStore } from "../../store/tracker-store";
 
 export function LayoutSettingsPanel() {

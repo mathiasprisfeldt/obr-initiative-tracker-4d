@@ -5,7 +5,7 @@ import { useApi } from "./settings-store";
 import {
     DEFAULT_LAYOUT_SETTINGS,
     type LayoutSettings,
-} from "./layout-settings-store";
+} from "../tracker/layout-settings";
 
 const TRACKER_STATE_KEY = "tracker";
 

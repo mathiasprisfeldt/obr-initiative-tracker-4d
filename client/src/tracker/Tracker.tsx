@@ -33,7 +33,7 @@ export function Tracker() {
 function Content({ tracker }: { tracker: TrackerResult }) {
     const { state, connectionStatus } = tracker;
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
-    const layout = useTrackerLayout(state?.characters.length ?? 0);
+    const layout = useTrackerLayout(state?.characters.length ?? 0, state?.layoutSettings);
 
     // Widen the popover so extra portrait columns are fully visible.
     useEffect(() => {

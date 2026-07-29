@@ -13,11 +13,17 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
     DEFAULT_LAYOUT_SETTINGS,
     LAYOUT_SETTING_FIELDS,
-    useLayoutSettingsStore,
 } from "../../store/layout-settings-store";
+import { useTrackerStore } from "../../store/tracker-store";
 
 export function LayoutSettingsPanel() {
-    const { settings, setSetting, resetSetting, reset } = useLayoutSettingsStore();
+    const { state, updateLayoutSettings } = useTrackerStore();
+    const settings = state.layoutSettings ?? DEFAULT_LAYOUT_SETTINGS;
+    const setSetting = (key: keyof typeof settings, value: number) =>
+        updateLayoutSettings({ ...settings, [key]: value });
+    const resetSetting = (key: keyof typeof settings) =>
+        updateLayoutSettings({ ...settings, [key]: DEFAULT_LAYOUT_SETTINGS[key] });
+    const reset = () => updateLayoutSettings({ ...DEFAULT_LAYOUT_SETTINGS });
 
     const isDefault = LAYOUT_SETTING_FIELDS.every(
         (field) => settings[field.key] === DEFAULT_LAYOUT_SETTINGS[field.key],
@@ -26,8 +32,8 @@ export function LayoutSettingsPanel() {
     return (
         <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
-                Tune the tracker layout to match your setup. Changes are saved on this device and
-                apply to the tracker on the fly.
+                Tune the tracker layout for everyone in this room. Changes apply to connected
+                trackers on the fly.
             </Typography>
             {LAYOUT_SETTING_FIELDS.map((field) => {
                 const fieldIsDefault = settings[field.key] === DEFAULT_LAYOUT_SETTINGS[field.key];

@@ -1,13 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-    DEFAULT_LAYOUT_SETTINGS,
-    type LayoutSettings,
-    useLayoutSettings,
-} from "../store/layout-settings-store";
+import { DEFAULT_LAYOUT_SETTINGS, type LayoutSettings } from "../store/layout-settings-store";
 
 // Default layout parameters. These remain exported for backwards compatibility
-// and as fallbacks; the live values come from the layout settings store so each
-// user can tweak them on the fly.
+// and as fallbacks while room state is loading or when an older saved room state
+// does not contain layout settings yet.
 export const PORTRAIT_GAP = DEFAULT_LAYOUT_SETTINGS.portraitGap;
 export const COLUMN_GAP = DEFAULT_LAYOUT_SETTINGS.columnGap;
 export const VERTICAL_PADDING = DEFAULT_LAYOUT_SETTINGS.verticalPadding;
@@ -93,8 +89,7 @@ export function computeTrackerLayout(
 }
 
 /** Reactively computes the tracker layout from the creature count and window height. */
-export function useTrackerLayout(count: number): TrackerLayout {
-    const settings = useLayoutSettings();
+export function useTrackerLayout(count: number, settings?: LayoutSettings): TrackerLayout {
     const [viewportHeight, setViewportHeight] = useState(() =>
         typeof window === "undefined" ? 0 : window.innerHeight,
     );
@@ -106,7 +101,7 @@ export function useTrackerLayout(count: number): TrackerLayout {
     }, []);
 
     return useMemo(
-        () => computeTrackerLayout(count, viewportHeight, settings),
+        () => computeTrackerLayout(count, viewportHeight, settings ?? DEFAULT_LAYOUT_SETTINGS),
         [count, viewportHeight, settings],
     );
 }

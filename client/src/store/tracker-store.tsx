@@ -2,6 +2,10 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { useRoomConnection, type RoomConnectionStatus } from "../hooks/use-room-connection";
 import type { RoomConnectionLogEntry } from "obr-initiative-tracker-4d-backend/api-client";
 import { useApi } from "./settings-store";
+import {
+    DEFAULT_LAYOUT_SETTINGS,
+    type LayoutSettings,
+} from "./layout-settings-store";
 
 const TRACKER_STATE_KEY = "tracker";
 
@@ -32,6 +36,7 @@ export interface TrackerState {
     hasEncounterStarted: boolean;
     isDisplayed: boolean;
     previousEncounters?: CombatHistoryEntry[];
+    layoutSettings: LayoutSettings;
 }
 
 export interface TrackerStore {
@@ -50,6 +55,7 @@ export interface TrackerStore {
     endEncounter(): void;
     toggleDisplay(): void;
     clearPreviousEncounters(): void;
+    updateLayoutSettings(settings: LayoutSettings): void;
 }
 
 const context = createContext<TrackerStore>({
@@ -58,6 +64,7 @@ const context = createContext<TrackerStore>({
         round: 1,
         hasEncounterStarted: false,
         isDisplayed: true,
+        layoutSettings: DEFAULT_LAYOUT_SETTINGS,
     },
     isLoading: true,
     canStartEncounter: false,
@@ -73,6 +80,7 @@ const context = createContext<TrackerStore>({
     endEncounter: () => {},
     toggleDisplay: () => {},
     clearPreviousEncounters: () => {},
+    updateLayoutSettings: () => {},
 });
 
 export interface TrackerResult {
@@ -111,7 +119,7 @@ export function useTracker(): TrackerResult {
 
 function cleanUpStateForClient(state: TrackerState) {
     return {
-        ...state,
+        ...normalizeTrackerState(state),
         // remove draft characters and dead characters
         characters: state.characters.filter(
             (c) =>
@@ -142,6 +150,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         round: 1,
         hasEncounterStarted: false,
         isDisplayed: true,
+        layoutSettings: { ...DEFAULT_LAYOUT_SETTINGS },
     });
 
     const canStartEncounter = useMemo(() => {
@@ -159,7 +168,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             } else {
                 hasReceivedInitialStateRef.current = true;
                 if (serverState) {
-                    setState(serverState);
+                    setState(normalizeTrackerState(serverState));
                 } else {
                     room.updateState(stateRef.current);
                 }
@@ -167,7 +176,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             setIsLoading(false);
         },
         onStateChanged: (incomingState) => {
-            setState(incomingState);
+            setState(normalizeTrackerState(incomingState));
         },
     });
 
@@ -330,6 +339,10 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                         previousEncounters: [],
                     }));
                 },
+
+                updateLayoutSettings: (layoutSettings: LayoutSettings) => {
+                    setState((prevState) => ({ ...prevState, layoutSettings }));
+                },
             }}
         >
             {children}
@@ -354,4 +367,11 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             round: nextTurnIndex === 0 ? state.round + 1 : state.round,
         };
     }
+}
+
+function normalizeTrackerState(state: TrackerState): TrackerState {
+    return {
+        ...state,
+        layoutSettings: state.layoutSettings ?? { ...DEFAULT_LAYOUT_SETTINGS },
+    };
 }

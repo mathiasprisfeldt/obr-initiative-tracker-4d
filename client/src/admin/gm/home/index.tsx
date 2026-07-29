@@ -11,10 +11,12 @@ import {
     List,
     ListItem,
     ListItemText,
-    Popover,
+    Dialog,
+    DialogContent,
+    DialogTitle,
     Tooltip,
 } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Close, Visibility, VisibilityOff } from "@mui/icons-material";
 import TuneIcon from "@mui/icons-material/Tune";
 import { useState } from "react";
 import { LayoutSettingsPanel } from "../LayoutSettingsPanel";
@@ -42,7 +44,7 @@ function Content({
 }: {
     trackerStore: TrackerStore;
 }) {
-    const [layoutAnchor, setLayoutAnchor] = useState<HTMLElement | null>(null);
+    const [layoutDialogOpen, setLayoutDialogOpen] = useState(false);
 
     if (isLoading) return <LinearProgress />;
 
@@ -55,23 +57,43 @@ function Content({
                 <Tooltip title="Layout settings">
                     <IconButton
                         size="small"
-                        onClick={(e) => setLayoutAnchor(e.currentTarget)}
+                        onClick={() => setLayoutDialogOpen(true)}
                         aria-label="Layout settings"
                     >
                         <TuneIcon />
                     </IconButton>
                 </Tooltip>
             </Stack>
-            <Popover
-                open={Boolean(layoutAnchor)}
-                anchorEl={layoutAnchor}
-                onClose={() => setLayoutAnchor(null)}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                slotProps={{ paper: { sx: { p: 2, width: 320, maxWidth: "90vw" } } }}
+            <Dialog
+                open={layoutDialogOpen}
+                onClose={() => setLayoutDialogOpen(false)}
+                fullWidth
+                maxWidth="sm"
+                aria-labelledby="layout-settings-title"
+                slotProps={{
+                    paper: {
+                        sx: {
+                            m: 1,
+                            width: "calc(100% - 16px)",
+                            maxHeight: "calc(100% - 16px)",
+                        },
+                    },
+                }}
             >
-                <LayoutSettingsPanel />
-            </Popover>
+                <DialogTitle id="layout-settings-title" sx={{ pr: 6 }}>
+                    Tracker layout
+                </DialogTitle>
+                <IconButton
+                    aria-label="Close layout settings"
+                    onClick={() => setLayoutDialogOpen(false)}
+                    sx={{ position: "absolute", right: 8, top: 8 }}
+                >
+                    <Close />
+                </IconButton>
+                <DialogContent dividers sx={{ p: 2 }}>
+                    <LayoutSettingsPanel />
+                </DialogContent>
+            </Dialog>
 
             <CharacterTable>
                 <CharacterRowHeader />

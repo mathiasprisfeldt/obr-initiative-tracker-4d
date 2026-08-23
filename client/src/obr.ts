@@ -30,8 +30,13 @@ const mockOBR = {
         },
     },
     player: {
+        getId: async () => "dev-gm",
         getRole: async () =>
             (window.location.pathname.includes("/tracker/") ? "PLAYER" : "GM") as "GM" | "PLAYER",
+        getMetadata: async () => ({ ...metadata }),
+        setMetadata: async (meta: Record<string, unknown>) => {
+            Object.assign(metadata, meta);
+        },
     },
     theme: {
         getTheme: async (): Promise<Theme> =>

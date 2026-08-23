@@ -20,6 +20,8 @@ export interface UseRoomConnectionResult<T> {
 
 export interface UseRoomConnectionOptions<T> {
     key: string;
+    /** Override the OBR room ID, for backend state that follows a user. */
+    roomId?: string;
     onInitialState: (state: T | undefined) => void;
     onStateChanged: (state: T) => void;
     onConnected?: () => void;
@@ -39,14 +41,14 @@ export function useRoomConnection<T>(
     optionsRef.current = options;
 
     useEffect(() => {
-        if (!api) {
+        if (!api || optionsRef.current.roomId === "") {
             setStatus("idle");
             return;
         }
 
         setStatus("connecting");
 
-        const connection = api.connectRoom(OBR.room.id, {
+        const connection = api.connectRoom(optionsRef.current.roomId ?? OBR.room.id, {
             onInitialState: (states) => {
                 const state = states.get(optionsRef.current.key) as T | undefined;
                 optionsRef.current.onInitialState(state);
@@ -80,7 +82,7 @@ export function useRoomConnection<T>(
             connectionRef.current = null;
             setStatus("idle");
         };
-    }, [api]);
+    }, [api, options.roomId]);
 
     return {
         status,

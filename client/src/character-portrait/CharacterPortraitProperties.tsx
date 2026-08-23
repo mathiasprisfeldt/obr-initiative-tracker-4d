@@ -1,7 +1,8 @@
-import { Button, TableCell, TableRow, TextField, Tooltip, Typography } from "@mui/material";
+import { Button, TableCell, TableRow, Tooltip, Typography } from "@mui/material";
 import { PortraitImage } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
 import { MouseEventHandler } from "react";
+import { ImagePositionInput } from "./ImagePositionInput";
 
 interface Props {
     portraitImage: PortraitImage;
@@ -38,10 +39,9 @@ export function CharacterPortraitProperties({
                 <Typography>{portraitImage.displayName}</Typography>
             </TableCell>
             <TableCell>
-                <TextField
-                    label="Position"
+                <ImagePositionInput
                     value={portraitImage.position}
-                    onChange={(e) => onPositionChanged?.(e.target.value)}
+                    onChange={onPositionChanged}
                 />
             </TableCell>
         </TableRow>

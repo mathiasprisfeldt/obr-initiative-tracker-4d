@@ -51,7 +51,9 @@ function Content({ tracker }: { tracker: TrackerResult }) {
                     <>
                         <StyledCharacterRow
                             characters={state.characters}
-                            currentCharacter={state.currentCharacter}
+                            currentCharacter={state.characters.find(
+                                (character) => character.id === state.currentCharacterId,
+                            )}
                             visible={!!visible}
                             itemSize={layout.itemSize}
                             gap={layout.portraitGap}

@@ -2,7 +2,7 @@ import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { Box, CssBaseline, Tab, Typography } from "@mui/material";
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import Tracker from "./home";
+import Tracker, { HistoryPane } from "./home";
 import { SettingsPanel } from "./SettingsPanel";
 import { CharacterPortraitBorderSettings } from "../../character-portrait/CharacterPortraitBorderSettings";
 import { CharacterPortraitSettings } from "../../character-portrait/CharacterPortraitSettings";
@@ -37,24 +37,32 @@ export default function Admin() {
         <Box sx={{ width: "100%", typography: "body1", color: "white" }}>
             <TabContext value={value}>
                 <Box sx={{ borderBottom: 1, borderColor: "divider", position: "relative" }}>
-                    <TabList onChange={(_event, newValue) => setValue(newValue)}>
+                    <TabList
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        onChange={(_event, newValue) => setValue(newValue)}
+                    >
                         <Tab label="Home" value="1" />
-                        <Tab label="Portraits" value="2" />
-                        <Tab label="Borders" value="3" />
-                        <Tab label="Settings" value="4" />
+                        <Tab label="History" value="2" />
+                        <Tab label="Portraits" value="3" />
+                        <Tab label="Borders" value="4" />
+                        <Tab label="Settings" value="5" />
                     </TabList>
-                    <RoomConnectionIndicator onClick={() => setValue("4")} />
+                    <RoomConnectionIndicator onClick={() => setValue("5")} />
                 </Box>
                 <TabPanel value="1">
                     <Tracker />
                 </TabPanel>
                 <TabPanel value="2">
-                    <CharacterPortraitSettings />
+                    <HistoryPane />
                 </TabPanel>
                 <TabPanel value="3">
-                    <CharacterPortraitBorderSettings />
+                    <CharacterPortraitSettings />
                 </TabPanel>
                 <TabPanel value="4">
+                    <CharacterPortraitBorderSettings />
+                </TabPanel>
+                <TabPanel value="5">
                     <SettingsPanel />
                 </TabPanel>
             </TabContext>

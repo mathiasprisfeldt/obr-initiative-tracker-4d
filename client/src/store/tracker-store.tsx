@@ -2,86 +2,74 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { useRoomConnection, type RoomConnectionStatus } from "../hooks/use-room-connection";
 import type { RoomConnectionLogEntry } from "obr-initiative-tracker-4d-backend/api-client";
 import { useApi } from "./settings-store";
+import type { LayoutSettings } from "../tracker/layout-settings";
 import {
-    DEFAULT_LAYOUT_SETTINGS,
-    type LayoutSettings,
-} from "../tracker/layout-settings";
+    appendTrackerEvent,
+    createCharacter,
+    createInitialTrackerDocument,
+    deriveTrackerState,
+    normalizeTrackerDocument,
+    numberDuplicateCharacters,
+    snapshotCombatant,
+    toLocalDate,
+    type Character,
+    type CharacterProperties,
+    type CombatEvent,
+    type Encounter,
+    type GameSession,
+    type LegacyTrackerState,
+    type TrackerDocument,
+    type TrackerEvent,
+    type TrackerState,
+} from "./tracker-domain";
+
+export type {
+    ActiveEncounter,
+    Character,
+    CharacterProperties,
+    CombatEvent,
+    CombatantSnapshot,
+    Encounter,
+    GameSession,
+    TrackerDocument,
+    TrackerEvent,
+    TrackerState,
+} from "./tracker-domain";
 
 const TRACKER_STATE_KEY = "tracker";
 
-export interface Character {
-    id: string;
-    properties: CharacterProperties;
-}
-
-export interface CharacterProperties {
-    name: string;
-    initiative: number;
-    health: number;
-    maxHealth: number;
-    portraitImageId: string | null;
-    hideName: boolean;
-}
-
-export interface CombatHistoryEntry {
-    participants: string[];
-    rounds: number;
-    endedAt: string;
-}
-
-export interface TrackerState {
-    characters: Character[];
-    currentCharacter?: Character;
-    round: number;
-    hasEncounterStarted: boolean;
-    isDisplayed: boolean;
-    previousEncounters?: CombatHistoryEntry[];
-    layoutSettings: LayoutSettings;
-}
-
 export interface TrackerStore {
     state: TrackerState;
+    events: TrackerEvent[];
+    cursor: number;
     isLoading: boolean;
     canStartEncounter: boolean;
+    canUndo: boolean;
+    canRedo: boolean;
     roomConnectionStatus: RoomConnectionStatus;
-
     updateCharacter(id: string, properties: CharacterProperties): void;
+    deleteCharacter(id: string): void;
     sortCharacters(): void;
-
     previousTurn(): void;
     nextTurn(): void;
-
     startEncounter(): void;
     endEncounter(): void;
+    deleteEncounter(sessionId: string, encounterId: string): void;
+    renameCompletedEncounter(sessionId: string, encounterId: string, name: string): void;
+    renameEncounter(name: string): void;
+    setDraftEncounterName(name: string): void;
+    renameSession(sessionId: string, name: string): void;
+    endSession(sessionId: string): void;
+    deleteSession(sessionId: string): void;
+    recordCombat(targetId: string, type: "damage" | "healing", amount: number): void;
+    undo(): void;
+    redo(): void;
     toggleDisplay(): void;
-    clearPreviousEncounters(): void;
     updateLayoutSettings(settings: LayoutSettings): void;
 }
 
-const context = createContext<TrackerStore>({
-    state: {
-        characters: [],
-        round: 1,
-        hasEncounterStarted: false,
-        isDisplayed: true,
-        layoutSettings: DEFAULT_LAYOUT_SETTINGS,
-    },
-    isLoading: true,
-    canStartEncounter: false,
-    roomConnectionStatus: "idle",
-
-    updateCharacter: () => {},
-    sortCharacters: () => {},
-
-    previousTurn: () => {},
-    nextTurn: () => {},
-
-    startEncounter: () => {},
-    endEncounter: () => {},
-    toggleDisplay: () => {},
-    clearPreviousEncounters: () => {},
-    updateLayoutSettings: () => {},
-});
+const emptyDocument = createInitialTrackerDocument();
+const context = createContext<TrackerStore>(null!);
 
 export interface TrackerResult {
     state: TrackerState | undefined;
@@ -96,282 +84,356 @@ export function useTrackerStore(): TrackerStore {
 
 export function useTracker(): TrackerResult {
     const [state, setState] = useState<TrackerState>();
-
-    const room = useRoomConnection<TrackerState>({
+    const room = useRoomConnection<TrackerDocument | LegacyTrackerState>({
         key: TRACKER_STATE_KEY,
         onInitialState: (serverState) => {
-            if (serverState) {
-                setState(cleanUpStateForClient(serverState));
-            }
+            if (serverState) setState(cleanUpStateForClient(deriveTrackerState(normalizeTrackerDocument(serverState))));
         },
         onStateChanged: (incomingState) => {
-            setState(cleanUpStateForClient(incomingState));
+            setState(cleanUpStateForClient(deriveTrackerState(normalizeTrackerDocument(incomingState))));
         },
     });
-
-    return {
-        state,
-        connectionStatus: room.status,
-        logs: room.logs,
-        reconnect: room.reconnect,
-    };
+    return { state, connectionStatus: room.status, logs: room.logs, reconnect: room.reconnect };
 }
 
-function cleanUpStateForClient(state: TrackerState) {
+function cleanUpStateForClient(state: TrackerState): TrackerState {
     return {
-        ...normalizeTrackerState(state),
-        // remove draft characters and dead characters
+        ...state,
         characters: state.characters.filter(
-            (c) =>
-                c.properties.name.trim() !== "" &&
-                !(c.properties.maxHealth > 0 && c.properties.health <= 0),
+            (character) =>
+                character.properties.name.trim() !== "" &&
+                (character.properties.isPlayerCharacter ||
+                    !(character.properties.maxHealth > 0 && character.properties.health <= 0)),
         ),
     };
 }
 
 export function TrackerStoreProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
+    const [document, setDocument] = useState<TrackerDocument>(emptyDocument);
+    const documentRef = useRef(document);
     const hasReceivedInitialStateRef = useRef(false);
-    const stateRef = useRef<TrackerState>(null!);
-    const [state, setState] = useState<TrackerState>({
-        characters: [
-            {
-                id: crypto.randomUUID(),
-                properties: {
-                    name: "",
-                    initiative: 0,
-                    health: 0,
-                    maxHealth: 0,
-                    portraitImageId: null,
-                    hideName: false,
-                },
-            },
-        ],
-        round: 1,
-        hasEncounterStarted: false,
-        isDisplayed: true,
-        layoutSettings: { ...DEFAULT_LAYOUT_SETTINGS },
-    });
+    const state = useMemo(() => deriveTrackerState(document), [document]);
+    documentRef.current = document;
 
-    const canStartEncounter = useMemo(() => {
-        return state.characters.length > 1;
-    }, [state.characters.length]);
-
-    stateRef.current = state;
-
-    const room = useRoomConnection<TrackerState>({
+    const room = useRoomConnection<TrackerDocument | LegacyTrackerState>({
         key: TRACKER_STATE_KEY,
         onInitialState: (serverState) => {
             if (hasReceivedInitialStateRef.current) {
-                // Reconnect — local state takes priority over stale server state
-                room.updateState(stateRef.current);
+                room.updateState(documentRef.current);
             } else {
                 hasReceivedInitialStateRef.current = true;
                 if (serverState) {
-                    setState(normalizeTrackerState(serverState));
+                    const incoming = normalizeTrackerDocument(serverState);
+                    documentRef.current = incoming;
+                    setDocument(incoming);
                 } else {
-                    room.updateState(stateRef.current);
+                    room.updateState(documentRef.current);
                 }
             }
             setIsLoading(false);
         },
         onStateChanged: (incomingState) => {
-            setState(normalizeTrackerState(incomingState));
+            const incoming = normalizeTrackerDocument(incomingState);
+            documentRef.current = incoming;
+            setDocument(incoming);
         },
     });
 
-    // Keepalive: ping the backend health endpoint every 10 minutes
-    // to prevent the service from shutting down due to inactivity.
     const api = useApi();
     useEffect(() => {
         if (!api) return;
-        const intervalMs = 10 * 60 * 1000;
-        const id = setInterval(() => api.isHealthy(), intervalMs);
+        const id = setInterval(() => api.isHealthy(), 10 * 60 * 1000);
         return () => clearInterval(id);
     }, [api]);
 
-    useEffect(() => {
-        room.updateState(state);
-    }, [state]);
-
-    return (
-        <context.Provider
-            value={{
-                state,
-                isLoading: isLoading,
-                canStartEncounter: canStartEncounter,
-                roomConnectionStatus: room.status,
-
-                updateCharacter: (id: string, properties: CharacterProperties) => {
-                    setState((prevState) => {
-                        if (properties.health > properties.maxHealth) {
-                            properties.maxHealth = properties.health;
-                        }
-
-                        const updatedCharacters = prevState.characters.map((c) =>
-                            c.id === id ? { id, properties } : c,
-                        );
-
-                        // Add new placeholder character if this one is new
-                        if (!prevState.characters.find((c) => c.id === id)?.properties.name) {
-                            updatedCharacters.push({
-                                id: crypto.randomUUID(),
-                                properties: {
-                                    name: "",
-                                    initiative: 0,
-                                    health: 0,
-                                    maxHealth: 0,
-                                    portraitImageId: null,
-                                    hideName: false,
-                                },
-                            });
-                        }
-
-                        // Remove character if name is cleared
-                        if (properties.name.trim() === "") {
-                            // Advance turn if the current character is being removed
-                            if (prevState.currentCharacter?.id === id) {
-                                return {
-                                    ...nextTurn(prevState),
-                                    characters: updatedCharacters.filter((c) => c.id !== id),
-                                };
-                            }
-
-                            return {
-                                ...prevState,
-                                characters: updatedCharacters.filter((c) => c.id !== id),
-                            };
-                        }
-
-                        return {
-                            ...prevState,
-                            characters: updatedCharacters,
-                        };
-                    });
-                },
-
-                sortCharacters: () => {
-                    setState((prevState) => ({
-                        ...prevState,
-                        characters: prevState.characters.sort((a, b) => {
-                            // Ensure draft characters are sorted last
-                            if (!b.properties.name) return -1;
-                            if (!a.properties.name) return 1;
-
-                            return (b.properties.initiative || 0) - (a.properties.initiative || 0);
-                        }),
-                    }));
-                },
-
-                previousTurn: () => {
-                    setState((prevState) => {
-                        const currentCharacterIndex = prevState.characters.findIndex(
-                            (c) => c.id === prevState.currentCharacter?.id,
-                        );
-                        let previousTurnIndex = currentCharacterIndex - 1;
-
-                        // Go back to previous round if at the start of the current round
-                        if (previousTurnIndex < 0) {
-                            if (prevState.round === 1) {
-                                return prevState; // No previous turn if already at round 1
-                            }
-
-                            previousTurnIndex = prevState.characters.length - 2;
-                        }
-
-                        return {
-                            ...prevState,
-                            currentCharacter: prevState.characters[previousTurnIndex],
-                            round:
-                                previousTurnIndex === prevState.characters.length - 2
-                                    ? prevState.round - 1
-                                    : prevState.round,
-                        };
-                    });
-                },
-
-                nextTurn: () => {
-                    setState((prevState) => nextTurn(prevState));
-                },
-
-                startEncounter: () => {
-                    setState((prevState) => ({
-                        ...prevState,
-                        hasEncounterStarted: true,
-                        currentCharacter: prevState.characters[0],
-                        round: 1,
-                    }));
-                },
-
-                endEncounter: () => {
-                    setState((prevState) => {
-                        const entry: CombatHistoryEntry = {
-                            participants: prevState.characters
-                                .filter((c) => c.properties.name.trim() !== "")
-                                .map((c) => c.properties.name),
-                            rounds: prevState.round,
-                            endedAt: new Date().toISOString(),
-                        };
-                        const history = [entry, ...(prevState.previousEncounters ?? [])].slice(
-                            0,
-                            3,
-                        );
-                        return {
-                            ...prevState,
-                            hasEncounterStarted: false,
-                            currentCharacter: undefined,
-                            round: 1,
-                            previousEncounters: history,
-                        };
-                    });
-                },
-
-                toggleDisplay: () => {
-                    setState((prevState) => ({
-                        ...prevState,
-                        isDisplayed: !prevState.isDisplayed,
-                    }));
-                },
-
-                clearPreviousEncounters: () => {
-                    setState((prevState) => ({
-                        ...prevState,
-                        previousEncounters: [],
-                    }));
-                },
-
-                updateLayoutSettings: (layoutSettings: LayoutSettings) => {
-                    setState((prevState) => ({ ...prevState, layoutSettings }));
-                },
-            }}
-        >
-            {children}
-        </context.Provider>
-    );
-
-    function nextTurn(state: TrackerState): TrackerState {
-        if (state.currentCharacter === undefined) {
-            return {
-                ...state,
-                currentCharacter: state.characters[0],
-            };
-        }
-
-        const nextTurnIndex =
-            (state.characters.findIndex((c) => c.id === state.currentCharacter?.id) + 1) %
-            (state.characters.length - 1);
-
-        return {
-            ...state,
-            currentCharacter: state.characters[nextTurnIndex],
-            round: nextTurnIndex === 0 ? state.round + 1 : state.round,
-        };
-    }
-}
-
-function normalizeTrackerState(state: TrackerState): TrackerState {
-    return {
-        ...state,
-        layoutSettings: state.layoutSettings ?? { ...DEFAULT_LAYOUT_SETTINGS },
+    const dispatch = (event: TrackerEvent) => {
+        updateLocalDocument((current) => appendTrackerEvent(current, event));
     };
+    const updateLocalDocument = (update: (current: TrackerDocument) => TrackerDocument) => {
+        const next = update(documentRef.current);
+        documentRef.current = next;
+        setDocument(next);
+        room.updateState(next);
+    };
+    const getCurrentState = () => deriveTrackerState(documentRef.current);
+    const eventBase = (sessionId?: string) => {
+        const current = getCurrentState();
+        const currentSessionId =
+            sessionId ??
+            current.activeEncounter?.sessionId ??
+            current.sessions.find(
+                (session) => session.date === toLocalDate(new Date()) && !session.endedAt,
+            )?.id;
+        return {
+            id: crypto.randomUUID(),
+            timestamp: new Date().toISOString(),
+            sessionId: currentSessionId,
+        };
+    };
+
+    const value: TrackerStore = {
+        state,
+        events: document.events,
+        cursor: document.cursor,
+        isLoading,
+        canStartEncounter:
+            !state.hasEncounterStarted &&
+            state.characters.filter((character) => character.properties.name.trim()).length > 0,
+        canUndo: document.cursor > 0,
+        canRedo: document.cursor < document.events.length,
+        roomConnectionStatus: room.status,
+        updateCharacter: (id, properties) => {
+            const character = getCurrentState().characters.find((item) => item.id === id);
+            if (!character) {
+                dispatch({ ...eventBase(), type: "character-updated", character: { id, properties } });
+                return;
+            }
+            const adjusted = { ...properties };
+            if (!adjusted.isPlayerCharacter && adjusted.health > adjusted.maxHealth) {
+                adjusted.maxHealth = adjusted.health;
+            }
+            if (character.properties.name.trim() && !adjusted.name.trim()) {
+                dispatch({
+                    ...eventBase(),
+                    type: "character-deleted",
+                    characterId: id,
+                    characterName: character.properties.name,
+                });
+                return;
+            }
+            const isNamingDraft =
+                !character.properties.name.trim() && adjusted.name.trim() !== "";
+            const numbered = isNamingDraft
+                ? numberDuplicateCharacters(getCurrentState().characters, {
+                      id,
+                      properties: adjusted,
+                  })
+                : {
+                      character: { id, properties: adjusted },
+                      additionalCharacters: [],
+                  };
+            dispatch({
+                ...eventBase(),
+                type: "character-updated",
+                character: numbered.character,
+                additionalCharacters: numbered.additionalCharacters,
+                previousCharacter: character,
+                newDraftCharacterId: isNamingDraft ? crypto.randomUUID() : undefined,
+            });
+        },
+        deleteCharacter: (characterId) => {
+            const character = getCurrentState().characters.find(
+                (item) => item.id === characterId,
+            );
+            dispatch({
+                ...eventBase(),
+                type: "character-deleted",
+                characterId,
+                characterName: character?.properties.name,
+            });
+        },
+        sortCharacters: () => {
+            const ids = [...getCurrentState().characters]
+                .sort((a, b) => {
+                    if (!b.properties.name) return -1;
+                    if (!a.properties.name) return 1;
+                    return (b.properties.initiative || 0) - (a.properties.initiative || 0);
+                })
+                .map((character) => character.id);
+            dispatch({ ...eventBase(), type: "characters-sorted", characterIds: ids });
+        },
+        previousTurn: () => changeTurn(-1),
+        nextTurn: () => changeTurn(1),
+        startEncounter: () => {
+            const current = getCurrentState();
+            const now = new Date();
+            const date = toLocalDate(now);
+            const activeSession = current.sessions.find(
+                (session) => session.date === date && !session.endedAt,
+            );
+            const session: GameSession =
+                activeSession ?? {
+                    id: crypto.randomUUID(),
+                    date,
+                    name: `Session ${current.sessions.length + 1}`,
+                    encounters: [],
+                };
+            dispatch({
+                ...eventBase(session.id),
+                type: "encounter-started",
+                session,
+                encounter: {
+                    id: crypto.randomUUID(),
+                    sessionId: session.id,
+                    name:
+                        current.draftEncounterName?.trim() ||
+                        `Encounter ${session.encounters.length + 1}`,
+                    startedAt: now.toISOString(),
+                    combatEvents: [],
+                },
+            });
+        },
+        endEncounter: () => {
+            const current = getCurrentState();
+            if (!current.activeEncounter) return;
+            const encounter: Encounter = {
+                id: current.activeEncounter.id,
+                name: current.activeEncounter.name,
+                startedAt: current.activeEncounter.startedAt,
+                endedAt: new Date().toISOString(),
+                rounds: current.round,
+                participants: current.characters
+                    .filter((character) => character.properties.name.trim())
+                    .map(snapshotCombatant),
+                combatEvents: current.activeEncounter.combatEvents,
+            };
+            dispatch({
+                ...eventBase(),
+                type: "encounter-ended",
+                sessionId: current.activeEncounter.sessionId,
+                encounter,
+                remainingCharacters: current.characters.filter(
+                    (character) =>
+                        character.properties.isPlayerCharacter || !character.properties.name.trim(),
+                ),
+            });
+        },
+        deleteEncounter: (sessionId, encounterId) => {
+            const encounter = getCurrentState().sessions
+                .find((session) => session.id === sessionId)
+                ?.encounters.find((item) => item.id === encounterId);
+            if (!encounter) return;
+            dispatch({
+                ...eventBase(),
+                type: "encounter-deleted",
+                sessionId,
+                encounterId,
+                encounterName: encounter.name,
+            });
+        },
+        renameCompletedEncounter: (sessionId, encounterId, name) => {
+            const encounter = getCurrentState().sessions
+                .find((session) => session.id === sessionId)
+                ?.encounters.find((item) => item.id === encounterId);
+            const nextName = name.trim();
+            if (!encounter || !nextName || nextName === encounter.name) return;
+            dispatch({
+                ...eventBase(),
+                type: "completed-encounter-renamed",
+                sessionId,
+                encounterId,
+                previousName: encounter.name,
+                name: nextName,
+            });
+        },
+        renameEncounter: (name) =>
+            dispatch({ ...eventBase(), type: "encounter-renamed", name: name.trim() || "Encounter" }),
+        setDraftEncounterName: (name) =>
+            dispatch({
+                ...eventBase(),
+                type: "encounter-name-drafted",
+                name: name.trim(),
+            }),
+        renameSession: (sessionId, name) =>
+            dispatch({
+                ...eventBase(),
+                type: "session-renamed",
+                sessionId,
+                name: name.trim() || "Session",
+            }),
+        endSession: (sessionId) => {
+            const current = getCurrentState();
+            if (current.hasEncounterStarted) return;
+            const session = current.sessions.find((item) => item.id === sessionId);
+            if (!session || session.endedAt) return;
+            dispatch({
+                ...eventBase(),
+                type: "session-ended",
+                sessionId,
+                endedAt: new Date().toISOString(),
+            });
+        },
+        deleteSession: (sessionId) => {
+            const session = getCurrentState().sessions.find((item) => item.id === sessionId);
+            if (!session?.endedAt) return;
+            dispatch({
+                ...eventBase(),
+                type: "session-deleted",
+                sessionId,
+                sessionName: session.name,
+            });
+        },
+        recordCombat: (targetId, type, amount) => {
+            const current = deriveTrackerState(documentRef.current);
+            const encounter = current.activeEncounter;
+            const target = current.characters.find((character) => character.id === targetId);
+            if (!encounter || !target || !Number.isFinite(amount) || amount <= 0) return;
+            const source = current.characters.find(
+                (character) => character.id === current.currentCharacterId,
+            );
+            const combatEvent: CombatEvent = {
+                id: crypto.randomUUID(),
+                type,
+                timestamp: new Date().toISOString(),
+                sessionId: encounter.sessionId,
+                encounterId: encounter.id,
+                round: current.round,
+                source: source ? snapshotCombatant(source) : undefined,
+                target: snapshotCombatant(target),
+                amount,
+            };
+            const targetHealth = target.properties.isPlayerCharacter
+                ? undefined
+                : Math.max(0, target.properties.health + (type === "healing" ? amount : -amount));
+            const isDifferentSource = !source || source.id !== target.id;
+            const killingBlow = type === "damage" && isDifferentSource && targetHealth === 0 && target.properties.health > 0;
+            const revival = type === "healing" && isDifferentSource && target.properties.health === 0 && targetHealth !== undefined && targetHealth > 0;
+            if (killingBlow || revival) {
+                combatEvent.killingBlow = killingBlow;
+                combatEvent.revival = revival;
+            }
+            dispatch({ ...eventBase(), type: "combat-recorded", event: combatEvent, targetHealth });
+        },
+        undo: () =>
+            updateLocalDocument((current) => ({
+                ...current,
+                cursor: Math.max(0, current.cursor - 1),
+            })),
+        redo: () =>
+            updateLocalDocument((current) => ({
+                ...current,
+                cursor: Math.min(current.events.length, current.cursor + 1),
+            })),
+        toggleDisplay: () => dispatch({ ...eventBase(), type: "display-toggled" }),
+        updateLayoutSettings: (settings) =>
+            dispatch({ ...eventBase(), type: "layout-updated", settings }),
+    };
+
+    return <context.Provider value={value}>{children}</context.Provider>;
+
+    function changeTurn(direction: -1 | 1) {
+        const current = getCurrentState();
+        const characters = current.characters.filter((character) => character.properties.name.trim());
+        if (!characters.length) return;
+        const index = characters.findIndex((character) => character.id === current.currentCharacterId);
+        const currentIndex = index < 0 ? 0 : index;
+        let nextIndex = currentIndex + direction;
+        let round = current.round;
+        if (nextIndex >= characters.length) {
+            nextIndex = 0;
+            round += 1;
+        } else if (nextIndex < 0) {
+            if (round === 1) return;
+            nextIndex = characters.length - 1;
+            round -= 1;
+        }
+        dispatch({
+            ...eventBase(),
+            type: "turn-changed",
+            characterId: characters[nextIndex].id,
+            characterName: characters[nextIndex].properties.name,
+            round,
+        });
+    }
 }

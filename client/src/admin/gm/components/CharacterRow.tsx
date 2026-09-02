@@ -1,49 +1,72 @@
 import { CharacterPortraitPicker } from "../../../character-portrait";
 import {
+    Autocomplete,
     Box,
-    Checkbox,
-    FormControlLabel,
+    Button,
     IconButton,
     ListItemIcon,
     ListItemText,
     Menu,
     MenuItem,
+    Popover,
     Stack,
     TextField,
+    Tooltip,
     Typography,
 } from "@mui/material";
 import { Character } from "../../../store/tracker-store";
 import HealthInput from "./HealthInput";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { Visibility, VisibilityOff, Delete, Circle } from "@mui/icons-material";
+import {
+    Circle,
+    Delete,
+    Favorite,
+    LocalFireDepartment,
+    PersonAddAlt1,
+    SmartToy,
+} from "@mui/icons-material";
 
 interface Props {
     hasTurn: boolean;
+    combatTrackingEnabled: boolean;
     character: Character;
+    portraitNames: string[];
     onNameChange?: (name: string) => void;
-    onHideNameChange?: (hideName: boolean) => void;
+    onNameAndPortraitChange?: (name: string, portraitImageId: string) => void;
+    onPlayerCharacterChange?: (isPlayerCharacter: boolean) => void;
     onInitiativeChange?: (initiative: number) => void;
     onInitiativeSubmit?: () => void;
     onHealthChange?: (health: number) => void;
     onMaxHealthChange?: (maxHealth: number) => void;
+    onDamageTaken?: (amount: number) => void;
+    onHealingReceived?: (amount: number) => void;
     onPortraitImageChange?: (imageId: string | null) => void;
     onDelete?: () => void;
 }
 
 export default function CharacterRow({
     hasTurn,
+    combatTrackingEnabled,
     character,
+    portraitNames,
     onNameChange,
-    onHideNameChange,
+    onNameAndPortraitChange,
+    onPlayerCharacterChange,
     onInitiativeChange,
     onInitiativeSubmit,
     onHealthChange,
     onMaxHealthChange,
+    onDamageTaken,
+    onHealingReceived,
     onPortraitImageChange,
     onDelete,
 }: Props) {
     const isDraft = character.properties.name === "";
+    const [draftName, setDraftName] = useState(character.properties.name);
+    const selectedPortraitNameRef = useRef<string | null>(null);
+    const submittedNameRef = useRef<string | null>(null);
+    const initiativeInputRef = useRef<HTMLInputElement>(null);
 
     const [contextMenu, setContextMenu] = useState<null | HTMLElement>(null);
     const isContextMenuOpen = Boolean(contextMenu);
@@ -51,8 +74,49 @@ export default function CharacterRow({
 
     const turnColor = isDraft ? "disabled" : hasTurn ? "success" : "warning";
 
+    useEffect(() => {
+        setDraftName(character.properties.name);
+        if (submittedNameRef.current === character.properties.name) {
+            submittedNameRef.current = null;
+        }
+    }, [character.properties.name]);
+
+    const submitName = () => {
+        if (submittedNameRef.current === draftName) {
+            submittedNameRef.current = null;
+            return;
+        }
+        if (selectedPortraitNameRef.current === draftName) {
+            selectedPortraitNameRef.current = null;
+            return;
+        }
+        if (draftName !== character.properties.name) onNameChange?.(draftName);
+    };
+
     return (
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            onKeyDownCapture={(event) => {
+                const input = event.target as HTMLInputElement;
+                if (
+                    event.key !== "Tab" ||
+                    event.shiftKey ||
+                    input.dataset.field !== "character-name"
+                ) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                if (input.value !== character.properties.name) {
+                    submittedNameRef.current = input.value;
+                    onNameChange?.(input.value);
+                }
+                input.blur();
+                setTimeout(() => initiativeInputRef.current?.focus());
+            }}
+        >
             <IconButton
                 size="small"
                 disabled={isDraft}
@@ -68,16 +132,48 @@ export default function CharacterRow({
                 )}
             </IconButton>
 
-            <TextField
-                size="small"
-                value={character?.properties.name}
-                onChange={(e) => onNameChange?.(e.target.value)}
+            <Autocomplete
+                freeSolo
+                options={portraitNames}
+                inputValue={draftName}
+                value={null}
+                onInputChange={(_event, value, reason) => {
+                    setDraftName(value);
+                    if (reason === "input") selectedPortraitNameRef.current = null;
+                }}
+                onChange={(_event, value) => {
+                    if (typeof value !== "string" || !value) return;
+                    selectedPortraitNameRef.current = value;
+                    setDraftName(value);
+                    onNameAndPortraitChange?.(value, value);
+                }}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        size="small"
+                        inputProps={{
+                            ...params.inputProps,
+                            "data-field": "character-name",
+                        }}
+                        onBlur={submitName}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" && !event.defaultPrevented) {
+                                event.currentTarget.blur();
+                                setTimeout(() => initiativeInputRef.current?.focus());
+                            } else if (event.key === "Escape") {
+                                setDraftName(character.properties.name);
+                                event.currentTarget.blur();
+                            }
+                        }}
+                    />
+                )}
                 sx={{ mr: 1, flex: 1, minWidth: 0 }}
             />
             <TextField
                 size="small"
                 disabled={isDraft}
                 value={character?.properties.initiative}
+                inputRef={initiativeInputRef}
                 onChange={(e) => {
                     const newValue = Number(e.target.value);
                     if (isNaN(newValue)) return;
@@ -91,13 +187,28 @@ export default function CharacterRow({
                 }}
                 sx={{ mr: 1, width: 60 }}
             />
-            <HealthInput
-                disabled={isDraft}
-                health={character?.properties.health}
-                maxHealth={character?.properties.maxHealth}
-                onHealthChange={onHealthChange}
-                onMaxHealthChange={onMaxHealthChange}
-            />
+            {character.properties.isPlayerCharacter ? (
+                <>
+                    <ActionField
+                        label="Damage"
+                        disabled={!combatTrackingEnabled}
+                        onSubmit={onDamageTaken}
+                    />
+                    <ActionField
+                        label="Healing"
+                        disabled={!combatTrackingEnabled}
+                        onSubmit={onHealingReceived}
+                    />
+                </>
+            ) : (
+                <HealthInput
+                    disabled={isDraft}
+                    health={character?.properties.health}
+                    maxHealth={character?.properties.maxHealth}
+                    onHealthChange={onHealthChange}
+                    onMaxHealthChange={onMaxHealthChange}
+                />
+            )}
             <CharacterPortraitPicker
                 disabled={isDraft}
                 value={character?.properties.portraitImageId}
@@ -129,12 +240,19 @@ export default function CharacterRow({
                     },
                 }}
             >
-                <MenuItem onClick={() => onHideNameChange?.(!character.properties.hideName)}>
+                <MenuItem
+                    onClick={() => {
+                        onPlayerCharacterChange?.(!character.properties.isPlayerCharacter);
+                        setContextMenu(null);
+                    }}
+                >
                     <ListItemIcon>
-                        {character.properties.hideName ? <VisibilityOff /> : <Visibility />}
+                        {character.properties.isPlayerCharacter ? <SmartToy /> : <PersonAddAlt1 />}
                     </ListItemIcon>
                     <ListItemText>
-                        {character.properties.hideName ? "Show name" : "Hide name"}
+                        {character.properties.isPlayerCharacter
+                            ? "Mark as non-player character"
+                            : "Mark as player character"}
                     </ListItemText>
                 </MenuItem>
             </Menu>
@@ -168,5 +286,82 @@ export function CharacterRowHeader() {
             <Box sx={{ width: 40 }} />
             <Box sx={{ width: 40 }} />
         </Stack>
+    );
+}
+
+function ActionField({
+    label,
+    disabled,
+    onSubmit,
+}: {
+    label: string;
+    disabled: boolean;
+    onSubmit?: (amount: number) => void;
+}) {
+    const [value, setValue] = useState("");
+    const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+    const amountInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!anchorElement) return;
+        const focusTimer = window.setTimeout(() => amountInputRef.current?.focus());
+        return () => window.clearTimeout(focusTimer);
+    }, [anchorElement]);
+
+    const submit = () => {
+        const amount = Number(value);
+        if (!Number.isFinite(amount) || amount <= 0) return;
+        onSubmit?.(amount);
+        setValue("");
+        setAnchorElement(null);
+    };
+
+    return (
+        <>
+            <Tooltip title={label}>
+                <span>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        color={label === "Damage" ? "error" : "success"}
+                        aria-label={label}
+                        disabled={disabled}
+                        onClick={(event) => setAnchorElement(event.currentTarget)}
+                        sx={{ width: 60, minWidth: 60, height: 40 }}
+                    >
+                        {label === "Damage" ? <LocalFireDepartment /> : <Favorite />}
+                    </Button>
+                </span>
+            </Tooltip>
+            <Popover
+                open={Boolean(anchorElement)}
+                anchorEl={anchorElement}
+                onClose={() => {
+                    setAnchorElement(null);
+                    setValue("");
+                }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                transformOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Stack
+                    component="form"
+                    sx={{ p: 1.5 }}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        submit();
+                    }}
+                >
+                    <TextField
+                        inputRef={amountInputRef}
+                        size="small"
+                        value={value}
+                        label={`${label} amount`}
+                        inputProps={{ inputMode: "numeric" }}
+                        onChange={(event) => setValue(event.target.value)}
+                        sx={{ width: 120 }}
+                    />
+                </Stack>
+            </Popover>
+        </>
     );
 }

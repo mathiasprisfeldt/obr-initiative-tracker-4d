@@ -64,7 +64,7 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                 }}
             />
             {number && <NumberBadge hasTurn={hasTurn}>{number}</NumberBadge>}
-            {!character.properties.hideName && nameWithoutNumber && (
+            {character.properties.isPlayerCharacter && nameWithoutNumber && (
                 <Name variant="body2" hasTurn={hasTurn}>
                     {nameWithoutNumber}
                 </Name>

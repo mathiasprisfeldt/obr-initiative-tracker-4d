@@ -38,15 +38,13 @@ export function CharacterPortraitProperties({
         <TableRow
             key={portraitImage.url}
             sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+            onMouseEnter={() => setIsPreviewingParticles(true)}
+            onMouseLeave={() => setIsPreviewingParticles(false)}
+            onFocus={() => setIsPreviewingParticles(true)}
+            onBlur={() => setIsPreviewingParticles(false)}
         >
             <TableCell>
-                <Box
-                    sx={{ position: "relative", width: 100, height: 100 }}
-                    onMouseEnter={() => setIsPreviewingParticles(true)}
-                    onMouseLeave={() => setIsPreviewingParticles(false)}
-                    onFocus={() => setIsPreviewingParticles(true)}
-                    onBlur={() => setIsPreviewingParticles(false)}
-                >
+                <Box sx={{ position: "relative", width: 100, height: 100 }}>
                     <Button
                         onClick={onPortraitClicked}
                         disabled={!portraitClickEnabled}

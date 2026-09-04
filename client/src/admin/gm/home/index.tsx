@@ -124,6 +124,7 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
         nextTurn,
         toggleDisplay,
         recordCombat,
+        recordKillingBlow,
         recordRevival,
         renameEncounter,
         setDraftEncounterName,
@@ -352,6 +353,7 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                         onDamageTaken={(amount) =>
                             recordCombat(character.id, "damage", amount)
                         }
+                        onKillingBlow={() => recordKillingBlow(character.id)}
                         onHealingReceived={(amount) =>
                             recordCombat(character.id, "healing", amount)
                         }

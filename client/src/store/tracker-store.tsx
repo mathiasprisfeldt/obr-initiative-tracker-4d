@@ -64,6 +64,7 @@ export interface TrackerStore {
     deleteSession(sessionId: string): void;
     recordCombat(targetId: string, type: "damage" | "healing", amount: number): void;
     recordRevival(targetId: string): void;
+    recordKillingBlow(targetId: string): void;
     replaceDocument(document: TrackerDocument): void;
     undo(): void;
     redo(): void;
@@ -178,7 +179,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         targetId: string,
         type: "damage" | "healing",
         amount: number,
-        isRevival = false,
+        forcedResult?: "killing-blow" | "revival",
     ) => {
         const current = deriveTrackerState(documentRef.current);
         const encounter = current.activeEncounter;
@@ -187,8 +188,10 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             !encounter ||
             !target ||
             !Number.isFinite(amount) ||
-            (amount <= 0 && !isRevival) ||
-            (isRevival && !target.properties.isPlayerCharacter)
+            (amount <= 0 && !forcedResult) ||
+            (forcedResult && !target.properties.isPlayerCharacter) ||
+            (forcedResult === "revival" && type !== "healing") ||
+            (forcedResult === "killing-blow" && type !== "damage")
         ) {
             return;
         }
@@ -211,12 +214,13 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             : Math.max(0, target.properties.health + (type === "healing" ? amount : -amount));
         const isDifferentSource = !source || source.id !== target.id;
         const killingBlow =
-            type === "damage" &&
-            isDifferentSource &&
-            targetHealth === 0 &&
-            target.properties.health > 0;
+            forcedResult === "killing-blow" ||
+            (type === "damage" &&
+                isDifferentSource &&
+                targetHealth === 0 &&
+                target.properties.health > 0);
         const revival =
-            isRevival ||
+            forcedResult === "revival" ||
             (type === "healing" &&
                 isDifferentSource &&
                 target.properties.health === 0 &&
@@ -423,7 +427,8 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             });
         },
         recordCombat,
-        recordRevival: (targetId) => recordCombat(targetId, "healing", 0, true),
+        recordRevival: (targetId) => recordCombat(targetId, "healing", 0, "revival"),
+        recordKillingBlow: (targetId) => recordCombat(targetId, "damage", 0, "killing-blow"),
         replaceDocument: (nextDocument) =>
             updateLocalDocument(() => normalizeTrackerDocument(nextDocument)),
         undo: () =>

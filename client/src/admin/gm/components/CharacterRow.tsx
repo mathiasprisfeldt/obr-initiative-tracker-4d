@@ -40,6 +40,7 @@ interface Props {
     onHealthChange?: (health: number) => void;
     onMaxHealthChange?: (maxHealth: number) => void;
     onDamageTaken?: (amount: number) => void;
+    onKillingBlow?: () => void;
     onHealingReceived?: (amount: number) => void;
     onRevive?: () => void;
     onPortraitImageChange?: (imageId: string | null) => void;
@@ -59,6 +60,7 @@ export default function CharacterRow({
     onHealthChange,
     onMaxHealthChange,
     onDamageTaken,
+    onKillingBlow,
     onHealingReceived,
     onRevive,
     onPortraitImageChange,
@@ -195,6 +197,7 @@ export default function CharacterRow({
                         label="Damage"
                         disabled={!combatTrackingEnabled}
                         onSubmit={onDamageTaken}
+                        onKillingBlow={onKillingBlow}
                     />
                     <ActionField
                         label="Healing"
@@ -296,11 +299,13 @@ function ActionField({
     label,
     disabled,
     onSubmit,
+    onKillingBlow,
     onRevive,
 }: {
     label: string;
     disabled: boolean;
     onSubmit?: (amount: number) => void;
+    onKillingBlow?: () => void;
     onRevive?: () => void;
 }) {
     const [value, setValue] = useState("");
@@ -377,6 +382,20 @@ function ActionField({
                             sx={{ mt: 1 }}
                         >
                             Revive
+                        </Button>
+                    )}
+                    {onKillingBlow && (
+                        <Button
+                            type="button"
+                            color="error"
+                            onClick={() => {
+                                onKillingBlow();
+                                setValue("");
+                                setAnchorElement(null);
+                            }}
+                            sx={{ mt: 1 }}
+                        >
+                            Killing blow
                         </Button>
                     )}
                 </Stack>

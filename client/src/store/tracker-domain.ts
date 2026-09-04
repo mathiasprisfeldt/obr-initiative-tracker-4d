@@ -552,6 +552,7 @@ export function describeTrackerEvent(event: TrackerEvent): string | null {
             return "Sorted characters by initiative";
         case "combat-recorded": {
             const source = event.event.source?.name ?? "Unknown";
+            if (event.event.revival) return `${source} revived ${event.event.target.name}`;
             return event.event.type === "damage"
                 ? `${source} dealt ${event.event.amount} damage to ${event.event.target.name}`
                 : event.event.source?.id === event.event.target.id

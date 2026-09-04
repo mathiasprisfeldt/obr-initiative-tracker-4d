@@ -124,6 +124,7 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
         nextTurn,
         toggleDisplay,
         recordCombat,
+        recordRevival,
         renameEncounter,
         setDraftEncounterName,
         renameSession,
@@ -354,6 +355,7 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                         onHealingReceived={(amount) =>
                             recordCombat(character.id, "healing", amount)
                         }
+                        onRevive={() => recordRevival(character.id)}
                         onPortraitImageChange={(portraitImageId) =>
                             updateCharacter(character.id, {
                                 ...character.properties,

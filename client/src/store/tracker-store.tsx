@@ -63,6 +63,7 @@ export interface TrackerStore {
     endSession(sessionId: string): void;
     deleteSession(sessionId: string): void;
     recordCombat(targetId: string, type: "damage" | "healing", amount: number): void;
+    recordRevival(targetId: string): void;
     replaceDocument(document: TrackerDocument): void;
     undo(): void;
     redo(): void;
@@ -172,6 +173,60 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             timestamp: new Date().toISOString(),
             sessionId: currentSessionId,
         };
+    };
+    const recordCombat = (
+        targetId: string,
+        type: "damage" | "healing",
+        amount: number,
+        isRevival = false,
+    ) => {
+        const current = deriveTrackerState(documentRef.current);
+        const encounter = current.activeEncounter;
+        const target = current.characters.find((character) => character.id === targetId);
+        if (
+            !encounter ||
+            !target ||
+            !Number.isFinite(amount) ||
+            (amount <= 0 && !isRevival) ||
+            (isRevival && !target.properties.isPlayerCharacter)
+        ) {
+            return;
+        }
+        const source = current.characters.find(
+            (character) => character.id === current.currentCharacterId,
+        );
+        const combatEvent: CombatEvent = {
+            id: crypto.randomUUID(),
+            type,
+            timestamp: new Date().toISOString(),
+            sessionId: encounter.sessionId,
+            encounterId: encounter.id,
+            round: current.round,
+            source: source ? snapshotCombatant(source) : undefined,
+            target: snapshotCombatant(target),
+            amount,
+        };
+        const targetHealth = target.properties.isPlayerCharacter
+            ? undefined
+            : Math.max(0, target.properties.health + (type === "healing" ? amount : -amount));
+        const isDifferentSource = !source || source.id !== target.id;
+        const killingBlow =
+            type === "damage" &&
+            isDifferentSource &&
+            targetHealth === 0 &&
+            target.properties.health > 0;
+        const revival =
+            isRevival ||
+            (type === "healing" &&
+                isDifferentSource &&
+                target.properties.health === 0 &&
+                targetHealth !== undefined &&
+                targetHealth > 0);
+        if (killingBlow || revival) {
+            combatEvent.killingBlow = killingBlow;
+            combatEvent.revival = revival;
+        }
+        dispatch({ ...eventBase(), type: "combat-recorded", event: combatEvent, targetHealth });
     };
 
     const value: TrackerStore = {
@@ -367,37 +422,8 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 sessionName: session.name,
             });
         },
-        recordCombat: (targetId, type, amount) => {
-            const current = deriveTrackerState(documentRef.current);
-            const encounter = current.activeEncounter;
-            const target = current.characters.find((character) => character.id === targetId);
-            if (!encounter || !target || !Number.isFinite(amount) || amount <= 0) return;
-            const source = current.characters.find(
-                (character) => character.id === current.currentCharacterId,
-            );
-            const combatEvent: CombatEvent = {
-                id: crypto.randomUUID(),
-                type,
-                timestamp: new Date().toISOString(),
-                sessionId: encounter.sessionId,
-                encounterId: encounter.id,
-                round: current.round,
-                source: source ? snapshotCombatant(source) : undefined,
-                target: snapshotCombatant(target),
-                amount,
-            };
-            const targetHealth = target.properties.isPlayerCharacter
-                ? undefined
-                : Math.max(0, target.properties.health + (type === "healing" ? amount : -amount));
-            const isDifferentSource = !source || source.id !== target.id;
-            const killingBlow = type === "damage" && isDifferentSource && targetHealth === 0 && target.properties.health > 0;
-            const revival = type === "healing" && isDifferentSource && target.properties.health === 0 && targetHealth !== undefined && targetHealth > 0;
-            if (killingBlow || revival) {
-                combatEvent.killingBlow = killingBlow;
-                combatEvent.revival = revival;
-            }
-            dispatch({ ...eventBase(), type: "combat-recorded", event: combatEvent, targetHealth });
-        },
+        recordCombat,
+        recordRevival: (targetId) => recordCombat(targetId, "healing", 0, true),
         replaceDocument: (nextDocument) =>
             updateLocalDocument(() => normalizeTrackerDocument(nextDocument)),
         undo: () =>

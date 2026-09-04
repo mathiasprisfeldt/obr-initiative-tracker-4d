@@ -41,6 +41,7 @@ interface Props {
     onMaxHealthChange?: (maxHealth: number) => void;
     onDamageTaken?: (amount: number) => void;
     onHealingReceived?: (amount: number) => void;
+    onRevive?: () => void;
     onPortraitImageChange?: (imageId: string | null) => void;
     onDelete?: () => void;
 }
@@ -59,6 +60,7 @@ export default function CharacterRow({
     onMaxHealthChange,
     onDamageTaken,
     onHealingReceived,
+    onRevive,
     onPortraitImageChange,
     onDelete,
 }: Props) {
@@ -198,6 +200,7 @@ export default function CharacterRow({
                         label="Healing"
                         disabled={!combatTrackingEnabled}
                         onSubmit={onHealingReceived}
+                        onRevive={onRevive}
                     />
                 </>
             ) : (
@@ -293,10 +296,12 @@ function ActionField({
     label,
     disabled,
     onSubmit,
+    onRevive,
 }: {
     label: string;
     disabled: boolean;
     onSubmit?: (amount: number) => void;
+    onRevive?: () => void;
 }) {
     const [value, setValue] = useState("");
     const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
@@ -360,6 +365,20 @@ function ActionField({
                         onChange={(event) => setValue(event.target.value)}
                         sx={{ width: 120 }}
                     />
+                    {onRevive && (
+                        <Button
+                            type="button"
+                            color="success"
+                            onClick={() => {
+                                onRevive();
+                                setValue("");
+                                setAnchorElement(null);
+                            }}
+                            sx={{ mt: 1 }}
+                        >
+                            Revive
+                        </Button>
+                    )}
                 </Stack>
             </Popover>
         </>

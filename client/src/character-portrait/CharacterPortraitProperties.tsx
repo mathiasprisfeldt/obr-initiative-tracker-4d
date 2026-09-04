@@ -1,4 +1,19 @@
-import { Box, Button, Skeleton, Stack, TableCell, TableRow, Tooltip, Typography, styled } from "@mui/material";
+import {
+    Add,
+    RestartAlt,
+} from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    IconButton,
+    Skeleton,
+    Stack,
+    TableCell,
+    TableRow,
+    Tooltip,
+    Typography,
+    styled,
+} from "@mui/material";
 import { PortraitImage } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
 import { MouseEventHandler, useState } from "react";
@@ -80,7 +95,7 @@ export function CharacterPortraitProperties({
                 />
             </TableCell>
             <TableCell sx={{ minWidth: 210 }}>
-                <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                <Stack direction="row" spacing={1} alignItems="center">
                     <Typography variant="caption" sx={{ fontWeight: 600 }}>
                         Particles
                     </Typography>
@@ -90,44 +105,49 @@ export function CharacterPortraitProperties({
                                 <Skeleton key={index} variant="rounded" width={28} height={28} />
                             ))}
                         </Stack>
-                    ) : particleColors.length > 0 ? (
-                        particleColors.map((color, index) => (
-                            <Stack key={`${color}-${index}`} direction="row" alignItems="center" spacing={0.25}>
-                                <input
-                                    aria-label={`Particle color ${index + 1}`}
-                                    type="color"
-                                    value={color}
-                                    onChange={(event) => updateParticleColor(index, event.target.value)}
-                                    style={{ width: 28, height: 28, padding: 0, border: 0, background: "transparent" }}
-                                />
-                                <Button
-                                    size="small"
-                                    aria-label={`Remove particle color ${index + 1}`}
-                                    disabled={particleColors.length === 1}
-                                    onClick={() =>
-                                        onParticleColorsChanged?.(
-                                            particleColors.filter((_, currentIndex) => currentIndex !== index),
-                                        )
-                                    }
-                                    sx={{ minWidth: 24, px: 0.25 }}
-                                >
-                                    ×
-                                </Button>
-                            </Stack>
-                        ))
                     ) : (
-                        <Typography variant="caption" color="text.secondary">
-                            Palette unavailable
-                        </Typography>
+                        <ParticleColorGrid>
+                            {particleColors.map((color, index) => (
+                                <Tooltip
+                                    key={`${color}-${index}`}
+                                    title="Click to edit · right-click to remove"
+                                >
+                                    <ColorInput
+                                        aria-label={`Particle color ${index + 1}`}
+                                        type="color"
+                                        value={color}
+                                        onChange={(event) =>
+                                            updateParticleColor(index, event.target.value)
+                                        }
+                                        onContextMenu={(event) => {
+                                            event.preventDefault();
+                                            onParticleColorsChanged?.(
+                                                particleColors.filter(
+                                                    (_, currentIndex) => currentIndex !== index,
+                                                ),
+                                            );
+                                        }}
+                                    />
+                                </Tooltip>
+                            ))}
+                            <Tooltip title="Add particle color">
+                                <IconButton
+                                    size="small"
+                                    aria-label="Add particle color"
+                                    onClick={() =>
+                                        onParticleColorsChanged?.([...particleColors, "#ffffff"])
+                                    }
+                                    sx={{ width: 28, height: 28, border: 1, borderColor: "divider" }}
+                                >
+                                    <Add fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </ParticleColorGrid>
                     )}
                     <Button
                         size="small"
-                        onClick={() => onParticleColorsChanged?.([...particleColors, "#ffffff"])}
-                    >
-                        Add
-                    </Button>
-                    <Button
-                        size="small"
+                        variant="outlined"
+                        startIcon={<RestartAlt fontSize="small" />}
                         disabled={!portraitImage.particleColors}
                         onClick={() => onParticleColorsChanged?.(undefined)}
                     >
@@ -199,4 +219,19 @@ const PortraitParticle = styled("span", {
             transform: translate3d(0, -75px, 0) scale(0.45);
         }
     }
+`;
+
+const ParticleColorGrid = styled("div")`
+    display: grid;
+    grid-template-columns: repeat(4, 28px);
+    gap: 4px;
+`;
+
+const ColorInput = styled("input")`
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
 `;

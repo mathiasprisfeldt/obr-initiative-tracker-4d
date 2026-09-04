@@ -37,16 +37,27 @@ export function CharacterPortraitProperties({
     onParticleColorsChanged,
 }: Props) {
     const [isPreviewingParticles, setIsPreviewingParticles] = useState(false);
-    const particleColors = portraitImage.particleColors ?? portraitImage.palette ?? [];
+    const [pendingParticleColors, setPendingParticleColors] = useState<string[] | null>(null);
+    const savedParticleColors = portraitImage.particleColors ?? portraitImage.palette ?? [];
+    const particleColors = pendingParticleColors ?? savedParticleColors;
     const isPaletteLoading =
         portraitImage.particleColors === undefined && portraitImage.palette === undefined;
 
-    const updateParticleColor = (index: number, color: string) => {
-        onParticleColorsChanged?.(
-            particleColors.map((current, currentIndex) =>
-                currentIndex === index ? color : current,
+    const updatePendingParticleColor = (index: number, color: string) => {
+        setPendingParticleColors((current) =>
+            (current ?? savedParticleColors).map((currentColor, currentIndex) =>
+                currentIndex === index ? color : currentColor,
             ),
         );
+    };
+
+    const commitParticleColor = (index: number, color: string) => {
+        onParticleColorsChanged?.(
+            (pendingParticleColors ?? savedParticleColors).map((currentColor, currentIndex) =>
+                currentIndex === index ? color : currentColor,
+            ),
+        );
+        setPendingParticleColors(null);
     };
 
     return (
@@ -116,11 +127,24 @@ export function CharacterPortraitProperties({
                                         aria-label={`Particle color ${index + 1}`}
                                         type="color"
                                         value={color}
-                                        onChange={(event) =>
-                                            updateParticleColor(index, event.target.value)
+                                        ref={(element) => {
+                                            if (!element) return;
+
+                                            // React maps `onChange` for color inputs to every
+                                            // in-picker adjustment. The native DOM `change` event
+                                            // instead fires when the system picker is dismissed.
+                                            element.onchange = () =>
+                                                commitParticleColor(index, element.value);
+                                        }}
+                                        onFocus={() =>
+                                            setPendingParticleColors((current) => current ?? savedParticleColors)
+                                        }
+                                        onInput={(event) =>
+                                            updatePendingParticleColor(index, event.currentTarget.value)
                                         }
                                         onContextMenu={(event) => {
                                             event.preventDefault();
+                                            setPendingParticleColors(null);
                                             onParticleColorsChanged?.(
                                                 particleColors.filter(
                                                     (_, currentIndex) => currentIndex !== index,
@@ -134,9 +158,10 @@ export function CharacterPortraitProperties({
                                 <IconButton
                                     size="small"
                                     aria-label="Add particle color"
-                                    onClick={() =>
-                                        onParticleColorsChanged?.([...particleColors, "#ffffff"])
-                                    }
+                                    onClick={() => {
+                                        setPendingParticleColors(null);
+                                        onParticleColorsChanged?.([...particleColors, "#ffffff"]);
+                                    }}
                                     sx={{ width: 28, height: 28, border: 1, borderColor: "divider" }}
                                 >
                                     <Add fontSize="small" />
@@ -149,7 +174,10 @@ export function CharacterPortraitProperties({
                         variant="outlined"
                         startIcon={<RestartAlt fontSize="small" />}
                         disabled={!portraitImage.particleColors}
-                        onClick={() => onParticleColorsChanged?.(undefined)}
+                        onClick={() => {
+                            setPendingParticleColors(null);
+                            onParticleColorsChanged?.(undefined);
+                        }}
                         >
                         Auto
                     </Button>

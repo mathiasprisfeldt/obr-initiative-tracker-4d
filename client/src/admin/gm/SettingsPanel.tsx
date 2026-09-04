@@ -5,12 +5,10 @@ import { useTrackerStore } from "../../store/tracker-store";
 import { usePortraitImagePickerStore } from "../../character-portrait/portrait-image-picker-store";
 import { useApi, useSettingsStore } from "../../store/settings-store";
 import type { ConnectedClientInfo } from "obr-initiative-tracker-4d-backend/api-client";
-import OBR from "@owlbear-rodeo/sdk";
 import { createTrackerBackup, parseTrackerBackup } from "../../store/tracker-backup";
 
 export function SettingsPanel() {
     const {
-        state: trackerState,
         document: trackerDocument,
         replaceDocument,
     } = useTrackerStore();
@@ -239,34 +237,6 @@ export function SettingsPanel() {
                     />
                 </Stack>
                 {backupStatus && <Typography variant="body2">{backupStatus}</Typography>}
-            </Stack>
-            <Divider />
-            <Stack direction="row" spacing={2} alignItems="center">
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => console.log(trackerState)}
-                >
-                    Print tracker state
-                </Button>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => console.log(portraitImagePickerState)}
-                >
-                    Print portrait image picker state
-                </Button>
-                <Button
-                    onClick={async () => {
-                        const metadata = await OBR.room.getMetadata();
-                        open(
-                            "data:text/json," + encodeURIComponent(JSON.stringify(metadata)),
-                            "_blank",
-                        );
-                    }}
-                >
-                    Download metadata
-                </Button>
             </Stack>
         </Stack>
     );

@@ -3,7 +3,6 @@ import { PortraitImage } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
 import { MouseEventHandler, useState } from "react";
 import { ImagePositionInput } from "./ImagePositionInput";
-import TurnIndicator from "../tracker/components/TurnIndicator";
 
 interface Props {
     portraitImage: PortraitImage;
@@ -12,7 +11,6 @@ interface Props {
     onPositionChanged?: (position: string) => void;
     onPortraitClicked?: MouseEventHandler<HTMLButtonElement>;
     onParticleColorsChanged?: (colors: string[] | undefined) => void;
-    particlePreviewEnabled?: boolean;
 }
 
 export function CharacterPortraitProperties({
@@ -22,13 +20,11 @@ export function CharacterPortraitProperties({
     onPositionChanged,
     onPortraitClicked,
     onParticleColorsChanged,
-    particlePreviewEnabled = false,
 }: Props) {
     const [isPreviewingParticles, setIsPreviewingParticles] = useState(false);
     const particleColors = portraitImage.particleColors ?? portraitImage.palette ?? [];
     const isPaletteLoading =
         portraitImage.particleColors === undefined && portraitImage.palette === undefined;
-    const previewId = `portrait-particle-preview-${portraitImage.displayName.replace(/[^a-z0-9_-]/gi, "-")}`;
 
     const updateParticleColor = (index: number, color: string) => {
         onParticleColorsChanged?.(
@@ -51,7 +47,18 @@ export function CharacterPortraitProperties({
                     onFocus={() => setIsPreviewingParticles(true)}
                     onBlur={() => setIsPreviewingParticles(false)}
                 >
-                    <Button onClick={onPortraitClicked} disabled={!portraitClickEnabled}>
+                    <Button
+                        onClick={onPortraitClicked}
+                        disabled={!portraitClickEnabled}
+                        sx={{
+                            width: 100,
+                            minWidth: 100,
+                            height: 100,
+                            p: 0,
+                            borderRadius: "50%",
+                            overflow: "hidden",
+                        }}
+                    >
                         <Tooltip title={portraitTooltip ?? "Hover to preview particles"}>
                             <CharacterPortraitThumbnail
                                 portraitImage={portraitImage}
@@ -60,13 +67,8 @@ export function CharacterPortraitProperties({
                             />
                         </Tooltip>
                     </Button>
-                    {particlePreviewEnabled && isPreviewingParticles && (
-                        <ParticlePreview
-                            id={previewId}
-                            hasTurn={isPreviewingParticles}
-                            palette={particleColors}
-                            contained
-                        />
+                    {isPreviewingParticles && (
+                        <PortraitParticlePreview colors={particleColors} />
                     )}
                 </Box>
             </TableCell>
@@ -139,10 +141,64 @@ export function CharacterPortraitProperties({
     );
 }
 
-const ParticlePreview = styled(TurnIndicator)`
+function PortraitParticlePreview({ colors }: { colors: string[] }) {
+    const particleColors = colors.length > 0 ? colors : ["#ffae00", "#ff7a00", "#ffd966"];
+
+    return (
+        <ParticlePreview aria-hidden>
+            {Array.from({ length: 12 }, (_, index) => (
+                <PortraitParticle
+                    key={index}
+                    color={particleColors[index % particleColors.length]}
+                    index={index}
+                />
+            ))}
+        </ParticlePreview>
+    );
+}
+
+const ParticlePreview = styled("div")`
     position: absolute;
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    clip-path: circle(38%);
+    border-radius: 50%;
+    overflow: hidden;
+`;
+
+const PortraitParticle = styled("span", {
+    shouldForwardProp: (prop) => prop !== "color" && prop !== "index",
+})<{ color: string; index: number }>`
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    left: ${({ index }) => `${18 + ((index * 37) % 64)}%`};
+    bottom: ${({ index }) => `${8 + ((index * 17) % 24)}%`};
+    width: ${({ index }) => 5 + (index % 3) * 2}px;
+    height: ${({ index }) => 5 + (index % 3) * 2}px;
+    background-color: ${({ color }) => color};
+    box-shadow: 0 0 12px ${({ color }) => color};
+    filter: brightness(1.5) saturate(1.25);
+    animation-name: portrait-particle-rise;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+    animation-delay: ${({ index }) => `${-(index % 4) * 0.28}s`};
+    animation-duration: ${({ index }) => `${0.9 + (index % 3) * 0.18}s`};
+
+    @keyframes portrait-particle-rise {
+        0% {
+            opacity: 0;
+            transform: translate3d(0, 0, 0) scale(0.7);
+        }
+        12% {
+            opacity: 1;
+        }
+        75% {
+            opacity: 0.9;
+        }
+        100% {
+            opacity: 0;
+            transform: translate3d(0, -75px, 0) scale(0.45);
+        }
+    }
 `;

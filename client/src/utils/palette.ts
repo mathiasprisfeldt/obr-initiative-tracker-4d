@@ -1,9 +1,16 @@
 import { extractPalette } from "@jimmyclchu/image-palette";
 
+const PALETTE_SAMPLE_SIZE = 64;
+
 export async function paletteFromImageElement(image: HTMLImageElement): Promise<string[]> {
     const canvas = document.createElement("canvas");
-    canvas.width = image.naturalWidth || image.width;
-    canvas.height = image.naturalHeight || image.height;
+    const { width, height } = fitWithin(
+        image.naturalWidth || image.width,
+        image.naturalHeight || image.height,
+        PALETTE_SAMPLE_SIZE,
+    );
+    canvas.width = width;
+    canvas.height = height;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return Promise.resolve([]);
@@ -21,4 +28,13 @@ export async function paletteFromImageElement(image: HTMLImageElement): Promise<
             includeMetadata: false,
         })
     ).map((color) => (typeof color === "string" ? color : color.color));
+}
+
+function fitWithin(srcW: number, srcH: number, maxSide: number): { width: number; height: number } {
+    if (!srcW || !srcH) return { width: maxSide, height: maxSide };
+    const scale = Math.min(maxSide / srcW, maxSide / srcH);
+    return {
+        width: Math.max(1, Math.round(srcW * scale)),
+        height: Math.max(1, Math.round(srcH * scale)),
+    };
 }

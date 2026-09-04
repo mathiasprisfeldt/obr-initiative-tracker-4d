@@ -6,8 +6,6 @@ import { TextPlate } from "./TextPlate";
 import TurnIndicator from "./TurnIndicator";
 import { DamageOverlay } from "./DamageOverlay";
 import { getDamageLevel } from "../../utils/damage-level";
-import { useEffect, useState } from "react";
-import { paletteFromImageElement } from "../../utils/palette";
 
 export interface Props {
     character: Character;
@@ -16,24 +14,6 @@ export interface Props {
 
 export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) {
     const portraitImage = usePortraitImage(character.properties.portraitImageId);
-    const [portraitImageEl, setPortraitImageEl] = useState<HTMLImageElement | undefined>(undefined);
-    const [portraitPalette, setPortraitPalette] = useState<string[] | undefined>(undefined);
-
-    useEffect(() => {
-        if (!portraitImageEl) return;
-        let ignore = false;
-
-        (async () => {
-            const palette = await paletteFromImageElement(portraitImageEl);
-
-            if (ignore) return;
-            setPortraitPalette(palette);
-        })();
-
-        return () => {
-            ignore = true;
-        };
-    }, [portraitImageEl]);
 
     const name = character.properties.name;
     const number = name.match(/\d+/)?.[0];
@@ -42,7 +22,7 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
     const particleColors =
         portraitImage?.particleColors && portraitImage.particleColors.length > 0
             ? portraitImage.particleColors
-            : portraitPalette;
+            : portraitImage?.palette;
 
     return (
         <Background {...rest}>
@@ -62,9 +42,6 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                 style={{
                     width: "100%",
                     height: "100%",
-                }}
-                onImageLoad={(event) => {
-                    setPortraitImageEl(event);
                 }}
             />
             {number && <NumberBadge hasTurn={hasTurn}>{number}</NumberBadge>}

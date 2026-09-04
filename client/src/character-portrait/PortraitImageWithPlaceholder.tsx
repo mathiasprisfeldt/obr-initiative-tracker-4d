@@ -65,6 +65,8 @@ export function PortraitImageWithPlaceholder({
                 sx={borderStyling}
                 src={src}
                 alt={portraitImage?.displayName}
+                loading="lazy"
+                decoding="async"
                 onLoadStart={() => setIsLoaded(false)}
                 onLoad={(event) => {
                     setIsLoaded(true);

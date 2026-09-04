@@ -1,9 +1,8 @@
-import { Box, Button, Stack, TableCell, TableRow, Tooltip, Typography, styled } from "@mui/material";
+import { Box, Button, Skeleton, Stack, TableCell, TableRow, Tooltip, Typography, styled } from "@mui/material";
 import { PortraitImage } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { MouseEventHandler, useState } from "react";
 import { ImagePositionInput } from "./ImagePositionInput";
-import { paletteFromImageElement } from "../utils/palette";
 import TurnIndicator from "../tracker/components/TurnIndicator";
 
 interface Props {
@@ -25,14 +24,11 @@ export function CharacterPortraitProperties({
     onParticleColorsChanged,
     particlePreviewEnabled = false,
 }: Props) {
-    const [autoParticleColors, setAutoParticleColors] = useState<string[]>([]);
     const [isPreviewingParticles, setIsPreviewingParticles] = useState(false);
-    const particleColors = portraitImage.particleColors ?? autoParticleColors;
+    const particleColors = portraitImage.particleColors ?? portraitImage.palette ?? [];
+    const isPaletteLoading =
+        portraitImage.particleColors === undefined && portraitImage.palette === undefined;
     const previewId = `portrait-particle-preview-${portraitImage.displayName.replace(/[^a-z0-9_-]/gi, "-")}`;
-
-    useEffect(() => {
-        setAutoParticleColors([]);
-    }, [portraitImage.url]);
 
     const updateParticleColor = (index: number, color: string) => {
         onParticleColorsChanged?.(
@@ -61,11 +57,6 @@ export function CharacterPortraitProperties({
                                 portraitImage={portraitImage}
                                 showBorder={true}
                                 sx={{ width: "100%", height: "100%" }}
-                                onImageLoad={(image) => {
-                                    void paletteFromImageElement(image)
-                                        .then(setAutoParticleColors)
-                                        .catch(() => setAutoParticleColors([]));
-                                }}
                             />
                         </Tooltip>
                     </Button>
@@ -93,7 +84,13 @@ export function CharacterPortraitProperties({
                     <Typography variant="caption" sx={{ fontWeight: 600 }}>
                         Particles
                     </Typography>
-                    {particleColors.length > 0 ? (
+                    {isPaletteLoading ? (
+                        <Stack aria-label="Loading palette" direction="row" spacing={0.5}>
+                            {Array.from({ length: 4 }, (_, index) => (
+                                <Skeleton key={index} variant="rounded" width={28} height={28} />
+                            ))}
+                        </Stack>
+                    ) : particleColors.length > 0 ? (
                         particleColors.map((color, index) => (
                             <Stack key={`${color}-${index}`} direction="row" alignItems="center" spacing={0.25}>
                                 <input
@@ -120,7 +117,7 @@ export function CharacterPortraitProperties({
                         ))
                     ) : (
                         <Typography variant="caption" color="text.secondary">
-                            Loading palette…
+                            Palette unavailable
                         </Typography>
                     )}
                     <Button

@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { computeBlurhashFromUrl } from "../utils/blurhash";
+import { computePortraitMetadataFromUrl } from "../utils/blurhash";
 import { isLocalDev } from "../utils/env";
 import { useRoomConnection } from "../hooks/use-room-connection";
 import { useApi } from "../store/settings-store";
@@ -14,6 +14,7 @@ export interface PortraitImage {
     url: string;
     position?: string;
     blurhash?: string | null;
+    palette?: string[];
     borderId?: string | null;
     particleColors?: string[];
 }
@@ -208,45 +209,47 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
         })();
     }, [isLoading, isGM, state.imageSourceUrl]);
 
-    // Update blurhashes for portrait images when new images are added
+    // Derive and persist display metadata in the background so the Portraits
+    // tab can read it immediately without recomputing it per thumbnail.
     useEffect(() => {
         if (!isGM) return;
 
         const abortController = new AbortController();
         (async () => {
-            // Compute blurhashes only for those missing one to avoid heavy CPU/load
+            // Only process metadata that is absent. `null` and an empty palette
+            // mean a previous attempt completed but the source could not provide it.
             const toCompute = state.images.filter(
-                (img) => !img.blurhash || typeof img.blurhash !== "string",
+                (img) => img.blurhash === undefined || img.palette === undefined,
             );
+            if (toCompute.length === 0) return;
 
-            if (toCompute.length > 0) {
-                const results = await Promise.allSettled(
-                    toCompute.map(async (img) => {
-                        const blurhash = await computeBlurhashFromUrl(
-                            img.url,
-                            abortController.signal,
-                        );
-                        return { url: img.url, blurhash: blurhash ?? null };
+            const metadataByUrl = new Map(
+                await mapWithConcurrency(toCompute, 2, async (img) => [
+                    img.url,
+                    await computePortraitMetadataFromUrl(img.url, abortController.signal, {
+                        blurhash: img.blurhash === undefined,
+                        palette: img.palette === undefined,
                     }),
-                );
-                const urlToBlurhash = new Map<string, string | null>();
-                results.forEach((res) => {
-                    if (res.status === "fulfilled") {
-                        urlToBlurhash.set(res.value.url, res.value.blurhash);
-                    }
-                });
+                ]),
+            );
+            if (abortController.signal.aborted) return;
 
-                if (abortController.signal.aborted) return;
-
-                setState((prev) => ({
-                    ...prev,
-                    images: prev.images.map((img) =>
-                        urlToBlurhash.has(img.url)
-                            ? { ...img, blurhash: urlToBlurhash.get(img.url) ?? null }
-                            : img,
-                    ),
-                }));
-            }
+            setState((prev) => ({
+                ...prev,
+                images: prev.images.map((img) => {
+                    const metadata = metadataByUrl.get(img.url);
+                    if (!metadata) return img;
+                    return {
+                        ...img,
+                        ...(img.blurhash === undefined && metadata.blurhash !== undefined
+                            ? { blurhash: metadata.blurhash }
+                            : {}),
+                        ...(img.palette === undefined && metadata.palette !== undefined
+                            ? { palette: metadata.palette }
+                            : {}),
+                    };
+                }),
+            }));
         })();
 
         return () => {
@@ -333,6 +336,25 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
 interface Image {
     displayName: string;
     url: string;
+}
+
+async function mapWithConcurrency<T, R>(
+    items: T[],
+    concurrency: number,
+    mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+    const results: R[] = [];
+    let nextIndex = 0;
+
+    await Promise.all(
+        Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+            while (nextIndex < items.length) {
+                const item = items[nextIndex++];
+                results.push(await mapper(item));
+            }
+        }),
+    );
+    return results;
 }
 
 async function downloadImageUrlsFromSource(sourceUrl: string): Promise<Image[]> {

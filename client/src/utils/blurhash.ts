@@ -1,30 +1,32 @@
 import { decode, encode } from "blurhash";
+import { paletteFromImageElement } from "./palette";
 
-export async function computeBlurhashFromUrl(
+export interface PortraitMetadata {
+    blurhash?: string | null;
+    palette?: string[];
+}
+
+export async function computePortraitMetadataFromUrl(
     url: string,
     abortSignal: AbortSignal,
-): Promise<string | null> {
+    options: { blurhash?: boolean; palette?: boolean } = {},
+): Promise<PortraitMetadata> {
+    const shouldComputeBlurhash = options.blurhash !== false;
+    const shouldComputePalette = options.palette !== false;
+
     try {
         const img = await loadImage(url, abortSignal);
-        const { width, height } = fitWithin(
-            img.naturalWidth || img.width,
-            img.naturalHeight || img.height,
-            32,
-        );
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return null;
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const imageData = ctx.getImageData(0, 0, width, height);
-
-        return encode(imageData.data, width, height, 4, 4);
+        return {
+            blurhash: shouldComputeBlurhash ? computeBlurhashFromImage(img) : undefined,
+            palette: shouldComputePalette
+                ? await paletteFromImageElement(img).catch(() => [])
+                : undefined,
+        };
     } catch (_err) {
-        return null;
+        return {
+            blurhash: shouldComputeBlurhash ? null : undefined,
+            palette: shouldComputePalette ? [] : undefined,
+        };
     }
 }
 
@@ -58,6 +60,27 @@ function loadImage(url: string, abortSignal: AbortSignal): Promise<HTMLImageElem
             reject();
         };
     });
+}
+
+function computeBlurhashFromImage(img: HTMLImageElement): string | null {
+    try {
+        const { width, height } = fitWithin(
+            img.naturalWidth || img.width,
+            img.naturalHeight || img.height,
+            32,
+        );
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        return encode(imageData.data, width, height, 4, 4);
+    } catch (_err) {
+        return null;
+    }
 }
 
 function fitWithin(srcW: number, srcH: number, maxSide: number): { width: number; height: number } {

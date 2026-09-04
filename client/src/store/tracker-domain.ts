@@ -37,6 +37,7 @@ export interface CombatEvent {
     source?: CombatantSnapshot;
     target: CombatantSnapshot;
     amount: number;
+    downed?: boolean;
     killingBlow?: boolean;
     revival?: boolean;
 }

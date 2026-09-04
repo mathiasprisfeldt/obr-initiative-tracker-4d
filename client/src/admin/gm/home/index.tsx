@@ -876,6 +876,7 @@ function buildSessionSummary(
             row.healingReceived ||
             row.selfHealing ||
             row.teamDamage ||
+            row.downs ||
             row.killingBlows ||
             row.revivals,
     );
@@ -905,6 +906,7 @@ function buildSessionSummary(
                 row.healingReceived > 0 ? `${row.healingReceived} healing received` : "",
                 row.selfHealing > 0 ? `${row.selfHealing} self-healed` : "",
                 row.teamDamage > 0 ? `${row.teamDamage} team damage` : "",
+                row.downs > 0 ? `${row.downs} down${row.downs === 1 ? "" : "s"}` : "",
                 row.killingBlows > 0 ? `${row.killingBlows} killing blow${row.killingBlows === 1 ? "" : "s"}` : "",
                 row.revivals > 0 ? `${row.revivals} revival${row.revivals === 1 ? "" : "s"}` : "",
             ].filter(Boolean);
@@ -932,7 +934,7 @@ function buildSessionSummary(
                     creature.encounterIds.size
                 } ${creature.encounterIds.size === 1 ? "encounter" : "encounters"}, ${
                     creature.damageDealt
-                } damage dealt, ${creature.damageReceived} damage received, ${creature.healingGiven} healing given, ${creature.healingReceived} healing received`,
+                } damage dealt, ${creature.damageReceived} damage received, ${creature.healingGiven} healing given, ${creature.healingReceived} healing received, ${creature.downs} down${creature.downs === 1 ? "" : "s"}`,
             );
         }
     }
@@ -988,6 +990,7 @@ function Summary({
                     row.healingReceived ||
                     row.selfHealing ||
                     row.teamDamage ||
+                    row.downs ||
                     row.killingBlows ||
                     row.revivals,
             ),
@@ -1074,6 +1077,14 @@ function Summary({
                                     label={`${row.teamDamage} team damage`}
                                 />
                             )}
+                            {row.downs > 0 && (
+                                <Chip
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    label={`${row.downs} down${row.downs === 1 ? "" : "s"}`}
+                                />
+                            )}
                             {row.killingBlows > 0 && (
                                 <Chip
                                     size="small"
@@ -1147,6 +1158,7 @@ function aggregateCreatureStatistics(
             healingGiven: number;
             healingReceived: number;
             selfHealing: number;
+            downs: number;
             ids: Set<string>;
             encounterIds: Set<string>;
         }
@@ -1170,6 +1182,7 @@ function aggregateCreatureStatistics(
                 healingGiven: 0,
                 healingReceived: 0,
                 selfHealing: 0,
+                downs: 0,
                 ids: new Set(),
                 encounterIds: new Set(),
             });
@@ -1206,6 +1219,9 @@ function aggregateCreatureStatistics(
                 values.get(target.creatureType.toLocaleLowerCase())!.healingReceived += event.amount;
             }
         }
+        if ((event.downed ?? event.killingBlow) && !target.isPlayerCharacter) {
+            values.get(target.creatureType.toLocaleLowerCase())!.downs += 1;
+        }
     }
     return [...values.values()];
 }
@@ -1221,6 +1237,7 @@ interface CombatantSummary {
     healingReceived: number;
     selfHealing: number;
     teamDamage: number;
+    downs: number;
     killingBlows: number;
     revivals: number;
 }
@@ -1249,6 +1266,7 @@ function aggregateCombatants(
                 healingReceived: 0,
                 selfHealing: 0,
                 teamDamage: 0,
+                downs: 0,
                 killingBlows: 0,
                 revivals: 0,
             });
@@ -1260,6 +1278,7 @@ function aggregateCombatants(
     for (const event of events) {
         const source = event.source ? resolveCombatant(event.source) : undefined;
         const target = resolveCombatant(event.target);
+        if (event.downed ?? event.killingBlow) rowFor(target).downs += 1;
         if (event.killingBlow && source) rowFor(source).killingBlows += 1;
         if (event.revival && source) rowFor(source).revivals += 1;
         if (event.type === "healing" && source?.id === target.id) {
@@ -1301,6 +1320,7 @@ function formatCombatMetrics(row: CombatantSummary): string {
         row.healingReceived > 0 ? `${row.healingReceived} healed` : "",
         row.selfHealing > 0 ? `${row.selfHealing} self-healed` : "",
         row.teamDamage > 0 ? `${row.teamDamage} team damage` : "",
+        row.downs > 0 ? `${row.downs} down${row.downs === 1 ? "" : "s"}` : "",
         row.killingBlows > 0
             ? `${row.killingBlows} killing blow${row.killingBlows === 1 ? "" : "s"}`
             : "",
@@ -1317,6 +1337,7 @@ function formatCreatureMetrics(creature: ReturnType<typeof aggregateCreatureStat
         `${creature.healingGiven} healing given`,
         `${creature.healingReceived} healing received`,
         `${creature.selfHealing} self-healed`,
+        `${creature.downs} down${creature.downs === 1 ? "" : "s"}`,
     ].join(", ");
 }
 

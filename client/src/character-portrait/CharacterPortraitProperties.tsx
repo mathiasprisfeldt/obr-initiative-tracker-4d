@@ -6,10 +6,12 @@ import {
     Box,
     Button,
     IconButton,
+    Popover,
     Skeleton,
     Stack,
     TableCell,
     TableRow,
+    TextField,
     Tooltip,
     Typography,
     styled,
@@ -37,6 +39,11 @@ export function CharacterPortraitProperties({
     onParticleColorsChanged,
 }: Props) {
     const [isPreviewingParticles, setIsPreviewingParticles] = useState(false);
+    const [colorPicker, setColorPicker] = useState<{
+        anchorElement: HTMLButtonElement;
+        index: number;
+    } | null>(null);
+    const [colorDraft, setColorDraft] = useState("");
     const particleColors = portraitImage.particleColors ?? portraitImage.palette ?? [];
     const isPaletteLoading =
         portraitImage.particleColors === undefined && portraitImage.palette === undefined;
@@ -47,6 +54,19 @@ export function CharacterPortraitProperties({
                 currentIndex === index ? color : current,
             ),
         );
+    };
+
+    const openColorPicker = (index: number, anchorElement: HTMLButtonElement) => {
+        setColorDraft(particleColors[index]);
+        setColorPicker({ index, anchorElement });
+    };
+
+    const updateColorDraft = (color: string) => {
+        setColorDraft(color);
+
+        if (isHexColor(color)) {
+            updateParticleColor(colorPicker?.index ?? -1, color);
+        }
     };
 
     return (
@@ -112,21 +132,19 @@ export function CharacterPortraitProperties({
                                     key={`${color}-${index}`}
                                     title="Click to edit · right-click to remove"
                                 >
-                                    <ColorInput
+                                    <ColorSwatch
                                         aria-label={`Particle color ${index + 1}`}
-                                        type="color"
-                                        value={color}
-                                        onChange={(event) =>
-                                            updateParticleColor(index, event.target.value)
-                                        }
+                                        onClick={(event) => openColorPicker(index, event.currentTarget)}
                                         onContextMenu={(event) => {
                                             event.preventDefault();
+                                            setColorPicker(null);
                                             onParticleColorsChanged?.(
                                                 particleColors.filter(
                                                     (_, currentIndex) => currentIndex !== index,
                                                 ),
                                             );
                                         }}
+                                        sx={{ backgroundColor: color }}
                                     />
                                 </Tooltip>
                             ))}
@@ -153,6 +171,42 @@ export function CharacterPortraitProperties({
                     >
                         Auto
                     </Button>
+                    <Popover
+                        open={Boolean(colorPicker)}
+                        anchorEl={colorPicker?.anchorElement}
+                        onClose={() => setColorPicker(null)}
+                        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                        transformOrigin={{ vertical: "top", horizontal: "left" }}
+                    >
+                        <Stack spacing={1.25} sx={{ p: 1.5, width: 220 }}>
+                            <Typography variant="caption" color="text.secondary">
+                                Pick a particle color
+                            </Typography>
+                            <ParticleColorPresets>
+                                {PARTICLE_COLOR_PRESETS.map((color) => (
+                                    <ColorSwatch
+                                        key={color}
+                                        aria-label={`Use ${color}`}
+                                        onClick={() => updateColorDraft(color)}
+                                        sx={{ backgroundColor: color }}
+                                    />
+                                ))}
+                            </ParticleColorPresets>
+                            <TextField
+                                label="Hex color"
+                                size="small"
+                                value={colorDraft}
+                                onChange={(event) => updateColorDraft(event.target.value)}
+                                error={colorDraft.length > 0 && !isHexColor(colorDraft)}
+                                helperText={
+                                    colorDraft.length > 0 && !isHexColor(colorDraft)
+                                        ? "Use a hex color, e.g. #ffae00"
+                                        : undefined
+                                }
+                                inputProps={{ maxLength: 7 }}
+                            />
+                        </Stack>
+                    </Popover>
                 </Stack>
             </TableCell>
         </TableRow>
@@ -227,11 +281,34 @@ const ParticleColorGrid = styled("div")`
     gap: 4px;
 `;
 
-const ColorInput = styled("input")`
+const ParticleColorPresets = styled("div")`
+    display: grid;
+    grid-template-columns: repeat(6, 28px);
+    gap: 4px;
+`;
+
+const ColorSwatch = styled(IconButton)`
     width: 28px;
     height: 28px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 4px;
 `;
+
+const PARTICLE_COLOR_PRESETS = [
+    "#ffffff",
+    "#ffd966",
+    "#ffae00",
+    "#ff7a00",
+    "#f44336",
+    "#e91e63",
+    "#9c27b0",
+    "#673ab7",
+    "#3f51b5",
+    "#2196f3",
+    "#00bcd4",
+    "#4caf50",
+];
+
+function isHexColor(color: string) {
+    return /^#[0-9a-f]{6}$/i.test(color);
+}

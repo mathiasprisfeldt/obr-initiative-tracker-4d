@@ -6,17 +6,27 @@ import { usePortraitImagePickerStore } from "../../character-portrait/portrait-i
 import { useApi, useSettingsStore } from "../../store/settings-store";
 import type { ConnectedClientInfo } from "obr-initiative-tracker-4d-backend/api-client";
 import OBR from "@owlbear-rodeo/sdk";
+import { createTrackerBackup, parseTrackerBackup } from "../../store/tracker-backup";
 
 export function SettingsPanel() {
-    const { state: trackerState } = useTrackerStore();
-    const { state: portraitImagePickerState } = usePortraitImagePickerStore();
-    const { state: settings, setBackendUrl } = useSettingsStore();
+    const {
+        state: trackerState,
+        document: trackerDocument,
+        replaceDocument,
+    } = useTrackerStore();
+    const {
+        state: portraitImagePickerState,
+        replaceState: replacePortraitState,
+    } = usePortraitImagePickerStore();
+    const { state: settings, setBackendUrl, replaceState: replaceSettingsState } = useSettingsStore();
     const api = useApi();
     const [loading, setLoading] = useState(false);
     const [healthStatus, setHealthStatus] = useState<"idle" | "ok" | "unhealthy" | "error">("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [connectedClients, setConnectedClients] = useState<ConnectedClientInfo[]>([]);
     const [clientsLoading, setClientsLoading] = useState(false);
+    const [backupStatus, setBackupStatus] = useState<string | null>(null);
+    const backupInputRef = useRef<HTMLInputElement>(null);
 
     const checkHealth = useCallback(async () => {
         if (!api) {
@@ -104,6 +114,44 @@ export function SettingsPanel() {
         return `${Math.round(diff / 1000)}s ago`;
     }
 
+    const downloadBackup = () => {
+        const backup = createTrackerBackup({
+            settings,
+            tracker: trackerDocument,
+            portraits: portraitImagePickerState,
+        });
+        const blob = new Blob([JSON.stringify(backup, null, 2)], {
+            type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const download = document.createElement("a");
+        download.href = url;
+        download.download = `initiative-tracker-backup-${backup.exportedAt.slice(0, 10)}.json`;
+        download.style.display = "none";
+        document.body.append(download);
+        download.click();
+        download.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url));
+        setBackupStatus("Backup downloaded.");
+    };
+
+    const importBackup = async (file: File) => {
+        try {
+            const backup = parseTrackerBackup(JSON.parse(await file.text()));
+            if (!window.confirm("Replace the current tracker, portrait, and backend settings with this backup?")) {
+                return;
+            }
+            replaceSettingsState(backup.settings);
+            replacePortraitState(backup.portraits);
+            replaceDocument(backup.tracker);
+            setBackupStatus("Backup imported. The restored state is now shared with connected players.");
+        } catch (error) {
+            setBackupStatus(
+                error instanceof Error ? `Could not import backup: ${error.message}` : "Could not import backup.",
+            );
+        }
+    };
+
     return (
         <Stack spacing={2}>
             <TextField
@@ -164,6 +212,33 @@ export function SettingsPanel() {
                         ))}
                     </List>
                 )}
+            </Stack>
+            <Divider />
+            <Stack spacing={1}>
+                <Typography variant="subtitle2">Backup</Typography>
+                <Typography variant="body2" color="text.secondary">
+                    Export all tracker history, portrait settings, and backend settings as JSON, then restore it here later.
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    <Button variant="outlined" onClick={downloadBackup}>
+                        Export JSON
+                    </Button>
+                    <Button variant="outlined" onClick={() => backupInputRef.current?.click()}>
+                        Import JSON
+                    </Button>
+                    <input
+                        ref={backupInputRef}
+                        hidden
+                        type="file"
+                        accept="application/json,.json"
+                        onChange={(event) => {
+                            const [file] = Array.from(event.target.files ?? []);
+                            event.target.value = "";
+                            if (file) void importBackup(file);
+                        }}
+                    />
+                </Stack>
+                {backupStatus && <Typography variant="body2">{backupStatus}</Typography>}
             </Stack>
             <Divider />
             <Stack direction="row" spacing={2} alignItems="center">

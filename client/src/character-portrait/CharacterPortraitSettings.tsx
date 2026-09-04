@@ -81,6 +81,9 @@ export function CharacterPortraitSettings() {
                                 onPositionChanged={(position) => {
                                     updatePortraitImage({ ...image, position });
                                 }}
+                                onParticleColorsChanged={(particleColors) => {
+                                    updatePortraitImage({ ...image, particleColors });
+                                }}
                                 onPortraitClicked={(event) => {
                                     setCurrentCharacterPortraitElement(event.currentTarget);
                                     setCurrentCharacterPortrait(image);

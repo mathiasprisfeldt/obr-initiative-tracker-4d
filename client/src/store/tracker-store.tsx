@@ -40,6 +40,7 @@ const TRACKER_STATE_KEY = "tracker";
 
 export interface TrackerStore {
     state: TrackerState;
+    document: TrackerDocument;
     events: TrackerEvent[];
     cursor: number;
     isLoading: boolean;
@@ -62,6 +63,7 @@ export interface TrackerStore {
     endSession(sessionId: string): void;
     deleteSession(sessionId: string): void;
     recordCombat(targetId: string, type: "damage" | "healing", amount: number): void;
+    replaceDocument(document: TrackerDocument): void;
     undo(): void;
     redo(): void;
     toggleDisplay(): void;
@@ -174,6 +176,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
 
     const value: TrackerStore = {
         state,
+        document,
         events: document.events,
         cursor: document.cursor,
         isLoading,
@@ -395,6 +398,8 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             }
             dispatch({ ...eventBase(), type: "combat-recorded", event: combatEvent, targetHealth });
         },
+        replaceDocument: (nextDocument) =>
+            updateLocalDocument(() => normalizeTrackerDocument(nextDocument)),
         undo: () =>
             updateLocalDocument((current) => ({
                 ...current,

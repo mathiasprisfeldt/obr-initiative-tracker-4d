@@ -16,6 +16,7 @@ export interface SettingsStore {
     api: ApiClient | null;
 
     setBackendUrl(url: string): void;
+    replaceState(state: SettingsState): void;
 }
 
 const context = createContext<SettingsStore>({
@@ -24,6 +25,7 @@ const context = createContext<SettingsStore>({
     api: null,
 
     setBackendUrl: () => {},
+    replaceState: () => {},
 });
 
 export function useSettingsStore(): SettingsStore {
@@ -123,6 +125,9 @@ export function SettingsStoreProvider({ children }: { children: React.ReactNode 
 
                 setBackendUrl: (url: string) => {
                     setState((prev) => ({ ...prev, backendUrl: url }));
+                },
+                replaceState: (nextState: SettingsState) => {
+                    setState({ backendUrl: nextState.backendUrl });
                 },
             }}
         >

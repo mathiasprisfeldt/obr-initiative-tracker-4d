@@ -39,6 +39,10 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
     const number = name.match(/\d+/)?.[0];
     const nameWithoutNumber = name.replace(/\d+/, "").trim();
     const damageLevel = getDamageLevel(character.properties.health, character.properties.maxHealth);
+    const particleColors =
+        portraitImage?.particleColors && portraitImage.particleColors.length > 0
+            ? portraitImage.particleColors
+            : portraitPalette;
 
     return (
         <Background {...rest}>
@@ -51,7 +55,7 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                         <TurnIndicatorStyled
                             id={character.id}
                             hasTurn={hasTurn}
-                            palette={portraitPalette}
+                            palette={particleColors}
                         />
                     </>
                 }

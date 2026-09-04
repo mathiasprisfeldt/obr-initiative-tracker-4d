@@ -15,6 +15,7 @@ export interface PortraitImage {
     position?: string;
     blurhash?: string | null;
     borderId?: string | null;
+    particleColors?: string[];
 }
 
 export interface PortraitBorder {
@@ -38,6 +39,7 @@ export interface PortraitImagePickerStore {
     setBorderSourceUrl(url: string): void;
     setDefaultBorder(id?: string | null): void;
     updatePortraitImage(portraitImage: PortraitImage): void;
+    replaceState(state: PortraitImagePickerState): void;
 }
 
 const context = createContext<PortraitImagePickerStore>({
@@ -53,6 +55,7 @@ const context = createContext<PortraitImagePickerStore>({
     setBorderSourceUrl: () => {},
     setDefaultBorder: () => {},
     updatePortraitImage: () => {},
+    replaceState: () => {},
 });
 
 export function usePortraitImagePickerStore(): PortraitImagePickerStore {
@@ -77,6 +80,7 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
     const [hasReceivedRoomState, setHasReceivedRoomState] = useState(false);
     const roomStateRef = useRef<PortraitImagePickerState | undefined>(undefined);
     const stateRef = useRef<PortraitImagePickerState>(null!);
+    const hasPendingImportRef = useRef(false);
     const api = useApi();
 
     const [state, setState] = useState<PortraitImagePickerState>({
@@ -145,6 +149,13 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
 
     useEffect(() => {
         if (!hasReceivedRoomState) return;
+
+        if (hasPendingImportRef.current && isGM && api) {
+            room.updateState(stateRef.current);
+            hasPendingImportRef.current = false;
+            setIsLoading(false);
+            return;
+        }
 
         if (roomStateRef.current) {
             setState(roomStateRef.current);
@@ -306,6 +317,11 @@ export function PortraitImagePickerStoreProvider({ children }: { children: React
                             img.displayName === portraitImage.displayName ? portraitImage : img,
                         ),
                     }));
+                },
+
+                replaceState: (nextState: PortraitImagePickerState) => {
+                    hasPendingImportRef.current = true;
+                    setState(nextState);
                 },
             }}
         >

@@ -34,7 +34,7 @@ export default function TurnIndicator({
             detectRetina: true,
             particles: {
                 number: { value: 0 },
-                color: { value: palette || ["#ffae00", "#ff7a00", "#ffd966"] },
+                color: { value: palette?.length ? palette : ["#ffae00", "#ff7a00", "#ffd966"] },
                 shape: { type: "circle" },
                 size: {
                     value: { min: 1, max: 3 },

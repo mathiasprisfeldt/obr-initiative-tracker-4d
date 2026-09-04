@@ -37,6 +37,7 @@ export interface CombatEvent {
     source?: CombatantSnapshot;
     target: CombatantSnapshot;
     amount: number;
+    overkill?: number;
     downed?: boolean;
     killingBlow?: boolean;
     revival?: boolean;
@@ -554,11 +555,13 @@ export function describeTrackerEvent(event: TrackerEvent): string | null {
         case "combat-recorded": {
             const source = event.event.source?.name ?? "Unknown";
             if (event.event.killingBlow) {
-                return `${source} landed the killing blow on ${event.event.target.name}`;
+                const damage = event.event.amount > 0 ? ` (${event.event.amount} damage` : "";
+                const overkill = event.event.overkill ? `, ${event.event.overkill} overkill` : "";
+                return `${source} landed the killing blow on ${event.event.target.name}${damage}${overkill}${damage ? ")" : ""}`;
             }
             if (event.event.revival) return `${source} revived ${event.event.target.name}`;
             return event.event.type === "damage"
-                ? `${source} dealt ${event.event.amount} damage to ${event.event.target.name}`
+                ? `${source} dealt ${event.event.amount} damage to ${event.event.target.name}${event.event.overkill ? ` (${event.event.overkill} overkill)` : ""}`
                 : event.event.source?.id === event.event.target.id
                   ? `${source} self-healed for ${event.event.amount}`
                   : `${source} healed ${event.event.target.name} for ${event.event.amount}`;

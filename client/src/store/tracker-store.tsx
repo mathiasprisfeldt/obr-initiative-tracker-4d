@@ -212,6 +212,10 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         const targetHealth = target.properties.isPlayerCharacter
             ? undefined
             : Math.max(0, target.properties.health + (type === "healing" ? amount : -amount));
+        const overkill =
+            type === "damage" && targetHealth !== undefined
+                ? Math.max(0, amount - target.properties.health)
+                : 0;
         const isDifferentSource = !source || source.id !== target.id;
         const downed =
             forcedResult === "killing-blow" ||
@@ -229,6 +233,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 target.properties.health === 0 &&
                 targetHealth !== undefined &&
                 targetHealth > 0);
+        if (overkill > 0) combatEvent.overkill = overkill;
         if (downed || killingBlow || revival) {
             combatEvent.downed = downed;
             combatEvent.killingBlow = killingBlow;

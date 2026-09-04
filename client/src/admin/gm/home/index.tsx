@@ -901,6 +901,10 @@ function buildSessionSummary(
         for (const row of combatants) {
             const metrics = [
                 row.damageDealt > 0 ? `${row.damageDealt} damage dealt` : "",
+                row.highestDamageRoll > 0
+                    ? `${row.highestDamageRoll} highest damage roll`
+                    : "",
+                row.overkillDamage > 0 ? `${row.overkillDamage} overkill` : "",
                 row.damageReceived > 0 ? `${row.damageReceived} damage received` : "",
                 row.healingGiven > 0 ? `${row.healingGiven} healing given` : "",
                 row.healingReceived > 0 ? `${row.healingReceived} healing received` : "",
@@ -934,7 +938,13 @@ function buildSessionSummary(
                     creature.encounterIds.size
                 } ${creature.encounterIds.size === 1 ? "encounter" : "encounters"}, ${
                     creature.damageDealt
-                } damage dealt, ${creature.damageReceived} damage received, ${creature.healingGiven} healing given, ${creature.healingReceived} healing received, ${creature.downs} down${creature.downs === 1 ? "" : "s"}`,
+                } damage dealt, ${creature.highestDamageRoll} highest damage roll, ${
+                    creature.overkillDamage
+                } overkill, ${creature.damageReceived} damage received, ${
+                    creature.healingGiven
+                } healing given, ${creature.healingReceived} healing received, ${
+                    creature.downs
+                } down${creature.downs === 1 ? "" : "s"}`,
             );
         }
     }
@@ -1032,6 +1042,22 @@ function Summary({
                                     color="error"
                                     icon={<LocalFireDepartment />}
                                     label={`${row.damageDealt} dealt`}
+                                />
+                            )}
+                            {row.highestDamageRoll > 0 && (
+                                <Chip
+                                    size="small"
+                                    color="error"
+                                    variant="outlined"
+                                    label={`${row.highestDamageRoll} highest roll`}
+                                />
+                            )}
+                            {row.overkillDamage > 0 && (
+                                <Chip
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    label={`${row.overkillDamage} overkill`}
                                 />
                             )}
                             {row.damageReceived > 0 && (
@@ -1154,6 +1180,8 @@ function aggregateCreatureStatistics(
         {
             name: string;
             damageDealt: number;
+            highestDamageRoll: number;
+            overkillDamage: number;
             damageReceived: number;
             healingGiven: number;
             healingReceived: number;
@@ -1178,6 +1206,8 @@ function aggregateCreatureStatistics(
             values.set(key, {
                 name: combatant.creatureType,
                 damageDealt: 0,
+                highestDamageRoll: 0,
+                overkillDamage: 0,
                 damageReceived: 0,
                 healingGiven: 0,
                 healingReceived: 0,
@@ -1202,7 +1232,13 @@ function aggregateCreatureStatistics(
         addCreature(target, event.encounterId);
         if (event.type === "damage") {
             if (source && !source.isPlayerCharacter) {
-                values.get(source.creatureType.toLocaleLowerCase())!.damageDealt += event.amount;
+                const sourceStatistics = values.get(source.creatureType.toLocaleLowerCase())!;
+                sourceStatistics.damageDealt += event.amount;
+                sourceStatistics.highestDamageRoll = Math.max(
+                    sourceStatistics.highestDamageRoll,
+                    event.amount,
+                );
+                sourceStatistics.overkillDamage += event.overkill ?? 0;
             }
             if (!target.isPlayerCharacter) {
                 values.get(target.creatureType.toLocaleLowerCase())!.damageReceived += event.amount;
@@ -1232,6 +1268,8 @@ interface CombatantSummary {
     initiative?: number;
     isPlayerCharacter: boolean;
     damageDealt: number;
+    highestDamageRoll: number;
+    overkillDamage: number;
     damageReceived: number;
     healingGiven: number;
     healingReceived: number;
@@ -1261,6 +1299,8 @@ function aggregateCombatants(
                 initiative: combatant.initiative,
                 isPlayerCharacter: combatant.isPlayerCharacter,
                 damageDealt: 0,
+                highestDamageRoll: 0,
+                overkillDamage: 0,
                 damageReceived: 0,
                 healingGiven: 0,
                 healingReceived: 0,
@@ -1289,6 +1329,8 @@ function aggregateCombatants(
             const sourceRow = rowFor(source);
             if (event.type === "damage") {
                 sourceRow.damageDealt += event.amount;
+                sourceRow.highestDamageRoll = Math.max(sourceRow.highestDamageRoll, event.amount);
+                sourceRow.overkillDamage += event.overkill ?? 0;
                 if (
                     source.isPlayerCharacter &&
                     target.isPlayerCharacter &&
@@ -1315,6 +1357,8 @@ function aggregateCombatants(
 function formatCombatMetrics(row: CombatantSummary): string {
     return [
         row.damageDealt > 0 ? `${row.damageDealt} dealt` : "",
+        row.highestDamageRoll > 0 ? `${row.highestDamageRoll} highest roll` : "",
+        row.overkillDamage > 0 ? `${row.overkillDamage} overkill` : "",
         row.damageReceived > 0 ? `${row.damageReceived} received` : "",
         row.healingGiven > 0 ? `${row.healingGiven} healing given` : "",
         row.healingReceived > 0 ? `${row.healingReceived} healed` : "",
@@ -1333,6 +1377,8 @@ function formatCombatMetrics(row: CombatantSummary): string {
 function formatCreatureMetrics(creature: ReturnType<typeof aggregateCreatureStatistics>[number]): string {
     return [
         `${creature.damageDealt} damage dealt`,
+        `${creature.highestDamageRoll} highest damage roll`,
+        `${creature.overkillDamage} overkill`,
         `${creature.damageReceived} damage received`,
         `${creature.healingGiven} healing given`,
         `${creature.healingReceived} healing received`,
@@ -1359,6 +1405,7 @@ function Highlights({ rows }: { rows: CombatantSummary[] }) {
 function buildHighlights(rows: CombatantSummary[]): string[] {
     const highlights = [
         buildTopHighlight("Most damage dealt", rows, (row) => row.damageDealt, "damage"),
+        buildTopHighlight("Highest damage roll", rows, (row) => row.highestDamageRoll, "damage"),
         buildTopHighlight("Most revivals", rows, (row) => row.revivals, "revival"),
         buildTopHighlight(
             "Most heals",

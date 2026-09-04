@@ -14,7 +14,10 @@ import {
 } from "@mui/material";
 import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
 import { CharacterPortraitProperties } from "./CharacterPortraitProperties";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import { loadEmittersPlugin } from "@tsparticles/plugin-emitters";
 
 export function CharacterPortraitSettings() {
     const {
@@ -31,6 +34,14 @@ export function CharacterPortraitSettings() {
     const [currentCharacterPortraitElement, setCurrentCharacterPortraitElement] =
         useState<HTMLElement | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [particlesReady, setParticlesReady] = useState(false);
+
+    useEffect(() => {
+        initParticlesEngine(async (engine) => {
+            await loadSlim(engine);
+            await loadEmittersPlugin(engine);
+        }).then(() => setParticlesReady(true));
+    }, []);
 
     const filteredImages = searchQuery.trim()
         ? images.filter((img) =>
@@ -78,6 +89,7 @@ export function CharacterPortraitSettings() {
                                 portraitImage={image}
                                 portraitTooltip="Change border"
                                 portraitClickEnabled={borders && borders.length > 0}
+                                particlePreviewEnabled={particlesReady}
                                 onPositionChanged={(position) => {
                                     updatePortraitImage({ ...image, position });
                                 }}

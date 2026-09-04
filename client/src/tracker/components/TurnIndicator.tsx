@@ -9,12 +9,14 @@ export interface TurnIndicatorProps {
     id: string;
     hasTurn: boolean;
     palette?: HexColor[];
+    contained?: boolean;
 }
 
 export default function TurnIndicator({
     id,
     hasTurn,
     palette,
+    contained = false,
     ...rest
 }: TurnIndicatorProps & BoxProps) {
     const [particlesContainer, setParticlesContainer] = useState<Container>();
@@ -32,12 +34,13 @@ export default function TurnIndicator({
             autoPlay: true,
             fpsLimit: 60,
             detectRetina: true,
+            fullScreen: { enable: !contained },
             particles: {
                 number: { value: 0 },
                 color: { value: palette?.length ? palette : ["#ffae00", "#ff7a00", "#ffd966"] },
                 shape: { type: "circle" },
                 size: {
-                    value: { min: 1, max: 3 },
+                    value: { min: contained ? 2 : 1, max: contained ? 5 : 3 },
                     animation: {
                         enable: true,
                         startValue: "min",
@@ -49,7 +52,7 @@ export default function TurnIndicator({
                     },
                 },
                 opacity: {
-                    value: { min: 0, max: 1 },
+                    value: { min: contained ? 0.35 : 0, max: 1 },
                     animation: {
                         enable: true,
                         startValue: "min",
@@ -76,10 +79,10 @@ export default function TurnIndicator({
             },
             emitters: [
                 {
-                    autoPlay: false,
-                    startCount: 0,
+                    autoPlay: contained,
+                    startCount: contained ? 12 : 0,
                     position: { x: 50, y: 100 },
-                    rate: { delay: 0, quantity: 1 },
+                    rate: { delay: 0, quantity: contained ? 3 : 1 },
                     size: { width: 0, height: 0 },
                     particles: {
                         move: {
@@ -90,7 +93,7 @@ export default function TurnIndicator({
                 },
             ],
         };
-    }, [palette]);
+    }, [contained, palette]);
 
     const particles = useMemo(
         () => (
@@ -103,7 +106,7 @@ export default function TurnIndicator({
                 }}
             />
         ),
-        [id, options],
+        [contained, id, options],
     );
 
     return (

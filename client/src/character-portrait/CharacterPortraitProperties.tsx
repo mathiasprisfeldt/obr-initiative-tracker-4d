@@ -1,9 +1,10 @@
-import { Button, Stack, TableCell, TableRow, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, TableCell, TableRow, Tooltip, Typography, styled } from "@mui/material";
 import { PortraitImage } from "./portrait-image-picker-store";
 import { CharacterPortraitThumbnail } from "./CharacterPortraitThumbnail";
 import { MouseEventHandler, useEffect, useState } from "react";
 import { ImagePositionInput } from "./ImagePositionInput";
 import { paletteFromImageElement } from "../utils/palette";
+import TurnIndicator from "../tracker/components/TurnIndicator";
 
 interface Props {
     portraitImage: PortraitImage;
@@ -12,6 +13,7 @@ interface Props {
     onPositionChanged?: (position: string) => void;
     onPortraitClicked?: MouseEventHandler<HTMLButtonElement>;
     onParticleColorsChanged?: (colors: string[] | undefined) => void;
+    particlePreviewEnabled?: boolean;
 }
 
 export function CharacterPortraitProperties({
@@ -21,9 +23,12 @@ export function CharacterPortraitProperties({
     onPositionChanged,
     onPortraitClicked,
     onParticleColorsChanged,
+    particlePreviewEnabled = false,
 }: Props) {
     const [autoParticleColors, setAutoParticleColors] = useState<string[]>([]);
+    const [isPreviewingParticles, setIsPreviewingParticles] = useState(false);
     const particleColors = portraitImage.particleColors ?? autoParticleColors;
+    const previewId = `portrait-particle-preview-${portraitImage.displayName.replace(/[^a-z0-9_-]/gi, "-")}`;
 
     useEffect(() => {
         setAutoParticleColors([]);
@@ -43,20 +48,36 @@ export function CharacterPortraitProperties({
             sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
         >
             <TableCell>
-                <Button onClick={onPortraitClicked} disabled={!portraitClickEnabled}>
-                    <Tooltip title={portraitTooltip}>
-                        <CharacterPortraitThumbnail
-                            portraitImage={portraitImage}
-                            showBorder={true}
-                            sx={{ width: 100 }}
-                            onImageLoad={(image) => {
-                                void paletteFromImageElement(image)
-                                    .then(setAutoParticleColors)
-                                    .catch(() => setAutoParticleColors([]));
-                            }}
+                <Box
+                    sx={{ position: "relative", width: 100, height: 100 }}
+                    onMouseEnter={() => setIsPreviewingParticles(true)}
+                    onMouseLeave={() => setIsPreviewingParticles(false)}
+                    onFocus={() => setIsPreviewingParticles(true)}
+                    onBlur={() => setIsPreviewingParticles(false)}
+                >
+                    <Button onClick={onPortraitClicked} disabled={!portraitClickEnabled}>
+                        <Tooltip title={portraitTooltip ?? "Hover to preview particles"}>
+                            <CharacterPortraitThumbnail
+                                portraitImage={portraitImage}
+                                showBorder={true}
+                                sx={{ width: "100%", height: "100%" }}
+                                onImageLoad={(image) => {
+                                    void paletteFromImageElement(image)
+                                        .then(setAutoParticleColors)
+                                        .catch(() => setAutoParticleColors([]));
+                                }}
+                            />
+                        </Tooltip>
+                    </Button>
+                    {particlePreviewEnabled && isPreviewingParticles && (
+                        <ParticlePreview
+                            id={previewId}
+                            hasTurn={isPreviewingParticles}
+                            palette={particleColors}
+                            contained
                         />
-                    </Tooltip>
-                </Button>
+                    )}
+                </Box>
             </TableCell>
             <TableCell>
                 <Typography>{portraitImage.displayName}</Typography>
@@ -120,3 +141,11 @@ export function CharacterPortraitProperties({
         </TableRow>
     );
 }
+
+const ParticlePreview = styled(TurnIndicator)`
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    clip-path: circle(38%);
+`;

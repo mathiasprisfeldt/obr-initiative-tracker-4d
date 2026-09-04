@@ -207,20 +207,13 @@ export default function CharacterRow({
                     />
                 </>
             ) : (
-                <>
-                    <ActionField
-                        label="Damage"
-                        disabled={!combatTrackingEnabled}
-                        onSubmit={onDamageTaken}
-                    />
-                    <HealthInput
-                        disabled={isDraft}
-                        health={character?.properties.health}
-                        maxHealth={character?.properties.maxHealth}
-                        onHealthChange={onHealthChange}
-                        onMaxHealthChange={onMaxHealthChange}
-                    />
-                </>
+                <HealthInput
+                    disabled={isDraft}
+                    health={character?.properties.health}
+                    maxHealth={character?.properties.maxHealth}
+                    onHealthChange={onHealthChange}
+                    onMaxHealthChange={onMaxHealthChange}
+                />
             )}
             <CharacterPortraitPicker
                 disabled={isDraft}

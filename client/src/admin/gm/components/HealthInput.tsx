@@ -90,7 +90,7 @@ function MathField({
 }
 
 const MaxHealthAwareMathField = styled(MathField, {
-    shouldForwardProp: (prop) => prop !== "maxhealth" && prop !== "clampToZero",
+    shouldForwardProp: (prop) => prop !== "maxhealth",
 })<{
     maxhealth: number;
 }>`

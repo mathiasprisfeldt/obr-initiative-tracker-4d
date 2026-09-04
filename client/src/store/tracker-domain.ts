@@ -22,6 +22,7 @@ export interface CharacterProperties {
 export interface CombatantSnapshot {
     id: string;
     name: string;
+    initiative: number;
     isPlayerCharacter: boolean;
     creatureType: string;
 }
@@ -217,6 +218,7 @@ export function normalizeTrackerDocument(value: TrackerDocument | LegacyTrackerS
                 participants: entry.participants.map((name) => ({
                     id: crypto.randomUUID(),
                     name,
+                    initiative: 0,
                     isPlayerCharacter: false,
                     creatureType: normalizeCreatureType(name),
                 })),
@@ -522,6 +524,7 @@ export function snapshotCombatant(character: Character): CombatantSnapshot {
     return {
         id: character.id,
         name: character.properties.name,
+        initiative: character.properties.initiative,
         isPlayerCharacter: character.properties.isPlayerCharacter,
         creatureType: character.properties.isPlayerCharacter
             ? character.properties.name

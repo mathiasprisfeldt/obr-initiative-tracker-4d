@@ -189,7 +189,7 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 dispatch({ ...eventBase(), type: "character-updated", character: { id, properties } });
                 return;
             }
-            const adjusted = { ...properties };
+            const adjusted = { ...properties, health: Math.max(0, properties.health) };
             if (!adjusted.isPlayerCharacter && adjusted.health > adjusted.maxHealth) {
                 adjusted.maxHealth = adjusted.health;
             }
@@ -416,18 +416,42 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         const current = getCurrentState();
         const characters = current.characters.filter((character) => character.properties.name.trim());
         if (!characters.length) return;
+        const canTakeTurn = (character: Character) =>
+            character.properties.isPlayerCharacter ||
+            !(character.properties.maxHealth > 0 && character.properties.health <= 0);
+        if (!characters.some(canTakeTurn)) return;
+
         const index = characters.findIndex((character) => character.id === current.currentCharacterId);
-        const currentIndex = index < 0 ? 0 : index;
-        let nextIndex = currentIndex + direction;
-        let round = current.round;
-        if (nextIndex >= characters.length) {
-            nextIndex = 0;
-            round += 1;
-        } else if (nextIndex < 0) {
-            if (round === 1) return;
-            nextIndex = characters.length - 1;
-            round -= 1;
+        if (index < 0) {
+            const nextCharacter = direction === 1
+                ? characters.find(canTakeTurn)
+                : [...characters].reverse().find(canTakeTurn);
+            if (!nextCharacter) return;
+            dispatch({
+                ...eventBase(),
+                type: "turn-changed",
+                characterId: nextCharacter.id,
+                characterName: nextCharacter.properties.name,
+                round: current.round,
+            });
+            return;
         }
+
+        let nextIndex = index;
+        let round = current.round;
+        for (let attempts = 0; attempts < characters.length; attempts += 1) {
+            nextIndex += direction;
+            if (nextIndex >= characters.length) {
+                nextIndex = 0;
+                round += 1;
+            } else if (nextIndex < 0) {
+                if (round === 1) return;
+                nextIndex = characters.length - 1;
+                round -= 1;
+            }
+            if (canTakeTurn(characters[nextIndex])) break;
+        }
+        if (!canTakeTurn(characters[nextIndex])) return;
         dispatch({
             ...eventBase(),
             type: "turn-changed",

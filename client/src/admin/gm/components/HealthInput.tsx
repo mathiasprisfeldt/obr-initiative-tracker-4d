@@ -27,6 +27,7 @@ export default function HealthInput({
                 disabled={disabled}
                 value={health}
                 onValueChange={onHealthChange}
+                clampToZero={false}
                 sx={{ maxWidth: 60, mr: 1 }}
                 maxhealth={maxHealth}
             />
@@ -44,10 +45,12 @@ export default function HealthInput({
 function MathField({
     value,
     onValueChange,
+    clampToZero = true,
     ...rest
 }: {
     value: number;
     onValueChange?: (value: number) => void;
+    clampToZero?: boolean;
 } & TextFieldProps) {
     const [draftValue, setDraftValue] = useState(value.toString());
 
@@ -61,13 +64,13 @@ function MathField({
             setDraftValue(value.toString());
             return;
         }
-        const clamped = Math.max(0, evaluated);
-        if (clamped === value) {
+        const nextValue = clampToZero ? Math.max(0, evaluated) : evaluated;
+        if (nextValue === value) {
             setDraftValue(value.toString());
             return;
         }
-        onValueChange?.(Math.max(0, evaluated));
-    }, [value, draftValue]);
+        onValueChange?.(nextValue);
+    }, [clampToZero, value, draftValue, onValueChange]);
 
     return (
         <TextField
@@ -86,7 +89,9 @@ function MathField({
     );
 }
 
-const MaxHealthAwareMathField = styled(MathField)<{
+const MaxHealthAwareMathField = styled(MathField, {
+    shouldForwardProp: (prop) => prop !== "maxhealth" && prop !== "clampToZero",
+})<{
     maxhealth: number;
 }>`
     & .MuiOutlinedInput-root {

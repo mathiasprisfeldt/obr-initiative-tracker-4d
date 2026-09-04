@@ -34,37 +34,49 @@ export default function Admin() {
     const [value, setValue] = useState("1");
 
     return (
-        <Box sx={{ width: "100%", typography: "body1", color: "white" }}>
+        <Box
+            sx={{
+                width: "100%",
+                height: "100vh",
+                minHeight: 0,
+                typography: "body1",
+                color: "white",
+                display: "flex",
+                flexDirection: "column",
+            }}
+        >
             <TabContext value={value}>
-                <Box sx={{ borderBottom: 1, borderColor: "divider", position: "relative" }}>
-                    <TabList
-                        variant="scrollable"
-                        scrollButtons="auto"
-                        onChange={(_event, newValue) => setValue(newValue)}
-                    >
-                        <Tab label="Home" value="1" />
-                        <Tab label="History" value="2" />
-                        <Tab label="Portraits" value="3" />
-                        <Tab label="Borders" value="4" />
-                        <Tab label="Settings" value="5" />
-                    </TabList>
-                    <RoomConnectionIndicator onClick={() => setValue("5")} />
+                <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+                    <Box sx={{ borderBottom: 1, borderColor: "divider", position: "relative" }}>
+                        <TabList
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            onChange={(_event, newValue) => setValue(newValue)}
+                        >
+                            <Tab label="Home" value="1" />
+                            <Tab label="History" value="2" />
+                            <Tab label="Portraits" value="3" />
+                            <Tab label="Borders" value="4" />
+                            <Tab label="Settings" value="5" />
+                        </TabList>
+                        <RoomConnectionIndicator onClick={() => setValue("5")} />
+                    </Box>
+                    <TabPanel value="1" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                        <Tracker />
+                    </TabPanel>
+                    <TabPanel value="2" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                        <HistoryPane />
+                    </TabPanel>
+                    <TabPanel value="3" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                        <CharacterPortraitSettings />
+                    </TabPanel>
+                    <TabPanel value="4" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                        <CharacterPortraitBorderSettings />
+                    </TabPanel>
+                    <TabPanel value="5" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                        <SettingsPanel />
+                    </TabPanel>
                 </Box>
-                <TabPanel value="1">
-                    <Tracker />
-                </TabPanel>
-                <TabPanel value="2">
-                    <HistoryPane />
-                </TabPanel>
-                <TabPanel value="3">
-                    <CharacterPortraitSettings />
-                </TabPanel>
-                <TabPanel value="4">
-                    <CharacterPortraitBorderSettings />
-                </TabPanel>
-                <TabPanel value="5">
-                    <SettingsPanel />
-                </TabPanel>
             </TabContext>
             <Typography
                 variant="caption"

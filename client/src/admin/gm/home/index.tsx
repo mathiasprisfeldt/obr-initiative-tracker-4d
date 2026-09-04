@@ -40,6 +40,7 @@ import {
     Favorite,
     FavoriteBorder,
     FormatListBulleted,
+    Groups,
     LocalFireDepartment,
     MilitaryTech,
     Redo,
@@ -141,13 +142,14 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
     );
     const latestCompletedEncounter =
         currentSession?.encounters[currentSession.encounters.length - 1];
+    const activeCombatants = state.characters
+        .filter((character) => character.properties.name.trim())
+        .map(snapshotCombatant);
     const recentEncounter = state.activeEncounter
         ? {
               name: state.activeEncounter.name,
               events: state.activeEncounter.combatEvents,
-              combatants: state.characters
-                  .filter((character) => character.properties.name.trim())
-                  .map(snapshotCombatant),
+              combatants: activeCombatants,
           }
         : latestCompletedEncounter
           ? {
@@ -336,7 +338,7 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                             } else {
                                 updateCharacter(character.id, {
                                     ...character.properties,
-                                    health,
+                                    health: Math.max(0, health),
                                 });
                             }
                         }}
@@ -396,6 +398,7 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                     session={currentSession}
                     activeEvents={state.activeEncounter?.combatEvents ?? []}
                     activeEncounterName={state.activeEncounter?.name}
+                    activeCombatants={activeCombatants}
                     onRename={(name) => renameSession(currentSession.id, name)}
                     onEnd={() => endSession(currentSession.id)}
                     canEnd={!state.hasEncounterStarted}
@@ -572,6 +575,7 @@ function CurrentSessionOverview({
     session,
     activeEvents,
     activeEncounterName,
+    activeCombatants,
     onRename,
     onEnd,
     canEnd,
@@ -581,6 +585,7 @@ function CurrentSessionOverview({
     session: GameSession;
     activeEvents: CombatEvent[];
     activeEncounterName?: string;
+    activeCombatants: CombatantSnapshot[];
     onRename: (name: string) => void;
     onEnd: () => void;
     canEnd: boolean;
@@ -591,7 +596,10 @@ function CurrentSessionOverview({
         ...session.encounters.flatMap((encounter) => encounter.combatEvents),
         ...activeEvents,
     ];
-    const participants = session.encounters.flatMap((encounter) => encounter.participants);
+    const participants = [
+        ...session.encounters.flatMap((encounter) => encounter.participants),
+        ...activeCombatants,
+    ];
 
     return (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -633,6 +641,7 @@ function CurrentSessionOverview({
                         session={session}
                         activeEncounterName={activeEncounterName}
                         activeEvents={activeEvents}
+                        activeCombatants={activeCombatants}
                     />
                 </Stack>
                 <Summary
@@ -800,10 +809,12 @@ function CopySessionSummaryButton({
     session,
     activeEncounterName,
     activeEvents = [],
+    activeCombatants = [],
 }: {
     session: GameSession;
     activeEncounterName?: string;
     activeEvents?: CombatEvent[];
+    activeCombatants?: CombatantSnapshot[];
 }) {
     const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
     const title =
@@ -821,7 +832,14 @@ function CopySessionSummaryButton({
                 onClick={(event) => {
                     event.stopPropagation();
                     navigator.clipboard
-                        .writeText(buildSessionSummary(session, activeEvents, activeEncounterName))
+                        .writeText(
+                            buildSessionSummary(
+                                session,
+                                activeEvents,
+                                activeEncounterName,
+                                activeCombatants,
+                            ),
+                        )
                         .then(() => setCopyStatus("copied"))
                         .catch(() => setCopyStatus("error"));
                 }}
@@ -836,21 +854,24 @@ function buildSessionSummary(
     session: GameSession,
     activeEvents: CombatEvent[],
     activeEncounterName?: string,
+    activeCombatants: CombatantSnapshot[] = [],
 ): string {
     const allEvents = [
         ...session.encounters.flatMap((encounter) => encounter.combatEvents),
         ...activeEvents,
     ];
-    const combatants = aggregateCombatants(
-        allEvents,
-        session.encounters.flatMap((encounter) => encounter.participants),
-    ).filter(
+    const participants = [
+        ...session.encounters.flatMap((encounter) => encounter.participants),
+        ...activeCombatants,
+    ];
+    const combatants = aggregateCombatants(allEvents, participants).filter(
         (row) =>
             row.damageDealt ||
             row.damageReceived ||
             row.healingGiven ||
             row.healingReceived ||
             row.selfHealing ||
+            row.teamDamage ||
             row.killingBlows ||
             row.revivals,
     );
@@ -879,6 +900,7 @@ function buildSessionSummary(
                 row.healingGiven > 0 ? `${row.healingGiven} healing given` : "",
                 row.healingReceived > 0 ? `${row.healingReceived} healing received` : "",
                 row.selfHealing > 0 ? `${row.selfHealing} self-healed` : "",
+                row.teamDamage > 0 ? `${row.teamDamage} team damage` : "",
                 row.killingBlows > 0 ? `${row.killingBlows} killing blow${row.killingBlows === 1 ? "" : "s"}` : "",
                 row.revivals > 0 ? `${row.revivals} revival${row.revivals === 1 ? "" : "s"}` : "",
             ].filter(Boolean);
@@ -888,10 +910,15 @@ function buildSessionSummary(
 
     const creatures = aggregateCreatureStatistics(
         allEvents,
-        session.encounters.map((encounter) => ({
-            id: encounter.id,
-            participants: encounter.participants,
-        })),
+        [
+            ...session.encounters.map((encounter) => ({
+                id: encounter.id,
+                participants: encounter.participants,
+            })),
+            ...(activeCombatants.length > 0 && activeEvents[0]
+                ? [{ id: activeEvents[0].encounterId, participants: activeCombatants }]
+                : []),
+        ],
     );
     if (creatures.length > 0) {
         lines.push("", "Creatures:");
@@ -901,10 +928,13 @@ function buildSessionSummary(
                     creature.encounterIds.size
                 } ${creature.encounterIds.size === 1 ? "encounter" : "encounters"}, ${
                     creature.damageDealt
-                } damage dealt, ${creature.damageReceived} damage received`,
+                } damage dealt, ${creature.damageReceived} damage received, ${creature.healingGiven} healing given, ${creature.healingReceived} healing received`,
             );
         }
     }
+
+    const highlights = buildHighlights(aggregateCombatants(allEvents, participants, true));
+    if (highlights.length > 0) lines.push("", "Highlights:", ...highlights.map((highlight) => `- ${highlight}`));
 
     return lines.join("\n");
 }
@@ -953,9 +983,14 @@ function Summary({
                     row.healingGiven ||
                     row.healingReceived ||
                     row.selfHealing ||
+                    row.teamDamage ||
                     row.killingBlows ||
                     row.revivals,
             ),
+        [events, combatants],
+    );
+    const individualRows = useMemo(
+        () => aggregateCombatants(events, combatants, true),
         [events, combatants],
     );
     return (
@@ -1026,6 +1061,15 @@ function Summary({
                                     label={`${row.selfHealing} self-healed`}
                                 />
                             )}
+                            {row.teamDamage > 0 && (
+                                <Chip
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    icon={<Groups />}
+                                    label={`${row.teamDamage} team damage`}
+                                />
+                            )}
                             {row.killingBlows > 0 && (
                                 <Chip
                                     size="small"
@@ -1039,15 +1083,20 @@ function Summary({
                             )}
                             {row.key === "all-npcs" && npcExpanded && (
                                 <Stack sx={{ width: "100%", pl: 4 }} spacing={0.5}>
-                                    {aggregateCombatants(events, combatants, true)
-                                        .filter((npc) => npc.key !== "all-npcs")
-                                        .map((npc) => <Typography key={npc.key} variant="caption">{npc.name}: {npc.damageDealt} dealt, {npc.damageReceived} received{npc.killingBlows ? `, ${npc.killingBlows} killing blow${npc.killingBlows === 1 ? "" : "s"}` : ""}</Typography>)}
+                                    {individualRows
+                                        .filter((npc) => !npc.isPlayerCharacter)
+                                        .map((npc) => (
+                                            <Typography key={npc.key} variant="caption">
+                                                {npc.name}: {formatCombatMetrics(npc)}
+                                            </Typography>
+                                        ))}
                                 </Stack>
                             )}
                         </Stack>
                     ))}
                 </Stack>
             )}
+            <Highlights rows={individualRows} />
         </Paper>
     );
 }
@@ -1073,8 +1122,7 @@ function CreatureStatistics({
                 creatures.map((creature) => (
                     <Typography variant="body2" key={creature.name}>
                         <strong>{creature.name}</strong>: {creature.ids.size} creatures across{" "}
-                        {creature.encounterIds.size} encounters, {creature.damageDealt} damage dealt,{" "}
-                        {creature.damageReceived} damage received
+                        {creature.encounterIds.size} encounters, {formatCreatureMetrics(creature)}
                     </Typography>
                 ))
             )}
@@ -1092,11 +1140,22 @@ function aggregateCreatureStatistics(
             name: string;
             damageDealt: number;
             damageReceived: number;
+            healingGiven: number;
+            healingReceived: number;
+            selfHealing: number;
             ids: Set<string>;
             encounterIds: Set<string>;
         }
     >();
-    const addCreature = (combatant: CombatantSnapshot, encounterId: string) => {
+    const combatantsById = new Map(
+        encounters
+            .flatMap((encounter) => encounter.participants)
+            .map((combatant) => [combatant.id, combatant]),
+    );
+    const resolveCombatant = (combatant: CombatantSnapshot) =>
+        combatantsById.get(combatant.id) ?? combatant;
+    const addCreature = (candidate: CombatantSnapshot, encounterId: string) => {
+        const combatant = resolveCombatant(candidate);
         if (combatant.isPlayerCharacter) return;
         const key = combatant.creatureType.toLocaleLowerCase();
         if (!values.has(key)) {
@@ -1104,6 +1163,9 @@ function aggregateCreatureStatistics(
                 name: combatant.creatureType,
                 damageDealt: 0,
                 damageReceived: 0,
+                healingGiven: 0,
+                healingReceived: 0,
+                selfHealing: 0,
                 ids: new Set(),
                 encounterIds: new Set(),
             });
@@ -1117,52 +1179,72 @@ function aggregateCreatureStatistics(
         }
     }
     for (const event of events) {
-        for (const combatant of [event.source, event.target]) {
-            if (!combatant || combatant.isPlayerCharacter) continue;
-            addCreature(combatant, event.encounterId);
-        }
+        const source = event.source ? resolveCombatant(event.source) : undefined;
+        const target = resolveCombatant(event.target);
+        if (source) addCreature(source, event.encounterId);
+        addCreature(target, event.encounterId);
         if (event.type === "damage") {
-            if (event.source && !event.source.isPlayerCharacter) {
-                values.get(event.source.creatureType.toLocaleLowerCase())!.damageDealt +=
-                    event.amount;
+            if (source && !source.isPlayerCharacter) {
+                values.get(source.creatureType.toLocaleLowerCase())!.damageDealt += event.amount;
             }
-            if (!event.target.isPlayerCharacter) {
-                values.get(event.target.creatureType.toLocaleLowerCase())!.damageReceived +=
-                    event.amount;
+            if (!target.isPlayerCharacter) {
+                values.get(target.creatureType.toLocaleLowerCase())!.damageReceived += event.amount;
+            }
+        } else if (source?.id === target.id) {
+            if (!target.isPlayerCharacter) {
+                values.get(target.creatureType.toLocaleLowerCase())!.selfHealing += event.amount;
+            }
+        } else {
+            if (source && !source.isPlayerCharacter) {
+                values.get(source.creatureType.toLocaleLowerCase())!.healingGiven += event.amount;
+            }
+            if (!target.isPlayerCharacter) {
+                values.get(target.creatureType.toLocaleLowerCase())!.healingReceived += event.amount;
             }
         }
     }
     return [...values.values()];
 }
 
-function aggregateCombatants(events: CombatEvent[], combatants: CombatantSnapshot[], separateNpcs = false) {
-    const rows = new Map<
-        string,
-        {
-            key: string;
-            name: string;
-            isPlayerCharacter: boolean;
-            damageDealt: number;
-            damageReceived: number;
-            healingGiven: number;
-            healingReceived: number;
-            selfHealing: number;
-            killingBlows: number;
-            revivals: number;
-        }
-    >();
-    const rowFor = (combatant: NonNullable<CombatEvent["source"]>) => {
+interface CombatantSummary {
+    key: string;
+    name: string;
+    initiative?: number;
+    isPlayerCharacter: boolean;
+    damageDealt: number;
+    damageReceived: number;
+    healingGiven: number;
+    healingReceived: number;
+    selfHealing: number;
+    teamDamage: number;
+    killingBlows: number;
+    revivals: number;
+}
+
+function aggregateCombatants(
+    events: CombatEvent[],
+    combatants: CombatantSnapshot[],
+    separateNpcs = false,
+): CombatantSummary[] {
+    const rows = new Map<string, CombatantSummary>();
+    const combatantsById = new Map(combatants.map((combatant) => [combatant.id, combatant]));
+    const resolveCombatant = (combatant: CombatantSnapshot) =>
+        combatantsById.get(combatant.id) ?? combatant;
+    const rowFor = (candidate: CombatantSnapshot) => {
+        const combatant = resolveCombatant(candidate);
         const key = combatant.isPlayerCharacter || separateNpcs ? combatant.id : "all-npcs";
         if (!rows.has(key)) {
             rows.set(key, {
                 key,
                 name: combatant.isPlayerCharacter || separateNpcs ? combatant.name : "NPCs",
+                initiative: combatant.initiative,
                 isPlayerCharacter: combatant.isPlayerCharacter,
                 damageDealt: 0,
                 damageReceived: 0,
                 healingGiven: 0,
                 healingReceived: 0,
                 selfHealing: 0,
+                teamDamage: 0,
                 killingBlows: 0,
                 revivals: 0,
             });
@@ -1172,23 +1254,32 @@ function aggregateCombatants(events: CombatEvent[], combatants: CombatantSnapsho
 
     for (const combatant of combatants) rowFor(combatant);
     for (const event of events) {
-        if (event.killingBlow && event.source) rowFor(event.source).killingBlows += 1;
-        if (event.revival && event.source) rowFor(event.source).revivals += 1;
-        if (
-            event.type === "healing" &&
-            event.source?.id === event.target.id
-        ) {
-            rowFor(event.target).selfHealing += event.amount;
+        const source = event.source ? resolveCombatant(event.source) : undefined;
+        const target = resolveCombatant(event.target);
+        if (event.killingBlow && source) rowFor(source).killingBlows += 1;
+        if (event.revival && source) rowFor(source).revivals += 1;
+        if (event.type === "healing" && source?.id === target.id) {
+            rowFor(target).selfHealing += event.amount;
             continue;
         }
-        if (event.source) {
-            const source = rowFor(event.source);
-            if (event.type === "damage") source.damageDealt += event.amount;
-            else source.healingGiven += event.amount;
+        if (source) {
+            const sourceRow = rowFor(source);
+            if (event.type === "damage") {
+                sourceRow.damageDealt += event.amount;
+                if (
+                    source.isPlayerCharacter &&
+                    target.isPlayerCharacter &&
+                    source.id !== target.id
+                ) {
+                    sourceRow.teamDamage += event.amount;
+                }
+            } else {
+                sourceRow.healingGiven += event.amount;
+            }
         }
-        const target = rowFor(event.target);
-        if (event.type === "damage") target.damageReceived += event.amount;
-        else target.healingReceived += event.amount;
+        const targetRow = rowFor(target);
+        if (event.type === "damage") targetRow.damageReceived += event.amount;
+        else targetRow.healingReceived += event.amount;
     }
     return [...rows.values()].sort((a, b) => {
         if (a.isPlayerCharacter !== b.isPlayerCharacter) {
@@ -1196,6 +1287,90 @@ function aggregateCombatants(events: CombatEvent[], combatants: CombatantSnapsho
         }
         return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
     });
+}
+
+function formatCombatMetrics(row: CombatantSummary): string {
+    return [
+        row.damageDealt > 0 ? `${row.damageDealt} dealt` : "",
+        row.damageReceived > 0 ? `${row.damageReceived} received` : "",
+        row.healingGiven > 0 ? `${row.healingGiven} healing given` : "",
+        row.healingReceived > 0 ? `${row.healingReceived} healed` : "",
+        row.selfHealing > 0 ? `${row.selfHealing} self-healed` : "",
+        row.teamDamage > 0 ? `${row.teamDamage} team damage` : "",
+        row.killingBlows > 0
+            ? `${row.killingBlows} killing blow${row.killingBlows === 1 ? "" : "s"}`
+            : "",
+        row.revivals > 0 ? `${row.revivals} revival${row.revivals === 1 ? "" : "s"}` : "",
+    ]
+        .filter(Boolean)
+        .join(", ");
+}
+
+function formatCreatureMetrics(creature: ReturnType<typeof aggregateCreatureStatistics>[number]): string {
+    return [
+        `${creature.damageDealt} damage dealt`,
+        `${creature.damageReceived} damage received`,
+        `${creature.healingGiven} healing given`,
+        `${creature.healingReceived} healing received`,
+        `${creature.selfHealing} self-healed`,
+    ].join(", ");
+}
+
+function Highlights({ rows }: { rows: CombatantSummary[] }) {
+    const highlights = buildHighlights(rows);
+    if (highlights.length === 0) return null;
+    return (
+        <Stack spacing={0.25} sx={{ pt: 0.5 }}>
+            <Typography variant="subtitle2">Highlights</Typography>
+            {highlights.map((highlight) => (
+                <Typography key={highlight} variant="body2" color="text.secondary">
+                    {highlight}
+                </Typography>
+            ))}
+        </Stack>
+    );
+}
+
+function buildHighlights(rows: CombatantSummary[]): string[] {
+    const highlights = [
+        buildTopHighlight("Most damage dealt", rows, (row) => row.damageDealt, "damage"),
+        buildTopHighlight("Most revivals", rows, (row) => row.revivals, "revival"),
+        buildTopHighlight(
+            "Most heals",
+            rows,
+            (row) => row.healingGiven + row.selfHealing,
+            "healing",
+        ),
+        buildTopHighlight("Most damage taken", rows, (row) => row.damageReceived, "damage"),
+        buildTopHighlight("Most team damage", rows, (row) => row.teamDamage, "team damage"),
+    ].filter((highlight): highlight is string => Boolean(highlight));
+    const rowsWithInitiative = rows.filter((row) => Number.isFinite(row.initiative));
+    if (rowsWithInitiative.length > 0) {
+        const highestInitiative = Math.max(
+            ...rowsWithInitiative.map((row) => row.initiative as number),
+        );
+        const names = rowsWithInitiative
+            .filter((row) => row.initiative === highestInitiative)
+            .map((row) => row.name)
+            .join(", ");
+        highlights.push(`Highest initiative roll: ${names} (${highestInitiative})`);
+    }
+    return highlights;
+}
+
+function buildTopHighlight(
+    label: string,
+    rows: CombatantSummary[],
+    metric: (row: CombatantSummary) => number,
+    unit: string,
+): string | null {
+    const topValue = Math.max(0, ...rows.map(metric));
+    if (topValue === 0) return null;
+    const names = rows
+        .filter((row) => metric(row) === topValue)
+        .map((row) => row.name)
+        .join(", ");
+    return `${label}: ${names} (${topValue} ${unit})`;
 }
 
 function formatDate(date: string) {

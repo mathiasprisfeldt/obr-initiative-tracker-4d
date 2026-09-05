@@ -18,7 +18,6 @@ import {
     Button,
     ButtonBase,
     Chip,
-    Collapse,
     Dialog,
     DialogContent,
     DialogTitle,
@@ -1466,24 +1465,12 @@ function Highlights({
     rows: CombatantSummary[];
     onSelect: (rowKey: string) => void;
 }) {
-    const [expanded, setExpanded] = useState(false);
     const metrics = useMemo(() => buildHighlightMetrics(rows), [rows]);
     if (metrics.length === 0) return null;
 
     return (
         <Stack spacing={0.75} sx={{ pt: 1.5 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Typography variant="subtitle2">Highlights</Typography>
-                <Tooltip title={expanded ? "Collapse highlight rankings" : "Expand highlight rankings"}>
-                    <IconButton
-                        size="small"
-                        aria-label={expanded ? "Collapse highlights" : "Expand highlights"}
-                        onClick={() => setExpanded((value) => !value)}
-                    >
-                        <ExpandMore sx={{ transform: expanded ? "rotate(180deg)" : undefined }} />
-                    </IconButton>
-                </Tooltip>
-            </Stack>
+            <Typography variant="subtitle2">Highlights</Typography>
             <Box
                 sx={{
                     display: "grid",
@@ -1496,28 +1483,17 @@ function Highlights({
                         <Typography variant="caption" color="text.secondary">
                             {metric.label}
                         </Typography>
-                        {expanded ? (
-                            <Collapse in>
-                                <Stack spacing={0.25} sx={{ pt: 0.5 }}>
-                                    {metric.rankings.map((ranking, index) => (
-                                        <HighlightRank
-                                            key={ranking.key}
-                                            ranking={ranking}
-                                            rank={index + 1}
-                                            unit={metric.unit}
-                                            onSelect={onSelect}
-                                        />
-                                    ))}
-                                </Stack>
-                            </Collapse>
-                        ) : (
-                            <HighlightRank
-                                ranking={metric.rankings[0]}
-                                rank={1}
-                                unit={metric.unit}
-                                onSelect={onSelect}
-                            />
-                        )}
+                        <Stack spacing={0.25} sx={{ pt: 0.5 }}>
+                            {metric.rankings.map((ranking, index) => (
+                                <HighlightRank
+                                    key={ranking.key}
+                                    ranking={ranking}
+                                    rank={index + 1}
+                                    unit={metric.unit}
+                                    onSelect={onSelect}
+                                />
+                            ))}
+                        </Stack>
                     </Paper>
                 ))}
             </Box>

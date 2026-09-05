@@ -1057,6 +1057,10 @@ function Summary({
                                     }
                                     sx={{
                                         aspectRatio: "1",
+                                        borderColor: selected ? "common.white" : undefined,
+                                        borderStyle: selected ? "solid" : undefined,
+                                        borderWidth: selected ? 2 : undefined,
+                                        boxSizing: "border-box",
                                         minHeight: 76,
                                         minWidth: 0,
                                         overflow: "hidden",

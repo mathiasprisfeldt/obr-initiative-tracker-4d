@@ -4,6 +4,7 @@ import {
     toLocalDate,
     type CombatantSnapshot,
     type CombatEvent,
+    type Encounter,
     type GameSession,
     type TrackerEvent,
 } from "../../../store/tracker-domain";
@@ -485,32 +486,18 @@ function SessionOverview({
                         participants: encounter.participants,
                     }))}
                 />
-                {session.encounters.map((encounter) => (
-                    <Accordion key={encounter.id} disableGutters>
-                        <AccordionSummary expandIcon={<ExpandMore />}>
-                            <Typography sx={{ flex: 1 }}>
-                                {encounter.name} · {encounter.rounds}{" "}
-                                {encounter.rounds === 1 ? "round" : "rounds"}
-                            </Typography>
-                            <NameEditButton
-                                name={encounter.name}
-                                label="encounter"
+                {session.encounters.length > 0 && (
+                    <Stack spacing={1} sx={{ pt: 1 }}>
+                        {session.encounters.map((encounter) => (
+                            <EncounterSummaryAccordion
+                                key={encounter.id}
+                                encounter={encounter}
                                 onRename={(name) => onRenameEncounter(encounter.id, name)}
-                            />
-                            <EncounterDeleteButton
-                                encounterName={encounter.name}
                                 onDelete={() => onDeleteEncounter(encounter.id)}
                             />
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Summary
-                                title="Encounter totals"
-                                events={encounter.combatEvents}
-                                combatants={encounter.participants}
-                            />
-                        </AccordionDetails>
-                    </Accordion>
-                ))}
+                        ))}
+                    </Stack>
+                )}
             </AccordionDetails>
             <Dialog
                 open={activityLogOpen}
@@ -615,46 +602,57 @@ function CurrentSessionOverview({
                 {session.encounters.length > 0 && (
                     <Stack spacing={1} sx={{ pt: 1 }}>
                         {session.encounters.map((encounter) => (
-                            <Accordion
+                            <EncounterSummaryAccordion
                                 key={encounter.id}
-                                disableGutters
-                                sx={{
-                                    border: 1,
-                                    borderColor: "divider",
-                                    borderRadius: 1,
-                                    overflow: "hidden",
-                                    "&::before": { display: "none" },
-                                    "&.Mui-expanded": { m: 0 },
-                                }}
-                            >
-                                <AccordionSummary expandIcon={<ExpandMore />}>
-                                    <Typography sx={{ flex: 1 }}>
-                                        {encounter.name} · {encounter.rounds}{" "}
-                                        {encounter.rounds === 1 ? "round" : "rounds"}
-                                    </Typography>
-                                    <NameEditButton
-                                        name={encounter.name}
-                                        label="encounter"
-                                        onRename={(name) => onRenameEncounter(encounter.id, name)}
-                                    />
-                                    <EncounterDeleteButton
-                                        encounterName={encounter.name}
-                                        onDelete={() => onDeleteEncounter(encounter.id)}
-                                    />
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Summary
-                                        title="Encounter totals"
-                                        events={encounter.combatEvents}
-                                        combatants={encounter.participants}
-                                    />
-                                </AccordionDetails>
-                            </Accordion>
+                                encounter={encounter}
+                                onRename={(name) => onRenameEncounter(encounter.id, name)}
+                                onDelete={() => onDeleteEncounter(encounter.id)}
+                            />
                         ))}
                     </Stack>
                 )}
             </Stack>
         </Paper>
+    );
+}
+
+function EncounterSummaryAccordion({
+    encounter,
+    onRename,
+    onDelete,
+}: {
+    encounter: Encounter;
+    onRename: (name: string) => void;
+    onDelete: () => void;
+}) {
+    return (
+        <Accordion
+            disableGutters
+            sx={{
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                overflow: "hidden",
+                "&::before": { display: "none" },
+                "&.Mui-expanded": { m: 0 },
+            }}
+        >
+            <AccordionSummary expandIcon={<ExpandMore />}>
+                <Typography sx={{ flex: 1 }}>
+                    {encounter.name} · {encounter.rounds}{" "}
+                    {encounter.rounds === 1 ? "round" : "rounds"}
+                </Typography>
+                <NameEditButton name={encounter.name} label="encounter" onRename={onRename} />
+                <EncounterDeleteButton encounterName={encounter.name} onDelete={onDelete} />
+            </AccordionSummary>
+            <AccordionDetails>
+                <Summary
+                    title="Encounter totals"
+                    events={encounter.combatEvents}
+                    combatants={encounter.participants}
+                />
+            </AccordionDetails>
+        </Accordion>
     );
 }
 

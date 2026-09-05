@@ -52,7 +52,10 @@ export function CharacterPortraitSettings() {
                 onChange={(e) => setImageSourceUrl(e.target.value)}
                 fullWidth
             />
-            <TableContainer component={Paper} sx={{ mt: 2, overflow: "visible" }}>
+            <TableContainer
+                component={Paper}
+                sx={{ mt: 2, maxHeight: "calc(100vh - 180px)", overflowY: "auto" }}
+            >
                 <Table stickyHeader size="small">
                     <TableHead>
                         <TableRow>

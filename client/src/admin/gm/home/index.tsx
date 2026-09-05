@@ -14,12 +14,14 @@ import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
+    Box,
     Button,
+    ButtonBase,
     Chip,
+    Collapse,
     Dialog,
     DialogContent,
     DialogTitle,
-    Divider,
     IconButton,
     LinearProgress,
     List,
@@ -477,14 +479,6 @@ function SessionOverview({
                     title="Session totals"
                     events={allEvents}
                     combatants={session.encounters.flatMap((encounter) => encounter.participants)}
-                />
-                <Divider sx={{ my: 1 }} />
-                <CreatureStatistics
-                    events={allEvents}
-                    encounters={session.encounters.map((encounter) => ({
-                        id: encounter.id,
-                        participants: encounter.participants,
-                    }))}
                 />
                 <EncounterSummaryGroup
                     encounters={session.encounters}
@@ -984,186 +978,204 @@ function Summary({
     combatants?: CombatantSnapshot[];
     action?: ReactNode;
 }) {
-    const [npcExpanded, setNpcExpanded] = useState(false);
-    const rows = useMemo(
-        () =>
-            aggregateCombatants(events, combatants).filter(
-                (row) =>
-                    row.damageDealt ||
-                    row.damageReceived ||
-                    row.healingGiven ||
-                    row.healingReceived ||
-                    row.selfHealing ||
-                    row.teamDamage ||
-                    row.downs ||
-                    row.killingBlows ||
-                    row.revivals,
-            ),
-        [events, combatants],
-    );
+    const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
+    const rows = useMemo(() => aggregateCombatants(events, combatants), [events, combatants]);
     const individualRows = useMemo(
         () => aggregateCombatants(events, combatants, true),
         [events, combatants],
     );
+    const selectableRows = rows.filter(
+        (row) => row.isPlayerCharacter || row.key === "all-npcs",
+    );
+    const selectedRow = selectableRows.find((row) => row.key === selectedRowKey);
+    const creatureCounts = useMemo(
+        () => countNpcCreatures(events, combatants),
+        [events, combatants],
+    );
+    const hasCombatActivity = rows.some(hasCombatMetrics);
+
     return (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
                 <Typography variant="subtitle1">{title}</Typography>
                 {action}
             </Stack>
-            {rows.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                    No combat activity recorded.
+            <Highlights
+                rows={individualRows}
+                onSelect={(rowKey) =>
+                    setSelectedRowKey(
+                        individualRows.find((row) => row.key === rowKey)?.isPlayerCharacter
+                            ? rowKey
+                            : "all-npcs",
+                    )
+                }
+            />
+            {selectableRows.length === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
+                    No combatants recorded.
                 </Typography>
             ) : (
-                <Stack spacing={1}>
-                    {rows.map((row) => (
-                        <Stack
-                            key={row.key}
-                            direction="row"
-                            alignItems="center"
-                            spacing={0.75}
-                            useFlexGap
-                            flexWrap="wrap"
-                        >
-                            {row.key === "all-npcs" && (
-                                <IconButton size="small" aria-label="Expand NPC summaries" onClick={() => setNpcExpanded((value) => !value)}>
-                                    <ExpandMore sx={{ transform: npcExpanded ? "rotate(180deg)" : undefined }} />
-                                </IconButton>
-                            )}
-                            <Typography variant="body2" fontWeight={600} sx={{ mr: 0.25 }}>
-                                {row.name}:
-                            </Typography>
-                            {row.damageDealt > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="error"
-                                    icon={<LocalFireDepartment />}
-                                    label={`${row.damageDealt} dealt`}
-                                />
-                            )}
-                            {row.highestDamageRoll > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="error"
-                                    variant="outlined"
-                                    label={`${row.highestDamageRoll} highest roll`}
-                                />
-                            )}
-                            {row.overkillDamage > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="warning"
-                                    variant="outlined"
-                                    label={`${row.overkillDamage} overkill`}
-                                />
-                            )}
-                            {row.damageReceived > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="error"
-                                    variant="outlined"
-                                    icon={<Shield />}
-                                    label={`${row.damageReceived} received`}
-                                />
-                            )}
-                            {row.healingGiven > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="success"
-                                    variant="outlined"
-                                    icon={<FavoriteBorder />}
-                                    label={`${row.healingGiven} healing given`}
-                                />
-                            )}
-                            {row.healingReceived > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="success"
-                                    icon={<Favorite />}
-                                    label={`${row.healingReceived} healed`}
-                                />
-                            )}
-                            {row.selfHealing > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="success"
-                                    icon={<Favorite />}
-                                    label={`${row.selfHealing} self-healed`}
-                                />
-                            )}
-                            {row.teamDamage > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="warning"
-                                    variant="outlined"
-                                    icon={<Groups />}
-                                    label={`${row.teamDamage} team damage`}
-                                />
-                            )}
-                            {row.downs > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="warning"
-                                    variant="outlined"
-                                    label={`${row.downs} down${row.downs === 1 ? "" : "s"}`}
-                                />
-                            )}
-                            {row.killingBlows > 0 && (
-                                <Chip
-                                    size="small"
-                                    color="warning"
-                                    icon={<MilitaryTech />}
-                                    label={`${row.killingBlows} killing blow${row.killingBlows === 1 ? "" : "s"}`}
-                                />
-                            )}
-                            {row.revivals > 0 && (
-                                <Chip size="small" color="success" variant="outlined" label={`${row.revivals} revival${row.revivals === 1 ? "" : "s"}`} />
-                            )}
-                            {row.key === "all-npcs" && npcExpanded && (
-                                <Stack sx={{ width: "100%", pl: 4 }} spacing={0.5}>
-                                    {individualRows
-                                        .filter((npc) => !npc.isPlayerCharacter)
-                                        .map((npc) => (
-                                            <Typography key={npc.key} variant="caption">
-                                                {npc.name}: {formatCombatMetrics(npc)}
-                                            </Typography>
-                                        ))}
-                                </Stack>
-                            )}
-                        </Stack>
-                    ))}
+                <Stack spacing={1} sx={{ pt: 1.5 }}>
+                    {!hasCombatActivity && (
+                        <Typography variant="body2" color="text.secondary">
+                            No combat activity recorded.
+                        </Typography>
+                    )}
+                    <Box
+                        sx={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fill, minmax(76px, 1fr))",
+                            gap: 0.75,
+                        }}
+                    >
+                        {selectableRows.map((row) => {
+                            const selected = row.key === selectedRowKey;
+                            return (
+                                <Button
+                                    key={row.key}
+                                    variant={selected ? "contained" : "outlined"}
+                                    color={selected ? "primary" : "inherit"}
+                                    aria-pressed={selected}
+                                    onClick={() =>
+                                        setSelectedRowKey((current) =>
+                                            current === row.key ? null : row.key,
+                                        )
+                                    }
+                                    sx={{
+                                        aspectRatio: "1",
+                                        minHeight: 76,
+                                        minWidth: 0,
+                                        px: 0.75,
+                                        textAlign: "center",
+                                        textTransform: "none",
+                                        whiteSpace: "normal",
+                                    }}
+                                >
+                                    {row.name}
+                                </Button>
+                            );
+                        })}
+                    </Box>
+                    {selectedRow && (
+                        <Paper variant="outlined" sx={{ p: 1 }}>
+                            <Stack spacing={0.75}>
+                                <Typography variant="subtitle2">{selectedRow.name}</Typography>
+                                {hasCombatMetrics(selectedRow) ? (
+                                    <CombatantStatChips row={selectedRow} />
+                                ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                        No combat activity recorded.
+                                    </Typography>
+                                )}
+                                {selectedRow.key === "all-npcs" && creatureCounts.length > 0 && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        Creatures: {creatureCounts
+                                            .map(({ name, count }) => `${name} ×${count}`)
+                                            .join(" · ")}
+                                    </Typography>
+                                )}
+                            </Stack>
+                        </Paper>
+                    )}
                 </Stack>
             )}
-            <Highlights rows={individualRows} />
         </Paper>
     );
 }
 
-function CreatureStatistics({
-    events,
-    encounters,
-}: {
-    events: CombatEvent[];
-    encounters: Array<{ id: string; participants: CombatantSnapshot[] }>;
-}) {
-    const creatures = useMemo(
-        () => aggregateCreatureStatistics(events, encounters),
-        [encounters, events],
-    );
-
+function CombatantStatChips({ row }: { row: CombatantSummary }) {
     return (
-        <Stack spacing={0.5}>
-            <Typography variant="subtitle1">Creature statistics</Typography>
-            {creatures.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">No NPC activity recorded.</Typography>
-            ) : (
-                creatures.map((creature) => (
-                    <Typography variant="body2" key={creature.name}>
-                        <strong>{creature.name}</strong>: {creature.ids.size} creatures across{" "}
-                        {creature.encounterIds.size} encounters, {formatCreatureMetrics(creature)}
-                    </Typography>
-                ))
+        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+            {row.damageDealt > 0 && (
+                <Chip
+                    size="small"
+                    color="error"
+                    icon={<LocalFireDepartment />}
+                    label={`${row.damageDealt} dealt`}
+                />
+            )}
+            {row.highestDamageRoll > 0 && (
+                <Chip
+                    size="small"
+                    color="error"
+                    variant="outlined"
+                    label={`${row.highestDamageRoll} highest roll`}
+                />
+            )}
+            {row.overkillDamage > 0 && (
+                <Chip
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                    label={`${row.overkillDamage} overkill`}
+                />
+            )}
+            {row.damageReceived > 0 && (
+                <Chip
+                    size="small"
+                    color="error"
+                    variant="outlined"
+                    icon={<Shield />}
+                    label={`${row.damageReceived} received`}
+                />
+            )}
+            {row.healingGiven > 0 && (
+                <Chip
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    icon={<FavoriteBorder />}
+                    label={`${row.healingGiven} healing given`}
+                />
+            )}
+            {row.healingReceived > 0 && (
+                <Chip
+                    size="small"
+                    color="success"
+                    icon={<Favorite />}
+                    label={`${row.healingReceived} healed`}
+                />
+            )}
+            {row.selfHealing > 0 && (
+                <Chip
+                    size="small"
+                    color="success"
+                    icon={<Favorite />}
+                    label={`${row.selfHealing} self-healed`}
+                />
+            )}
+            {row.teamDamage > 0 && (
+                <Chip
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                    icon={<Groups />}
+                    label={`${row.teamDamage} team damage`}
+                />
+            )}
+            {row.downs > 0 && (
+                <Chip
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                    label={`${row.downs} down${row.downs === 1 ? "" : "s"}`}
+                />
+            )}
+            {row.killingBlows > 0 && (
+                <Chip
+                    size="small"
+                    color="warning"
+                    icon={<MilitaryTech />}
+                    label={`${row.killingBlows} killing blow${row.killingBlows === 1 ? "" : "s"}`}
+                />
+            )}
+            {row.revivals > 0 && (
+                <Chip
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    label={`${row.revivals} revival${row.revivals === 1 ? "" : "s"}`}
+                />
             )}
         </Stack>
     );
@@ -1352,95 +1364,210 @@ function aggregateCombatants(
     });
 }
 
-function formatCombatMetrics(row: CombatantSummary): string {
-    return [
-        row.damageDealt > 0 ? `${row.damageDealt} dealt` : "",
-        row.highestDamageRoll > 0 ? `${row.highestDamageRoll} highest roll` : "",
-        row.overkillDamage > 0 ? `${row.overkillDamage} overkill` : "",
-        row.damageReceived > 0 ? `${row.damageReceived} received` : "",
-        row.healingGiven > 0 ? `${row.healingGiven} healing given` : "",
-        row.healingReceived > 0 ? `${row.healingReceived} healed` : "",
-        row.selfHealing > 0 ? `${row.selfHealing} self-healed` : "",
-        row.teamDamage > 0 ? `${row.teamDamage} team damage` : "",
-        row.downs > 0 ? `${row.downs} down${row.downs === 1 ? "" : "s"}` : "",
-        row.killingBlows > 0
-            ? `${row.killingBlows} killing blow${row.killingBlows === 1 ? "" : "s"}`
-            : "",
-        row.revivals > 0 ? `${row.revivals} revival${row.revivals === 1 ? "" : "s"}` : "",
-    ]
-        .filter(Boolean)
-        .join(", ");
+function hasCombatMetrics(row: CombatantSummary) {
+    return Boolean(
+        row.damageDealt ||
+            row.highestDamageRoll ||
+            row.overkillDamage ||
+            row.damageReceived ||
+            row.healingGiven ||
+            row.healingReceived ||
+            row.selfHealing ||
+            row.teamDamage ||
+            row.downs ||
+            row.killingBlows ||
+            row.revivals,
+    );
 }
 
-function formatCreatureMetrics(creature: ReturnType<typeof aggregateCreatureStatistics>[number]): string {
-    return [
-        `${creature.damageDealt} damage dealt`,
-        `${creature.highestDamageRoll} highest damage roll`,
-        `${creature.overkillDamage} overkill`,
-        `${creature.damageReceived} damage received`,
-        `${creature.healingGiven} healing given`,
-        `${creature.healingReceived} healing received`,
-        `${creature.selfHealing} self-healed`,
-        `${creature.downs} down${creature.downs === 1 ? "" : "s"}`,
-    ].join(", ");
+function countNpcCreatures(events: CombatEvent[], combatants: CombatantSnapshot[]) {
+    const combatantsById = new Map(combatants.map((combatant) => [combatant.id, combatant]));
+    const creatures = new Map<string, { name: string; ids: Set<string> }>();
+    const add = (candidate: CombatantSnapshot) => {
+        const combatant = combatantsById.get(candidate.id) ?? candidate;
+        if (combatant.isPlayerCharacter) return;
+
+        const name = combatant.creatureType || combatant.name;
+        const key = name.toLocaleLowerCase();
+        if (!creatures.has(key)) creatures.set(key, { name, ids: new Set() });
+        creatures.get(key)!.ids.add(combatant.id);
+    };
+
+    for (const combatant of combatants) add(combatant);
+    for (const event of events) {
+        if (event.source) add(event.source);
+        add(event.target);
+    }
+
+    return [...creatures.values()]
+        .map(({ name, ids }) => ({ name, count: ids.size }))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 }
 
-function Highlights({ rows }: { rows: CombatantSummary[] }) {
-    const highlights = buildHighlights(rows);
-    if (highlights.length === 0) return null;
+interface HighlightRanking {
+    key: string;
+    name: string;
+    value: number;
+}
+
+interface HighlightMetric {
+    label: string;
+    unit: string;
+    rankings: HighlightRanking[];
+}
+
+function Highlights({
+    rows,
+    onSelect,
+}: {
+    rows: CombatantSummary[];
+    onSelect: (rowKey: string) => void;
+}) {
+    const [expanded, setExpanded] = useState(false);
+    const metrics = useMemo(() => buildHighlightMetrics(rows), [rows]);
+    if (metrics.length === 0) return null;
+
     return (
-        <Stack spacing={0.25} sx={{ pt: 0.5 }}>
-            <Typography variant="subtitle2">Highlights</Typography>
-            {highlights.map((highlight) => (
-                <Typography key={highlight} variant="body2" color="text.secondary">
-                    {highlight}
-                </Typography>
-            ))}
+        <Stack spacing={0.75} sx={{ pt: 1.5 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="subtitle2">Highlights</Typography>
+                <Tooltip title={expanded ? "Collapse highlight rankings" : "Expand highlight rankings"}>
+                    <IconButton
+                        size="small"
+                        aria-label={expanded ? "Collapse highlights" : "Expand highlights"}
+                        onClick={() => setExpanded((value) => !value)}
+                    >
+                        <ExpandMore sx={{ transform: expanded ? "rotate(180deg)" : undefined }} />
+                    </IconButton>
+                </Tooltip>
+            </Stack>
+            <Box
+                sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                    gap: 0.75,
+                }}
+            >
+                {metrics.map((metric) => (
+                    <Paper key={metric.label} variant="outlined" sx={{ minWidth: 0, p: 1 }}>
+                        <Typography variant="caption" color="text.secondary">
+                            {metric.label}
+                        </Typography>
+                        {expanded ? (
+                            <Collapse in>
+                                <Stack spacing={0.25} sx={{ pt: 0.5 }}>
+                                    {metric.rankings.map((ranking, index) => (
+                                        <HighlightRank
+                                            key={ranking.key}
+                                            ranking={ranking}
+                                            rank={index + 1}
+                                            unit={metric.unit}
+                                            onSelect={onSelect}
+                                        />
+                                    ))}
+                                </Stack>
+                            </Collapse>
+                        ) : (
+                            <HighlightRank
+                                ranking={metric.rankings[0]}
+                                rank={1}
+                                unit={metric.unit}
+                                onSelect={onSelect}
+                            />
+                        )}
+                    </Paper>
+                ))}
+            </Box>
         </Stack>
     );
 }
 
-function buildHighlights(rows: CombatantSummary[]): string[] {
-    const highlights = [
-        buildTopHighlight("Most damage dealt", rows, (row) => row.damageDealt, "damage"),
-        buildTopHighlight("Highest damage roll", rows, (row) => row.highestDamageRoll, "damage"),
-        buildTopHighlight("Most revivals", rows, (row) => row.revivals, "revival"),
-        buildTopHighlight(
-            "Most heals",
-            rows,
-            (row) => row.healingGiven + row.selfHealing,
-            "healing",
-        ),
-        buildTopHighlight("Most damage taken", rows, (row) => row.damageReceived, "damage"),
-        buildTopHighlight("Most team damage", rows, (row) => row.teamDamage, "team damage"),
-    ].filter((highlight): highlight is string => Boolean(highlight));
-    const rowsWithInitiative = rows.filter((row) => Number.isFinite(row.initiative));
-    if (rowsWithInitiative.length > 0) {
-        const highestInitiative = Math.max(
-            ...rowsWithInitiative.map((row) => row.initiative as number),
-        );
-        const names = rowsWithInitiative
-            .filter((row) => row.initiative === highestInitiative)
-            .map((row) => row.name)
-            .join(", ");
-        highlights.push(`Highest initiative roll: ${names} (${highestInitiative})`);
-    }
-    return highlights;
+function HighlightRank({
+    ranking,
+    rank,
+    unit,
+    onSelect,
+}: {
+    ranking: HighlightRanking;
+    rank: number;
+    unit: string;
+    onSelect: (rowKey: string) => void;
+}) {
+    return (
+        <ButtonBase
+            onClick={() => onSelect(ranking.key)}
+            sx={{
+                alignItems: "center",
+                borderRadius: 0.5,
+                display: "flex",
+                gap: 0.5,
+                justifyContent: "space-between",
+                px: 0.5,
+                py: 0.25,
+                textAlign: "left",
+                width: "100%",
+            }}
+        >
+            <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
+                #{rank} {ranking.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+                {ranking.value} {unit}
+            </Typography>
+        </ButtonBase>
+    );
 }
 
-function buildTopHighlight(
-    label: string,
-    rows: CombatantSummary[],
-    metric: (row: CombatantSummary) => number,
-    unit: string,
-): string | null {
-    const topValue = Math.max(0, ...rows.map(metric));
-    if (topValue === 0) return null;
-    const names = rows
-        .filter((row) => metric(row) === topValue)
-        .map((row) => row.name)
-        .join(", ");
-    return `${label}: ${names} (${topValue} ${unit})`;
+function buildHighlightMetrics(rows: CombatantSummary[]): HighlightMetric[] {
+    const definitions: Array<{
+        label: string;
+        unit: string;
+        metric: (row: CombatantSummary) => number;
+        includeZero?: boolean;
+    }> = [
+        { label: "Most damage dealt", unit: "damage", metric: (row) => row.damageDealt },
+        {
+            label: "Highest damage roll",
+            unit: "damage",
+            metric: (row) => row.highestDamageRoll,
+        },
+        { label: "Most revivals", unit: "revival", metric: (row) => row.revivals },
+        {
+            label: "Most heals",
+            unit: "healing",
+            metric: (row) => row.healingGiven + row.selfHealing,
+        },
+        { label: "Most damage taken", unit: "damage", metric: (row) => row.damageReceived },
+        { label: "Most team damage", unit: "team damage", metric: (row) => row.teamDamage },
+        {
+            label: "Highest initiative roll",
+            unit: "initiative",
+            metric: (row) => row.initiative ?? Number.NaN,
+            includeZero: true,
+        },
+    ];
+
+    return definitions
+        .map(({ label, unit, metric, includeZero }) => {
+            const rankings = rows
+                .map((row) => ({ key: row.key, name: row.name, value: metric(row) }))
+                .filter(({ value }) => Number.isFinite(value) && (includeZero || value > 0))
+                .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
+
+            return rankings.length > 0 ? { label, unit, rankings } : null;
+        })
+        .filter((metric): metric is HighlightMetric => metric !== null);
+}
+
+function buildHighlights(rows: CombatantSummary[]): string[] {
+    return buildHighlightMetrics(rows).map((metric) => {
+        const top = metric.rankings[0];
+        const names = metric.rankings
+            .filter((ranking) => ranking.value === top.value)
+            .map((ranking) => ranking.name)
+            .join(", ");
+        return `${metric.label}: ${names} (${top.value} ${metric.unit})`;
+    });
 }
 
 function formatDate(date: string) {

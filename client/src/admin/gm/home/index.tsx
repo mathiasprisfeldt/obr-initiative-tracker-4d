@@ -979,6 +979,7 @@ function Summary({
     action?: ReactNode;
 }) {
     const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
+    const portraitState = usePortraitImagePickerState();
     const rows = useMemo(() => aggregateCombatants(events, combatants), [events, combatants]);
     const individualRows = useMemo(
         () => aggregateCombatants(events, combatants, true),
@@ -993,6 +994,16 @@ function Summary({
         [events, combatants],
     );
     const hasCombatActivity = rows.some(hasCombatMetrics);
+    const portraitsByName = useMemo(
+        () =>
+            new Map(
+                (portraitState?.images ?? []).map((portrait) => [
+                    portrait.displayName.toLocaleLowerCase(),
+                    portrait,
+                ]),
+            ),
+        [portraitState?.images],
+    );
 
     return (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -1030,6 +1041,9 @@ function Summary({
                     >
                         {selectableRows.map((row) => {
                             const selected = row.key === selectedRowKey;
+                            const portrait = row.isPlayerCharacter
+                                ? portraitsByName.get(row.name.toLocaleLowerCase())
+                                : undefined;
                             return (
                                 <Button
                                     key={row.key}
@@ -1045,13 +1059,51 @@ function Summary({
                                         aspectRatio: "1",
                                         minHeight: 76,
                                         minWidth: 0,
+                                        overflow: "hidden",
                                         px: 0.75,
+                                        position: "relative",
                                         textAlign: "center",
                                         textTransform: "none",
                                         whiteSpace: "normal",
+                                        ...(portrait && { color: "common.white" }),
                                     }}
                                 >
-                                    {row.name}
+                                    {portrait && (
+                                        <>
+                                            <Box
+                                                component="img"
+                                                src={portrait.url}
+                                                alt=""
+                                                aria-hidden
+                                                sx={{
+                                                    height: "100%",
+                                                    left: 0,
+                                                    objectFit: "cover",
+                                                    objectPosition: portrait.position || "center",
+                                                    position: "absolute",
+                                                    top: 0,
+                                                    width: "100%",
+                                                }}
+                                            />
+                                            <Box
+                                                sx={{
+                                                    background:
+                                                        "linear-gradient(transparent 35%, rgba(0, 0, 0, 0.8))",
+                                                    inset: 0,
+                                                    position: "absolute",
+                                                }}
+                                            />
+                                        </>
+                                    )}
+                                    <Box
+                                        component="span"
+                                        sx={{
+                                            position: "relative",
+                                            textShadow: portrait ? "0 1px 3px rgba(0, 0, 0, 0.9)" : undefined,
+                                        }}
+                                    >
+                                        {row.name}
+                                    </Box>
                                 </Button>
                             );
                         })}

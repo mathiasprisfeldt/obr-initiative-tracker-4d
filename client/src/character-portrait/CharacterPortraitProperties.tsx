@@ -104,85 +104,96 @@ export function CharacterPortraitProperties({
                     onChange={onPositionChanged}
                 />
             </TableCell>
-            <TableCell sx={{ minWidth: 92, width: 92 }}>
-                <ParticleColorGrid aria-busy={isPaletteLoading}>
-                    <Tooltip title="Reset to automatic palette">
-                        <ParticlePaletteResetButton
-                            size="small"
-                            aria-label="Reset particle colors to automatic palette"
-                            disabled={!portraitImage.particleColors}
-                            onClick={() => {
-                                setPendingParticleColors(null);
-                                onParticleColorsChanged?.(undefined);
-                            }}
-                        >
-                            <RestartAlt fontSize="small" />
-                        </ParticlePaletteResetButton>
-                    </Tooltip>
-                    {isPaletteLoading
-                        ? Array.from({ length: 3 }, (_, index) => (
-                              <Skeleton
-                                  key={index}
-                                  aria-label="Loading palette"
-                                  variant="rounded"
-                                  width={28}
-                                  height={28}
-                              />
-                          ))
-                        : (
-                            <>
-                            {particleColors.map((color, index) => (
-                                <Tooltip
-                                    key={index}
-                                    title="Click to edit · right-click to remove"
-                                >
-                                    <ColorInput
-                                        aria-label={`Particle color ${index + 1}`}
-                                        type="color"
-                                        value={color}
-                                        ref={(element) => {
-                                            if (!element) return;
+            <TableCell sx={{ minWidth: 108, width: 108 }}>
+                <ParticleColorEditor aria-busy={isPaletteLoading}>
+                    <ParticleColorGrid>
+                        {portraitImage.particleColors && <ParticlePaletteResetSpace />}
+                        {isPaletteLoading
+                            ? Array.from({ length: 4 }, (_, index) => (
+                                  <Skeleton
+                                      key={index}
+                                      aria-label="Loading palette"
+                                      variant="rounded"
+                                      width={28}
+                                      height={28}
+                                  />
+                              ))
+                            : (
+                                <>
+                                    {particleColors.map((color, index) => (
+                                        <Tooltip
+                                            key={index}
+                                            title="Click to edit · right-click to remove"
+                                        >
+                                            <ColorInput
+                                                aria-label={`Particle color ${index + 1}`}
+                                                type="color"
+                                                value={color}
+                                                ref={(element) => {
+                                                    if (!element) return;
 
-                                            // React maps `onChange` for color inputs to every
-                                            // in-picker adjustment. The native DOM `change` event
-                                            // instead fires when the system picker is dismissed.
-                                            element.onchange = () =>
-                                                commitParticleColor(index, element.value);
-                                        }}
-                                        onFocus={() =>
-                                            setPendingParticleColors((current) => current ?? savedParticleColors)
-                                        }
-                                        onInput={(event) =>
-                                            updatePendingParticleColor(index, event.currentTarget.value)
-                                        }
-                                        onContextMenu={(event) => {
-                                            event.preventDefault();
-                                            setPendingParticleColors(null);
-                                            onParticleColorsChanged?.(
-                                                particleColors.filter(
-                                                    (_, currentIndex) => currentIndex !== index,
-                                                ),
-                                            );
-                                        }}
-                                    />
-                                </Tooltip>
-                            ))}
-                            <Tooltip title="Add particle color">
-                                <IconButton
-                                    size="small"
-                                    aria-label="Add particle color"
-                                    onClick={() => {
-                                        setPendingParticleColors(null);
-                                        onParticleColorsChanged?.([...particleColors, "#ffffff"]);
-                                    }}
-                                    sx={{ width: 28, height: 28, border: 1, borderColor: "divider" }}
-                                >
-                                    <Add fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                            </>
-                        )}
-                </ParticleColorGrid>
+                                                    // React maps `onChange` for color inputs to every
+                                                    // in-picker adjustment. The native DOM `change` event
+                                                    // instead fires when the system picker is dismissed.
+                                                    element.onchange = () =>
+                                                        commitParticleColor(index, element.value);
+                                                }}
+                                                onFocus={() =>
+                                                    setPendingParticleColors(
+                                                        (current) => current ?? savedParticleColors,
+                                                    )
+                                                }
+                                                onInput={(event) =>
+                                                    updatePendingParticleColor(
+                                                        index,
+                                                        event.currentTarget.value,
+                                                    )
+                                                }
+                                                onContextMenu={(event) => {
+                                                    event.preventDefault();
+                                                    setPendingParticleColors(null);
+                                                    onParticleColorsChanged?.(
+                                                        particleColors.filter(
+                                                            (_, currentIndex) => currentIndex !== index,
+                                                        ),
+                                                    );
+                                                }}
+                                            />
+                                        </Tooltip>
+                                    ))}
+                                    <Tooltip title="Add particle color">
+                                        <ParticleColorAddButton
+                                            size="small"
+                                            aria-label="Add particle color"
+                                            onClick={() => {
+                                                setPendingParticleColors(null);
+                                                onParticleColorsChanged?.([
+                                                    ...particleColors,
+                                                    "#ffffff",
+                                                ]);
+                                            }}
+                                        >
+                                            <Add fontSize="small" />
+                                        </ParticleColorAddButton>
+                                    </Tooltip>
+                                </>
+                            )}
+                    </ParticleColorGrid>
+                    {portraitImage.particleColors && (
+                        <Tooltip title="Reset to automatic palette">
+                            <ParticlePaletteResetButton
+                                size="small"
+                                aria-label="Reset particle colors to automatic palette"
+                                onClick={() => {
+                                    setPendingParticleColors(null);
+                                    onParticleColorsChanged?.(undefined);
+                                }}
+                            >
+                                <RestartAlt fontSize="small" />
+                            </ParticlePaletteResetButton>
+                        </Tooltip>
+                    )}
+                </ParticleColorEditor>
             </TableCell>
         </TableRow>
     );
@@ -250,21 +261,48 @@ const PortraitParticle = styled("span", {
     }
 `;
 
+const ParticleColorEditor = styled("div")`
+    position: relative;
+    box-sizing: border-box;
+    min-width: 100px;
+    min-height: 100px;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.045);
+`;
+
 const ParticleColorGrid = styled("div")`
     display: grid;
     grid-template-columns: repeat(3, 28px);
     grid-template-rows: repeat(3, 28px);
     grid-auto-rows: 28px;
     gap: 4px;
-    min-width: 92px;
-    min-height: 92px;
+`;
+
+const ParticlePaletteResetSpace = styled("span")`
+    grid-column: 3;
+    grid-row: 1;
 `;
 
 const ParticlePaletteResetButton = styled(IconButton)`
-    grid-column: 3;
-    grid-row: 1;
+    position: absolute;
+    top: 4px;
+    right: 4px;
     width: 28px;
     height: 28px;
+    box-sizing: border-box;
+    z-index: 1;
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    border-radius: 4px;
+    background-color: rgba(30, 30, 40, 0.9);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+`;
+
+const ParticleColorAddButton = styled(IconButton)`
+    width: 28px;
+    height: 28px;
+    box-sizing: border-box;
     border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 4px;
 `;
@@ -272,6 +310,7 @@ const ParticlePaletteResetButton = styled(IconButton)`
 const ColorInput = styled("input")`
     width: 28px;
     height: 28px;
+    box-sizing: border-box;
     padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 4px;

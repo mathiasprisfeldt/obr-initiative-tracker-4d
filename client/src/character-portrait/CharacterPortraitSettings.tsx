@@ -1,5 +1,4 @@
 import {
-    Box,
     Button,
     Grid,
     LinearProgress,
@@ -9,7 +8,10 @@ import {
     styled,
     Table,
     TableBody,
+    TableCell,
     TableContainer,
+    TableHead,
+    TableRow,
     TextField,
 } from "@mui/material";
 import { PortraitImage, usePortraitImagePickerStore } from "./portrait-image-picker-store";
@@ -50,27 +52,24 @@ export function CharacterPortraitSettings() {
                 onChange={(e) => setImageSourceUrl(e.target.value)}
                 fullWidth
             />
-            <TableContainer component={Paper} sx={{ mt: 2 }}>
-                <Box
-                    sx={{
-                        position: "sticky",
-                        top: 0,
-                        zIndex: 1,
-                        bgcolor: "background.paper",
-                        p: 1,
-                        borderBottom: 1,
-                        borderColor: "divider",
-                    }}
-                >
-                    <TextField
-                        label="Search"
-                        size="small"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        fullWidth
-                    />
-                </Box>
-                <Table size="small">
+            <TableContainer component={Paper} sx={{ mt: 2, maxHeight: "calc(100vh - 180px)" }}>
+                <Table stickyHeader size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableHeaderCell sx={{ width: 132 }}>Portrait</TableHeaderCell>
+                            <TableHeaderCell>
+                                <TextField
+                                    label="Search name"
+                                    size="small"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    fullWidth
+                                />
+                            </TableHeaderCell>
+                            <TableHeaderCell sx={{ width: 92 }}>Position</TableHeaderCell>
+                            <TableHeaderCell sx={{ width: 108 }}>Particles</TableHeaderCell>
+                        </TableRow>
+                    </TableHead>
                     <TableBody>
                         {filteredImages.map((image) => (
                             <CharacterPortraitProperties
@@ -142,3 +141,7 @@ const BorderElement = styled("img")`
     width: 100px;
     height: 100px;
 `;
+
+const TableHeaderCell = styled(TableCell)(({ theme }) => ({
+    backgroundColor: theme.palette.background.paper,
+}));

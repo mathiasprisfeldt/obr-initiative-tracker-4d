@@ -486,18 +486,11 @@ function SessionOverview({
                         participants: encounter.participants,
                     }))}
                 />
-                {session.encounters.length > 0 && (
-                    <Stack spacing={1} sx={{ pt: 1 }}>
-                        {session.encounters.map((encounter) => (
-                            <EncounterSummaryAccordion
-                                key={encounter.id}
-                                encounter={encounter}
-                                onRename={(name) => onRenameEncounter(encounter.id, name)}
-                                onDelete={() => onDeleteEncounter(encounter.id)}
-                            />
-                        ))}
-                    </Stack>
-                )}
+                <EncounterSummaryGroup
+                    encounters={session.encounters}
+                    onRename={onRenameEncounter}
+                    onDelete={onDeleteEncounter}
+                />
             </AccordionDetails>
             <Dialog
                 open={activityLogOpen}
@@ -599,20 +592,38 @@ function CurrentSessionOverview({
                     events={allEvents}
                     combatants={participants}
                 />
-                {session.encounters.length > 0 && (
-                    <Stack spacing={1} sx={{ pt: 1 }}>
-                        {session.encounters.map((encounter) => (
-                            <EncounterSummaryAccordion
-                                key={encounter.id}
-                                encounter={encounter}
-                                onRename={(name) => onRenameEncounter(encounter.id, name)}
-                                onDelete={() => onDeleteEncounter(encounter.id)}
-                            />
-                        ))}
-                    </Stack>
-                )}
+                <EncounterSummaryGroup
+                    encounters={session.encounters}
+                    onRename={onRenameEncounter}
+                    onDelete={onDeleteEncounter}
+                />
             </Stack>
         </Paper>
+    );
+}
+
+function EncounterSummaryGroup({
+    encounters,
+    onRename,
+    onDelete,
+}: {
+    encounters: Encounter[];
+    onRename: (encounterId: string, name: string) => void;
+    onDelete: (encounterId: string) => void;
+}) {
+    if (encounters.length === 0) return null;
+
+    return (
+        <Stack sx={{ pt: 1 }}>
+            {encounters.map((encounter) => (
+                <EncounterSummaryAccordion
+                    key={encounter.id}
+                    encounter={encounter}
+                    onRename={(name) => onRename(encounter.id, name)}
+                    onDelete={() => onDelete(encounter.id)}
+                />
+            ))}
+        </Stack>
     );
 }
 
@@ -626,7 +637,26 @@ function EncounterSummaryAccordion({
     onDelete: () => void;
 }) {
     return (
-        <Accordion disableGutters>
+        <Accordion
+            disableGutters
+            sx={(theme) => ({
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 0,
+                overflow: "hidden",
+                "&::before": { display: "none" },
+                "&.Mui-expanded": { m: 0 },
+                "&:not(:first-of-type)": { borderTop: 0 },
+                "&:first-of-type": {
+                    borderTopLeftRadius: theme.shape.borderRadius,
+                    borderTopRightRadius: theme.shape.borderRadius,
+                },
+                "&:last-of-type": {
+                    borderBottomLeftRadius: theme.shape.borderRadius,
+                    borderBottomRightRadius: theme.shape.borderRadius,
+                },
+            })}
+        >
             <AccordionSummary expandIcon={<ExpandMore />}>
                 <Typography sx={{ flex: 1 }}>
                     {encounter.name} · {encounter.rounds}{" "}

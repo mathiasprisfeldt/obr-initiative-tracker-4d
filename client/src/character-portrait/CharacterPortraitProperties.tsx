@@ -7,7 +7,6 @@ import {
     Button,
     IconButton,
     Skeleton,
-    Stack,
     TableCell,
     TableRow,
     Tooltip,
@@ -105,19 +104,33 @@ export function CharacterPortraitProperties({
                     onChange={onPositionChanged}
                 />
             </TableCell>
-            <TableCell sx={{ minWidth: 210 }}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        Particles
-                    </Typography>
-                    {isPaletteLoading ? (
-                        <Stack aria-label="Loading palette" direction="row" spacing={0.5}>
-                            {Array.from({ length: 4 }, (_, index) => (
-                                <Skeleton key={index} variant="rounded" width={28} height={28} />
-                            ))}
-                        </Stack>
-                    ) : (
-                        <ParticleColorGrid>
+            <TableCell sx={{ minWidth: 92, width: 92 }}>
+                <ParticleColorGrid aria-busy={isPaletteLoading}>
+                    <Tooltip title="Reset to automatic palette">
+                        <ParticlePaletteResetButton
+                            size="small"
+                            aria-label="Reset particle colors to automatic palette"
+                            disabled={!portraitImage.particleColors}
+                            onClick={() => {
+                                setPendingParticleColors(null);
+                                onParticleColorsChanged?.(undefined);
+                            }}
+                        >
+                            <RestartAlt fontSize="small" />
+                        </ParticlePaletteResetButton>
+                    </Tooltip>
+                    {isPaletteLoading
+                        ? Array.from({ length: 3 }, (_, index) => (
+                              <Skeleton
+                                  key={index}
+                                  aria-label="Loading palette"
+                                  variant="rounded"
+                                  width={28}
+                                  height={28}
+                              />
+                          ))
+                        : (
+                            <>
                             {particleColors.map((color, index) => (
                                 <Tooltip
                                     key={index}
@@ -167,21 +180,9 @@ export function CharacterPortraitProperties({
                                     <Add fontSize="small" />
                                 </IconButton>
                             </Tooltip>
-                        </ParticleColorGrid>
-                    )}
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<RestartAlt fontSize="small" />}
-                        disabled={!portraitImage.particleColors}
-                        onClick={() => {
-                            setPendingParticleColors(null);
-                            onParticleColorsChanged?.(undefined);
-                        }}
-                        >
-                        Auto
-                    </Button>
-                </Stack>
+                            </>
+                        )}
+                </ParticleColorGrid>
             </TableCell>
         </TableRow>
     );
@@ -251,8 +252,21 @@ const PortraitParticle = styled("span", {
 
 const ParticleColorGrid = styled("div")`
     display: grid;
-    grid-template-columns: repeat(4, 28px);
+    grid-template-columns: repeat(3, 28px);
+    grid-template-rows: repeat(3, 28px);
+    grid-auto-rows: 28px;
     gap: 4px;
+    min-width: 92px;
+    min-height: 92px;
+`;
+
+const ParticlePaletteResetButton = styled(IconButton)`
+    grid-column: 3;
+    grid-row: 1;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 4px;
 `;
 
 const ColorInput = styled("input")`

@@ -626,17 +626,7 @@ function EncounterSummaryAccordion({
     onDelete: () => void;
 }) {
     return (
-        <Accordion
-            disableGutters
-            sx={{
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                overflow: "hidden",
-                "&::before": { display: "none" },
-                "&.Mui-expanded": { m: 0 },
-            }}
-        >
+        <Accordion disableGutters>
             <AccordionSummary expandIcon={<ExpandMore />}>
                 <Typography sx={{ flex: 1 }}>
                     {encounter.name} · {encounter.rounds}{" "}

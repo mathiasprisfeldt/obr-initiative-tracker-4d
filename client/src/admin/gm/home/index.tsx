@@ -430,7 +430,7 @@ function SessionOverview({
     const allEvents = session.encounters.flatMap((encounter) => encounter.combatEvents);
     const [activityLogOpen, setActivityLogOpen] = useState(false);
     return (
-        <Accordion disableGutters>
+        <Accordion disableGutters variant="outlined">
             <AccordionSummary expandIcon={<ExpandMore />}>
                 <Stack sx={{ minWidth: 0, flex: 1 }}>
                     <Typography>{session.name}</Typography>
@@ -639,6 +639,7 @@ function EncounterSummaryAccordion({
     return (
         <Accordion
             disableGutters
+            variant="outlined"
             sx={(theme) => ({
                 border: 1,
                 borderColor: "divider",

@@ -43,7 +43,7 @@ export function CharacterPortraitSettings() {
     if (isLoading) return <LinearProgress />;
 
     return (
-        <Stack>
+        <Stack sx={{ height: "100%", minHeight: 0 }}>
             <TextField
                 label="URL"
                 type="url"
@@ -54,7 +54,7 @@ export function CharacterPortraitSettings() {
             />
             <TableContainer
                 component={Paper}
-                sx={{ mt: 2, maxHeight: "calc(100vh - 180px)", overflowY: "auto" }}
+                sx={{ mt: 2, flex: 1, minHeight: 0, overflowY: "auto" }}
             >
                 <Table stickyHeader size="small">
                     <TableHead>

@@ -67,7 +67,7 @@ export default function Admin() {
                     <TabPanel value="2" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
                         <HistoryPane />
                     </TabPanel>
-                    <TabPanel value="3" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                    <TabPanel value="3" sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
                         <CharacterPortraitSettings />
                     </TabPanel>
                     <TabPanel value="4" sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>

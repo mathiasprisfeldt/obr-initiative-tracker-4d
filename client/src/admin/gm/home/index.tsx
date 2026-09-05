@@ -981,10 +981,6 @@ function Summary({
     const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
     const portraitState = usePortraitImagePickerState();
     const rows = useMemo(() => aggregateCombatants(events, combatants), [events, combatants]);
-    const individualRows = useMemo(
-        () => aggregateCombatants(events, combatants, true),
-        [events, combatants],
-    );
     const selectableRows = rows.filter(
         (row) => row.isPlayerCharacter || row.key === "all-npcs",
     );
@@ -1011,16 +1007,7 @@ function Summary({
                 <Typography variant="subtitle1">{title}</Typography>
                 {action}
             </Stack>
-            <Highlights
-                rows={individualRows}
-                onSelect={(rowKey) =>
-                    setSelectedRowKey(
-                        individualRows.find((row) => row.key === rowKey)?.isPlayerCharacter
-                            ? rowKey
-                            : "all-npcs",
-                    )
-                }
-            />
+            <Highlights rows={rows} onSelect={setSelectedRowKey} />
             {selectableRows.length === 0 ? (
                 <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
                     No combatants recorded.

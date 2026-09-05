@@ -264,8 +264,7 @@ const PortraitParticle = styled("span", {
 const ParticleColorEditor = styled("div")`
     position: relative;
     box-sizing: border-box;
-    min-width: 100px;
-    min-height: 100px;
+    width: 100px;
     padding: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -275,7 +274,6 @@ const ParticleColorEditor = styled("div")`
 const ParticleColorGrid = styled("div")`
     display: grid;
     grid-template-columns: repeat(3, 28px);
-    grid-template-rows: repeat(3, 28px);
     grid-auto-rows: 28px;
     gap: 4px;
 `;

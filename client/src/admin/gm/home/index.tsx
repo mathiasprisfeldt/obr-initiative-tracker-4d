@@ -50,7 +50,7 @@ import {
     Visibility,
     VisibilityOff,
 } from "@mui/icons-material";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { LayoutSettingsPanel } from "../LayoutSettingsPanel";
 import { usePortraitImagePickerState } from "../../../character-portrait";
 
@@ -127,7 +127,6 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
         recordKillingBlow,
         recordRevival,
         renameEncounter,
-        setDraftEncounterName,
         renameSession,
         endSession,
         undo,
@@ -171,21 +170,6 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
                 <Stack sx={{ minWidth: 0 }}>
                     <Typography variant="h5">Round: {state.round}</Typography>
-                    {state.activeEncounter && (
-                        <EditableName
-                            value={state.activeEncounter.name}
-                            label="Encounter name"
-                            onSubmit={renameEncounter}
-                        />
-                    )}
-                    {!state.activeEncounter && (
-                        <EditableName
-                            value={state.draftEncounterName ?? ""}
-                            label="Encounter name"
-                            placeholder="Optional encounter name"
-                            onSubmit={setDraftEncounterName}
-                        />
-                    )}
                 </Stack>
                 <Stack direction="row">
                     <Tooltip title="Undo">
@@ -394,6 +378,15 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                     title={`${recentEncounter.name} summary`}
                     events={recentEncounter.events}
                     combatants={recentEncounter.combatants}
+                    action={
+                        state.activeEncounter && (
+                            <NameEditButton
+                                name={state.activeEncounter.name}
+                                label="encounter"
+                                onRename={renameEncounter}
+                            />
+                        )
+                    }
                 />
             )}
 
@@ -415,40 +408,6 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                 />
             )}
         </Stack>
-    );
-}
-
-function EditableName({
-    value,
-    label,
-    placeholder,
-    onSubmit,
-}: {
-    value: string;
-    label: string;
-    placeholder?: string;
-    onSubmit: (value: string) => void;
-}) {
-    const [draft, setDraft] = useState(value);
-    useEffect(() => setDraft(value), [value]);
-
-    const submit = () => {
-        if (draft.trim() !== value) onSubmit(draft);
-    };
-
-    return (
-        <TextField
-            variant="standard"
-            size="small"
-            value={draft}
-            aria-label={label}
-            placeholder={placeholder}
-            onChange={(event) => setDraft(event.target.value)}
-            onBlur={submit}
-            onKeyUp={(event) => {
-                if (event.key === "Enter") submit();
-            }}
-        />
     );
 }
 
@@ -984,10 +943,12 @@ function Summary({
     title,
     events,
     combatants = [],
+    action,
 }: {
     title: string;
     events: CombatEvent[];
     combatants?: CombatantSnapshot[];
+    action?: ReactNode;
 }) {
     const [npcExpanded, setNpcExpanded] = useState(false);
     const rows = useMemo(
@@ -1012,7 +973,10 @@ function Summary({
     );
     return (
         <Paper variant="outlined" sx={{ p: 1.5 }}>
-            <Typography variant="subtitle1">{title}</Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                <Typography variant="subtitle1">{title}</Typography>
+                {action}
+            </Stack>
             {rows.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                     No combat activity recorded.

@@ -612,32 +612,47 @@ function CurrentSessionOverview({
                     events={allEvents}
                     combatants={participants}
                 />
-                {session.encounters.map((encounter) => (
-                    <Accordion key={encounter.id} disableGutters>
-                        <AccordionSummary expandIcon={<ExpandMore />}>
-                            <Typography sx={{ flex: 1 }}>
-                                {encounter.name} · {encounter.rounds}{" "}
-                                {encounter.rounds === 1 ? "round" : "rounds"}
-                            </Typography>
-                            <NameEditButton
-                                name={encounter.name}
-                                label="encounter"
-                                onRename={(name) => onRenameEncounter(encounter.id, name)}
-                            />
-                            <EncounterDeleteButton
-                                encounterName={encounter.name}
-                                onDelete={() => onDeleteEncounter(encounter.id)}
-                            />
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Summary
-                                title="Encounter totals"
-                                events={encounter.combatEvents}
-                                combatants={encounter.participants}
-                            />
-                        </AccordionDetails>
-                    </Accordion>
-                ))}
+                {session.encounters.length > 0 && (
+                    <Stack spacing={1} sx={{ pt: 1 }}>
+                        {session.encounters.map((encounter) => (
+                            <Accordion
+                                key={encounter.id}
+                                disableGutters
+                                sx={{
+                                    border: 1,
+                                    borderColor: "divider",
+                                    borderRadius: 1,
+                                    overflow: "hidden",
+                                    "&::before": { display: "none" },
+                                    "&.Mui-expanded": { m: 0 },
+                                }}
+                            >
+                                <AccordionSummary expandIcon={<ExpandMore />}>
+                                    <Typography sx={{ flex: 1 }}>
+                                        {encounter.name} · {encounter.rounds}{" "}
+                                        {encounter.rounds === 1 ? "round" : "rounds"}
+                                    </Typography>
+                                    <NameEditButton
+                                        name={encounter.name}
+                                        label="encounter"
+                                        onRename={(name) => onRenameEncounter(encounter.id, name)}
+                                    />
+                                    <EncounterDeleteButton
+                                        encounterName={encounter.name}
+                                        onDelete={() => onDeleteEncounter(encounter.id)}
+                                    />
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <Summary
+                                        title="Encounter totals"
+                                        events={encounter.combatEvents}
+                                        combatants={encounter.participants}
+                                    />
+                                </AccordionDetails>
+                            </Accordion>
+                        ))}
+                    </Stack>
+                )}
             </Stack>
         </Paper>
     );

@@ -107,6 +107,11 @@ export function CharacterPortraitSettings() {
                         vertical: "top",
                         horizontal: "right",
                     }}
+                    slotProps={{
+                        paper: {
+                            sx: { maxHeight: 300, overflowY: "auto" },
+                        },
+                    }}
                 >
                     <Grid container component={Paper} sx={{ p: 1 }} spacing={1}>
                         {borders.map((border) => (

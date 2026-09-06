@@ -1,5 +1,6 @@
 import {
     describeTrackerEvent,
+    isCharacterInEncounter,
     snapshotCombatant,
     toLocalDate,
     type CombatantSnapshot,
@@ -146,7 +147,9 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
     const latestCompletedEncounter =
         currentSession?.encounters[currentSession.encounters.length - 1];
     const activeCombatants = state.characters
-        .filter((character) => character.properties.name.trim())
+        .filter(
+            (character) => character.properties.name.trim() && isCharacterInEncounter(character),
+        )
         .map(snapshotCombatant);
     const recentEncounter = state.activeEncounter
         ? {
@@ -271,87 +274,101 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
 
             <CharacterTable>
                 <CharacterRowHeader />
-                {state.characters.map((character) => (
-                    <CharacterRow
-                        key={character.id}
-                        hasTurn={character.id === state.currentCharacterId}
-                        combatTrackingEnabled={state.hasEncounterStarted}
-                        character={character}
-                        portraitNames={(portraitState?.images ?? []).map(
-                            (portrait) => portrait.displayName,
-                        )}
-                        onNameChange={(name) =>
-                            updateCharacter(character.id, { ...character.properties, name })
-                        }
-                        onNameAndPortraitChange={(name, portraitImageId) =>
-                            updateCharacter(character.id, {
-                                ...character.properties,
-                                name,
-                                portraitImageId,
-                            })
-                        }
-                        onDelete={() => deleteCharacter(character.id)}
-                        onPlayerCharacterChange={(isPlayerCharacter) =>
-                            updateCharacter(character.id, {
-                                ...character.properties,
-                                isPlayerCharacter,
-                            })
-                        }
-                        onInitiativeChange={(initiative) =>
-                            updateCharacter(character.id, {
-                                ...character.properties,
-                                initiative,
-                            })
-                        }
-                        onInitiativeSubmit={sortCharacters}
-                        onHealthChange={(health) => {
-                            const delta = health - character.properties.health;
-                            const hasRecordedHealthChange =
-                                state.activeEncounter?.combatEvents.some(
-                                    (event) => event.target.id === character.id,
-                                );
-                            const isInitialHealth =
-                                character.properties.health === 0 &&
-                                !hasRecordedHealthChange;
-                            if (
-                                state.hasEncounterStarted &&
-                                delta !== 0 &&
-                                !isInitialHealth
-                            ) {
-                                recordCombat(
-                                    character.id,
-                                    delta > 0 ? "healing" : "damage",
-                                    Math.abs(delta),
-                                );
-                            } else {
+                {state.characters.map((character) => {
+                    const inEncounter = isCharacterInEncounter(character);
+                    return (
+                        <CharacterRow
+                            key={character.id}
+                            hasTurn={inEncounter && character.id === state.currentCharacterId}
+                            combatTrackingEnabled={state.hasEncounterStarted && inEncounter}
+                            inEncounter={inEncounter}
+                            character={character}
+                            portraitNames={(portraitState?.images ?? []).map(
+                                (portrait) => portrait.displayName,
+                            )}
+                            onNameChange={(name) =>
+                                updateCharacter(character.id, { ...character.properties, name })
+                            }
+                            onNameAndPortraitChange={(name, portraitImageId) =>
                                 updateCharacter(character.id, {
                                     ...character.properties,
-                                    health: Math.max(0, health),
-                                });
+                                    name,
+                                    portraitImageId,
+                                })
                             }
-                        }}
-                        onMaxHealthChange={(maxHealth) =>
-                            updateCharacter(character.id, {
-                                ...character.properties,
-                                maxHealth,
-                            })
-                        }
-                        onDamageTaken={(amount) =>
-                            recordCombat(character.id, "damage", amount)
-                        }
-                        onKillingBlow={() => recordKillingBlow(character.id)}
-                        onHealingReceived={(amount) =>
-                            recordCombat(character.id, "healing", amount)
-                        }
-                        onRevive={() => recordRevival(character.id)}
-                        onPortraitImageChange={(portraitImageId) =>
-                            updateCharacter(character.id, {
-                                ...character.properties,
-                                portraitImageId,
-                            })
-                        }
-                    />
-                ))}
+                            onDelete={() => deleteCharacter(character.id)}
+                            onEncounterParticipationToggle={
+                                state.hasEncounterStarted && character.properties.isPlayerCharacter
+                                    ? () =>
+                                          updateCharacter(character.id, {
+                                              ...character.properties,
+                                              isInEncounter: !inEncounter,
+                                          })
+                                    : undefined
+                            }
+                            onPlayerCharacterChange={(isPlayerCharacter) =>
+                                updateCharacter(character.id, {
+                                    ...character.properties,
+                                    isPlayerCharacter,
+                                })
+                            }
+                            onInitiativeChange={(initiative) =>
+                                updateCharacter(character.id, {
+                                    ...character.properties,
+                                    initiative,
+                                })
+                            }
+                            onInitiativeSubmit={sortCharacters}
+                            onHealthChange={(health) => {
+                                const delta = health - character.properties.health;
+                                const hasRecordedHealthChange =
+                                    state.activeEncounter?.combatEvents.some(
+                                        (event) => event.target.id === character.id,
+                                    );
+                                const isInitialHealth =
+                                    character.properties.health === 0 &&
+                                    !hasRecordedHealthChange;
+                                if (
+                                    state.hasEncounterStarted &&
+                                    inEncounter &&
+                                    delta !== 0 &&
+                                    !isInitialHealth
+                                ) {
+                                    recordCombat(
+                                        character.id,
+                                        delta > 0 ? "healing" : "damage",
+                                        Math.abs(delta),
+                                    );
+                                } else {
+                                    updateCharacter(character.id, {
+                                        ...character.properties,
+                                        health: Math.max(0, health),
+                                    });
+                                }
+                            }}
+                            onMaxHealthChange={(maxHealth) =>
+                                updateCharacter(character.id, {
+                                    ...character.properties,
+                                    maxHealth,
+                                })
+                            }
+                            onDamageTaken={(amount) =>
+                                recordCombat(character.id, "damage", amount)
+                            }
+                            onKillingBlow={() => recordKillingBlow(character.id)}
+                            onHealingReceived={(amount) =>
+                                recordCombat(character.id, "healing", amount)
+                            }
+                            onRevive={() => recordRevival(character.id)}
+                            onPortraitImageChange={(portraitImageId) =>
+                                updateCharacter(character.id, {
+                                    ...character.properties,
+                                    portraitImageId,
+                                })
+                            }
+                        />
+                    );
+                })}
             </CharacterTable>
 
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

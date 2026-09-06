@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTrackerLayout } from "./tracker-layout";
 import { isLocalDev } from "../utils/env";
+import { isCharacterInEncounter } from "../store/tracker-domain";
 
 export function Tracker() {
     const tracker = useTracker();
@@ -33,7 +34,8 @@ export function Tracker() {
 function Content({ tracker }: { tracker: TrackerResult }) {
     const { state, connectionStatus } = tracker;
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
-    const layout = useTrackerLayout(state?.characters.length ?? 0, state?.layoutSettings);
+    const encounterCharacters = state?.characters.filter(isCharacterInEncounter) ?? [];
+    const layout = useTrackerLayout(encounterCharacters.length, state?.layoutSettings);
 
     // Widen the popover so extra portrait columns are fully visible.
     useEffect(() => {
@@ -50,8 +52,8 @@ function Content({ tracker }: { tracker: TrackerResult }) {
                 {state && (
                     <>
                         <StyledCharacterRow
-                            characters={state.characters}
-                            currentCharacter={state.characters.find(
+                            characters={encounterCharacters}
+                            currentCharacter={encounterCharacters.find(
                                 (character) => character.id === state.currentCharacterId,
                             )}
                             visible={!!visible}

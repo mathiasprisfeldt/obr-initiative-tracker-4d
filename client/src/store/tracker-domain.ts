@@ -17,6 +17,7 @@ export interface CharacterProperties {
     maxHealth: number;
     portraitImageId: string | null;
     isPlayerCharacter: boolean;
+    isInEncounter?: boolean;
 }
 
 export interface CombatantSnapshot {
@@ -175,6 +176,7 @@ export function createCharacter(id: string = crypto.randomUUID()): Character {
             maxHealth: 0,
             portraitImageId: null,
             isPlayerCharacter: false,
+            isInEncounter: true,
         },
     };
 }
@@ -241,6 +243,7 @@ export function normalizeTrackerDocument(value: TrackerDocument | LegacyTrackerS
                 isPlayerCharacter:
                     character.properties.isPlayerCharacter ??
                     character.properties.hideName === false,
+                isInEncounter: character.properties.isInEncounter ?? true,
             },
         }));
     let activeEncounter: ActiveEncounter | undefined;
@@ -316,6 +319,11 @@ export function reduceTrackerEvent(state: TrackerState, event: TrackerEvent): Tr
             return {
                 ...state,
                 characters: ensureDraftCharacter(characters, event.newDraftCharacterId),
+                currentCharacterId:
+                    state.currentCharacterId === event.character.id &&
+                    event.character.properties.isInEncounter === false
+                        ? undefined
+                        : state.currentCharacterId,
             };
         }
         case "character-deleted":
@@ -352,7 +360,10 @@ export function reduceTrackerEvent(state: TrackerState, event: TrackerEvent): Tr
                 activeEncounter: event.encounter,
                 draftEncounterName: undefined,
                 hasEncounterStarted: true,
-                currentCharacterId: state.characters.find((c) => c.properties.name.trim())?.id,
+                currentCharacterId: state.characters.find(
+                    (character) =>
+                        character.properties.name.trim() && isCharacterInEncounter(character),
+                )?.id,
                 round: 1,
             };
         }
@@ -536,6 +547,10 @@ export function snapshotCombatant(character: Character): CombatantSnapshot {
     };
 }
 
+export function isCharacterInEncounter(character: Character): boolean {
+    return character.properties.isInEncounter !== false;
+}
+
 export function toLocalDate(value: string | Date): string {
     const date = typeof value === "string" ? new Date(value) : value;
     const year = date.getFullYear();
@@ -613,6 +628,11 @@ function describeCharacterUpdate(
             next.isPlayerCharacter ? "a player character" : "a non-player character"
         }`;
     }
+    if (previous.isInEncounter !== next.isInEncounter) {
+        return `${next.isInEncounter ? "Added" : "Removed"} ${name} ${
+            next.isInEncounter ? "to" : "from"
+        } the encounter`;
+    }
     if (previous.initiative !== next.initiative) {
         return `Set ${name}'s initiative to ${next.initiative}`;
     }
@@ -650,7 +670,15 @@ function ensureDraftCharacter(characters: Character[], newDraftCharacterId?: str
 function normalizeTrackerState(state: TrackerState): TrackerState {
     return {
         ...state,
-        characters: ensureDraftCharacter(state.characters ?? []),
+        characters: ensureDraftCharacter(
+            (state.characters ?? []).map((character) => ({
+                ...character,
+                properties: {
+                    ...character.properties,
+                    isInEncounter: character.properties.isInEncounter ?? true,
+                },
+            })),
+        ),
         sessions: state.sessions ?? [],
         round: state.round ?? 1,
         hasEncounterStarted: state.hasEncounterStarted ?? false,

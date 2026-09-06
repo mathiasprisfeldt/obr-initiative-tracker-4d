@@ -8,6 +8,7 @@ import {
     createCharacter,
     createInitialTrackerDocument,
     deriveTrackerState,
+    isCharacterInEncounter,
     normalizeTrackerDocument,
     numberDuplicateCharacters,
     snapshotCombatant,
@@ -183,7 +184,9 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
     ) => {
         const current = deriveTrackerState(documentRef.current);
         const encounter = current.activeEncounter;
-        const target = current.characters.find((character) => character.id === targetId);
+        const target = current.characters.find(
+            (character) => character.id === targetId && isCharacterInEncounter(character),
+        );
         if (
             !encounter ||
             !target ||
@@ -196,7 +199,8 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             return;
         }
         const source = current.characters.find(
-            (character) => character.id === current.currentCharacterId,
+            (character) =>
+                character.id === current.currentCharacterId && isCharacterInEncounter(character),
         );
         const combatEvent: CombatEvent = {
             id: crypto.randomUUID(),
@@ -250,7 +254,9 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
         isLoading,
         canStartEncounter:
             !state.hasEncounterStarted &&
-            state.characters.filter((character) => character.properties.name.trim()).length > 0,
+            state.characters.filter(
+                (character) => character.properties.name.trim() && isCharacterInEncounter(character),
+            ).length > 0,
         canUndo: document.cursor > 0,
         canRedo: document.cursor < document.events.length,
         roomConnectionStatus: room.status,
@@ -355,7 +361,10 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 endedAt: new Date().toISOString(),
                 rounds: current.round,
                 participants: current.characters
-                    .filter((character) => character.properties.name.trim())
+                    .filter(
+                        (character) =>
+                            character.properties.name.trim() && isCharacterInEncounter(character),
+                    )
                     .map(snapshotCombatant),
                 combatEvents: current.activeEncounter.combatEvents,
             };
@@ -364,10 +373,22 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
                 type: "encounter-ended",
                 sessionId: current.activeEncounter.sessionId,
                 encounter,
-                remainingCharacters: current.characters.filter(
-                    (character) =>
-                        character.properties.isPlayerCharacter || !character.properties.name.trim(),
-                ),
+                remainingCharacters: current.characters
+                    .filter(
+                        (character) =>
+                            character.properties.isPlayerCharacter || !character.properties.name.trim(),
+                    )
+                    .map((character) =>
+                        character.properties.isPlayerCharacter
+                            ? {
+                                  ...character,
+                                  properties: {
+                                      ...character.properties,
+                                      isInEncounter: true,
+                                  },
+                              }
+                            : character,
+                    ),
             });
         },
         deleteEncounter: (sessionId, encounterId) => {
@@ -459,7 +480,9 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
 
     function changeTurn(direction: -1 | 1) {
         const current = getCurrentState();
-        const characters = current.characters.filter((character) => character.properties.name.trim());
+        const characters = current.characters.filter(
+            (character) => character.properties.name.trim() && isCharacterInEncounter(character),
+        );
         if (!characters.length) return;
         const canTakeTurn = (character: Character) =>
             character.properties.isPlayerCharacter ||

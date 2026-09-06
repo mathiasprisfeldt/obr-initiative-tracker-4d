@@ -31,6 +31,7 @@ interface Props {
     hasTurn: boolean;
     combatTrackingEnabled: boolean;
     character: Character;
+    inEncounter?: boolean;
     portraitNames: string[];
     onNameChange?: (name: string) => void;
     onNameAndPortraitChange?: (name: string, portraitImageId: string) => void;
@@ -45,12 +46,14 @@ interface Props {
     onRevive?: () => void;
     onPortraitImageChange?: (imageId: string | null) => void;
     onDelete?: () => void;
+    onEncounterParticipationToggle?: () => void;
 }
 
 export default function CharacterRow({
     hasTurn,
     combatTrackingEnabled,
     character,
+    inEncounter = true,
     portraitNames,
     onNameChange,
     onNameAndPortraitChange,
@@ -65,6 +68,7 @@ export default function CharacterRow({
     onRevive,
     onPortraitImageChange,
     onDelete,
+    onEncounterParticipationToggle,
 }: Props) {
     const isDraft = character.properties.name === "";
     const [draftName, setDraftName] = useState(character.properties.name);
@@ -76,7 +80,10 @@ export default function CharacterRow({
     const isContextMenuOpen = Boolean(contextMenu);
     const [deleteHovered, setDeleteHovered] = useState(false);
 
-    const turnColor = isDraft ? "disabled" : hasTurn ? "success" : "warning";
+    const togglesEncounterParticipation = Boolean(
+        character.properties.isPlayerCharacter && onEncounterParticipationToggle,
+    );
+    const turnColor = isDraft || !inEncounter ? "disabled" : hasTurn ? "success" : "warning";
 
     useEffect(() => {
         setDraftName(character.properties.name);
@@ -124,12 +131,23 @@ export default function CharacterRow({
             <IconButton
                 size="small"
                 disabled={isDraft}
-                onMouseEnter={() => setDeleteHovered(true)}
+                aria-label={
+                    togglesEncounterParticipation
+                        ? `${inEncounter ? "Remove" : "Add"} ${character.properties.name} ${
+                              inEncounter ? "from" : "to"
+                          } encounter`
+                        : `Delete ${character.properties.name}`
+                }
+                onMouseEnter={() => {
+                    if (!togglesEncounterParticipation) setDeleteHovered(true);
+                }}
                 onMouseLeave={() => setDeleteHovered(false)}
-                onClick={onDelete}
+                onClick={
+                    togglesEncounterParticipation ? onEncounterParticipationToggle : onDelete
+                }
                 sx={{ width: 24, height: 24, p: 0 }}
             >
-                {deleteHovered && !isDraft ? (
+                {deleteHovered && !isDraft && !togglesEncounterParticipation ? (
                     <Delete fontSize="small" color="error" />
                 ) : (
                     <Circle fontSize="small" color={turnColor} />

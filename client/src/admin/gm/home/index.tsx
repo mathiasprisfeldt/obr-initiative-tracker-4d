@@ -1110,11 +1110,13 @@ function Summary({
                                     </Typography>
                                 )}
                                 {selectedRow.key === "all-npcs" && creatureCounts.length > 0 && (
-                                    <Typography variant="caption" color="text.secondary">
-                                        Creatures: {creatureCounts
-                                            .map(({ name, count }) => `${name} ×${count}`)
-                                            .join(" · ")}
-                                    </Typography>
+                                    <Stack spacing={0.25}>
+                                        {creatureCounts.map(({ name, count }) => (
+                                            <Typography key={name} variant="caption" color="text.secondary">
+                                                {name} ×{count}
+                                            </Typography>
+                                        ))}
+                                    </Stack>
                                 )}
                             </Stack>
                         </Paper>

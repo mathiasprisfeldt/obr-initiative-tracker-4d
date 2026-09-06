@@ -1033,7 +1033,7 @@ function Summary({
                             return (
                                 <Button
                                     key={row.key}
-                                    variant={selected ? "contained" : "outlined"}
+                                    variant={selected ? "contained" : "text"}
                                     color={selected ? "primary" : "inherit"}
                                     aria-pressed={selected}
                                     onClick={() =>
@@ -1551,6 +1551,11 @@ function buildHighlightMetrics(rows: CombatantSummary[]): HighlightMetric[] {
             metric: (row) => row.highestDamageRoll,
         },
         { label: "Most revivals", unit: "revival", metric: (row) => row.revivals },
+        {
+            label: "Most killing blows",
+            unit: "killing blow",
+            metric: (row) => row.killingBlows,
+        },
         {
             label: "Most heals",
             unit: "healing",

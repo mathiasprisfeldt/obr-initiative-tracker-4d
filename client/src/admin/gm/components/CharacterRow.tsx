@@ -193,7 +193,7 @@ export default function CharacterRow({
             />
             <TextField
                 size="small"
-                disabled={isDraft}
+                disabled={isDraft || !inEncounter}
                 value={character?.properties.initiative}
                 inputRef={initiativeInputRef}
                 onChange={(e) => {

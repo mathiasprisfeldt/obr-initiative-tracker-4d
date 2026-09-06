@@ -935,8 +935,19 @@ function buildSessionSummary(
         }
     }
 
-    const highlights = buildHighlights(aggregateCombatants(allEvents, participants, true));
-    if (highlights.length > 0) lines.push("", "Highlights:", ...highlights.map((highlight) => `- ${highlight}`));
+    const highlightMetrics = buildHighlightMetrics(aggregateCombatants(allEvents, participants));
+    if (highlightMetrics.length > 0) {
+        lines.push("", "Highlights:");
+        for (const metric of highlightMetrics) {
+            lines.push(`- ${metric.label}:`);
+            lines.push(
+                ...metric.rankings.map(
+                    (ranking, index) =>
+                        `  ${index + 1}. ${ranking.name} (${ranking.value} ${metric.unit})`,
+                ),
+            );
+        }
+    }
 
     return lines.join("\n");
 }
@@ -1583,17 +1594,6 @@ function buildHighlightMetrics(rows: CombatantSummary[]): HighlightMetric[] {
             return rankings.length > 0 ? { label, unit, rankings } : null;
         })
         .filter((metric): metric is HighlightMetric => metric !== null);
-}
-
-function buildHighlights(rows: CombatantSummary[]): string[] {
-    return buildHighlightMetrics(rows).map((metric) => {
-        const top = metric.rankings[0];
-        const names = metric.rankings
-            .filter((ranking) => ranking.value === top.value)
-            .map((ranking) => ranking.name)
-            .join(", ");
-        return `${metric.label}: ${names} (${top.value} ${metric.unit})`;
-    });
 }
 
 function formatDate(date: string) {

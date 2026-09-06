@@ -298,7 +298,7 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                             }
                             onDelete={() => deleteCharacter(character.id)}
                             onEncounterParticipationToggle={
-                                state.hasEncounterStarted && character.properties.isPlayerCharacter
+                                character.properties.isPlayerCharacter
                                     ? () =>
                                           updateCharacter(character.id, {
                                               ...character.properties,

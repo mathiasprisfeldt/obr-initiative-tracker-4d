@@ -56,6 +56,7 @@ import {
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { LayoutSettingsPanel } from "../LayoutSettingsPanel";
 import { usePortraitImagePickerState } from "../../../character-portrait";
+import AvatarPlaceholder from "assets/avatar-placeholder.png";
 
 export default function Tracker() {
     return <Content trackerStore={useTrackerStore()} />;
@@ -1058,6 +1059,9 @@ function Summary({
                             const portrait = row.isPlayerCharacter
                                 ? portraitsByName.get(row.name.toLocaleLowerCase())
                                 : undefined;
+                            const imageUrl =
+                                portrait?.url ??
+                                (row.key === "all-npcs" ? AvatarPlaceholder : undefined);
                             return (
                                 <Button
                                     key={row.key}
@@ -1083,21 +1087,21 @@ function Summary({
                                         textAlign: "center",
                                         textTransform: "none",
                                         whiteSpace: "normal",
-                                        ...(portrait && { color: "common.white" }),
+                                        ...(imageUrl && { color: "common.white" }),
                                     }}
                                 >
-                                    {portrait && (
+                                    {imageUrl && (
                                         <>
                                             <Box
                                                 component="img"
-                                                src={portrait.url}
+                                                src={imageUrl}
                                                 alt=""
                                                 aria-hidden
                                                 sx={{
                                                     height: "100%",
                                                     left: 0,
                                                     objectFit: "cover",
-                                                    objectPosition: portrait.position || "center",
+                                                    objectPosition: portrait?.position || "center",
                                                     position: "absolute",
                                                     top: 0,
                                                     width: "100%",
@@ -1117,7 +1121,9 @@ function Summary({
                                         component="span"
                                         sx={{
                                             position: "relative",
-                                            textShadow: portrait ? "0 1px 3px rgba(0, 0, 0, 0.9)" : undefined,
+                                            textShadow: imageUrl
+                                                ? "0 1px 3px rgba(0, 0, 0, 0.9)"
+                                                : undefined,
                                         }}
                                     >
                                         {row.name}

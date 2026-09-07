@@ -8,7 +8,7 @@
         "title": "Initiative Tracker 4D",
         "icon": "/obr-initiative-tracker-4d/icon.svg",
         "popover": "/obr-initiative-tracker-4d/src/admin/index.html",
-        "height": 600,
+        "height": 999999,
         "width": 600
     },
     "background_url": "/obr-initiative-tracker-4d/src/background/index.html"

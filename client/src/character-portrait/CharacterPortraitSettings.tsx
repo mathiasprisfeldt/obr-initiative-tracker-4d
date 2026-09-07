@@ -103,37 +103,30 @@ export function CharacterPortraitSettings() {
                         horizontal: "right",
                     }}
                 >
-                    <Grid
-                        container
-                        component={Paper}
-                        sx={{ p: 1, width: 232 }}
-                        spacing={1}
-                    >
+                    <Grid container component={Paper} sx={{ p: 1 }} spacing={1}>
                         {borders.map((border) => (
-                            <Grid key={border.id} size={6}>
-                                <Button
-                                    fullWidth
-                                    variant={
-                                        currentCharacterPortrait?.borderId === border.id
-                                            ? "outlined"
-                                            : "text"
-                                    }
-                                >
-                                    <BorderElement
-                                        src={border.url}
-                                        alt={border.id}
-                                        onClick={() => {
-                                            setCurrentCharacterPortraitElement(null);
-                                            setCurrentCharacterPortrait(null);
+                            <Button
+                                key={border.id}
+                                variant={
+                                    currentCharacterPortrait?.borderId === border.id
+                                        ? "outlined"
+                                        : "text"
+                                }
+                            >
+                                <BorderElement
+                                    src={border.url}
+                                    alt={border.id}
+                                    onClick={() => {
+                                        setCurrentCharacterPortraitElement(null);
+                                        setCurrentCharacterPortrait(null);
 
-                                            updatePortraitImage({
-                                                ...currentCharacterPortrait!,
-                                                borderId: border.id,
-                                            });
-                                        }}
-                                    />
-                                </Button>
-                            </Grid>
+                                        updatePortraitImage({
+                                            ...currentCharacterPortrait!,
+                                            borderId: border.id,
+                                        });
+                                    }}
+                                />
+                            </Button>
                         ))}
                     </Grid>
                 </Popover>
@@ -143,7 +136,6 @@ export function CharacterPortraitSettings() {
 }
 
 const BorderElement = styled("img")`
-    width: 100%;
-    max-width: 100px;
-    aspect-ratio: 1 / 1;
+    width: 100px;
+    height: 100px;
 `;

@@ -1171,7 +1171,7 @@ function CombatantStatChips({ row }: { row: CombatantSummary }) {
                     size="small"
                     color="error"
                     variant="outlined"
-                    label={`${row.highestDamageRoll} highest roll`}
+                    label={`${row.highestDamageRoll} highest damage roll`}
                 />
             )}
             {row.overkillDamage > 0 && (
@@ -1504,7 +1504,10 @@ function Highlights({
             <Box
                 sx={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                    gridTemplateColumns: {
+                        xs: "repeat(2, minmax(0, 1fr))",
+                        md: "repeat(auto-fit, minmax(150px, 1fr))",
+                    },
                     gap: 0.75,
                 }}
             >

@@ -447,8 +447,9 @@ export function TrackerStoreProvider({ children }: { children: React.ReactNode }
             });
         },
         deleteSession: (sessionId) => {
-            const session = getCurrentState().sessions.find((item) => item.id === sessionId);
-            if (!session?.endedAt) return;
+            const current = getCurrentState();
+            const session = current.sessions.find((item) => item.id === sessionId);
+            if (!session || current.activeEncounter?.sessionId === sessionId) return;
             dispatch({
                 ...eventBase(),
                 type: "session-deleted",

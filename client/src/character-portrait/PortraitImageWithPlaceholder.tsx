@@ -132,6 +132,7 @@ const Img = styled("img")`
 
 const Border = styled("img")`
     position: absolute;
+    z-index: 10;
     width: 100%;
     height: 100%;
     top: 0;

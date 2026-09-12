@@ -1,6 +1,7 @@
 import { CharacterPortraitPicker } from "../../../character-portrait";
 import {
     Autocomplete,
+    Badge,
     Box,
     Button,
     IconButton,
@@ -25,7 +26,9 @@ import {
     LocalFireDepartment,
     PersonAddAlt1,
     SmartToy,
+    Healing,
 } from "@mui/icons-material";
+import { DND_CONDITIONS } from "../../../tracker/conditions";
 
 interface Props {
     hasTurn: boolean;
@@ -45,6 +48,7 @@ interface Props {
     onHealingReceived?: (amount: number) => void;
     onRevive?: () => void;
     onPortraitImageChange?: (imageId: string | null) => void;
+    onConditionsChange?: (conditions: string[]) => void;
     onDelete?: () => void;
     onEncounterParticipationToggle?: () => void;
 }
@@ -67,6 +71,7 @@ export default function CharacterRow({
     onHealingReceived,
     onRevive,
     onPortraitImageChange,
+    onConditionsChange,
     onDelete,
     onEncounterParticipationToggle,
 }: Props) {
@@ -79,6 +84,8 @@ export default function CharacterRow({
     const [contextMenu, setContextMenu] = useState<null | HTMLElement>(null);
     const isContextMenuOpen = Boolean(contextMenu);
     const [deleteHovered, setDeleteHovered] = useState(false);
+    const [conditionsAnchor, setConditionsAnchor] = useState<HTMLElement | null>(null);
+    const [conditionInput, setConditionInput] = useState("");
 
     const togglesEncounterParticipation = Boolean(
         character.properties.isPlayerCharacter && onEncounterParticipationToggle,
@@ -178,7 +185,7 @@ export default function CharacterRow({
                             "data-field": "character-name",
                         }}
                         onBlur={submitName}
-                        onKeyDown={(event) => {
+                        onKeyDownCapture={(event) => {
                             if (event.key === "Enter" && !event.defaultPrevented) {
                                 event.currentTarget.blur();
                                 setTimeout(() => initiativeInputRef.current?.focus());
@@ -238,10 +245,58 @@ export default function CharacterRow({
                 value={character?.properties.portraitImageId}
                 onChange={onPortraitImageChange}
             />
+            <Popover
+                open={Boolean(conditionsAnchor)}
+                anchorEl={conditionsAnchor}
+                onClose={() => setConditionsAnchor(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                slotProps={{
+                    paper: {
+                        sx: { maxHeight: "calc(100vh - 32px)", overflowY: "auto" },
+                    },
+                }}
+            >
+                <Stack spacing={1} sx={{ p: 2, width: 360, maxWidth: "calc(100vw - 32px)" }}>
+                    <Autocomplete
+                        multiple
+                        freeSolo
+                        disableCloseOnSelect
+                        options={[...DND_CONDITIONS]}
+                        value={character.properties.conditions ?? []}
+                        inputValue={conditionInput}
+                        onInputChange={(_event, value) => setConditionInput(value)}
+                        onChange={(_event, values) => {
+                            onConditionsChange?.(normalizeConditions(values));
+                            setConditionInput("");
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                autoFocus
+                                label="Conditions"
+                                placeholder="Select or type a condition"
+                                onKeyDown={(event) => {
+                                    if (event.key !== "Enter" || !conditionInput.trim()) return;
+                                    event.preventDefault();
+                                    onConditionsChange?.(
+                                        normalizeConditions([
+                                            ...(character.properties.conditions ?? []),
+                                            conditionInput,
+                                        ]),
+                                    );
+                                    setConditionInput("");
+                                }}
+                            />
+                        )}
+                    />
+                </Stack>
+            </Popover>
             <IconButton
                 id="context-menu-button"
                 disabled={isDraft}
                 tabIndex={-1}
+                aria-label={`More actions for ${character.properties.name}`}
                 aria-controls={isContextMenuOpen ? "basic-menu" : undefined}
                 aria-haspopup="true"
                 aria-expanded={isContextMenuOpen ? "true" : undefined}
@@ -249,7 +304,12 @@ export default function CharacterRow({
                     setContextMenu(event.currentTarget);
                 }}
             >
-                <MoreVertIcon />
+                <Badge
+                    color="secondary"
+                    badgeContent={character.properties.conditions?.length ?? 0}
+                >
+                    <MoreVertIcon />
+                </Badge>
             </IconButton>
             <Menu
                 id="context-menu"
@@ -279,8 +339,44 @@ export default function CharacterRow({
                             : "Mark as player character"}
                     </ListItemText>
                 </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        setConditionsAnchor(contextMenu);
+                        setContextMenu(null);
+                    }}
+                >
+                    <ListItemIcon>
+                        <Healing />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary="Conditions"
+                        secondary={
+                            character.properties.conditions?.length
+                                ? `${character.properties.conditions.length} active`
+                                : undefined
+                        }
+                    />
+                </MenuItem>
             </Menu>
         </Stack>
+    );
+}
+
+function normalizeConditions(conditions: string[]): string[] {
+    const normalized = conditions
+        .map((condition) => {
+            const trimmed = condition.trim();
+            return (
+                DND_CONDITIONS.find(
+                    (knownCondition) => knownCondition.toLowerCase() === trimmed.toLowerCase(),
+                ) ?? trimmed
+            );
+        })
+        .filter(Boolean);
+    return normalized.filter(
+        (condition, index) =>
+            normalized.findIndex((candidate) => candidate.toLowerCase() === condition.toLowerCase()) ===
+            index,
     );
 }
 

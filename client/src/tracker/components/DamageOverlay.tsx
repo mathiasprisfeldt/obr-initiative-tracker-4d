@@ -132,8 +132,9 @@ export function DamageOverlay({ damageLevel, seed }: Props) {
 
 const Overlay = styled("div")`
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
+    inset: 12%;
+    overflow: hidden;
+    border-radius: 50%;
     pointer-events: none;
     z-index: 5;
 `;
@@ -161,9 +162,11 @@ const pulse = keyframes`
 
 const Glow = styled("div")<{ glowColor: string; damageLevel: DamageLevel }>`
     position: absolute;
-    inset: 12%;
+    inset: 0;
     border-radius: inherit;
-    box-shadow: ${({ glowColor }) => `inset 0 0 30px 10px ${glowColor}`};
+    background: ${({ glowColor }) =>
+        `radial-gradient(circle, transparent 42%, ${glowColor} 100%)`};
+    box-shadow: ${({ glowColor }) => `inset 0 0 22px 7px ${glowColor}`};
     animation: ${pulse}
         ${({ damageLevel }) =>
             damageLevel === "red" ? "1.2s" : damageLevel === "orange" ? "2s" : "3s"}

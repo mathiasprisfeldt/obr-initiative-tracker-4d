@@ -367,6 +367,12 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                                     portraitImageId,
                                 })
                             }
+                            onConditionsChange={(conditions) =>
+                                updateCharacter(character.id, {
+                                    ...character.properties,
+                                    conditions,
+                                })
+                            }
                         />
                     );
                 })}

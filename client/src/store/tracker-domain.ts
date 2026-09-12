@@ -3,7 +3,7 @@ import {
     type LayoutSettings,
 } from "../tracker/layout-settings";
 
-export const TRACKER_SCHEMA_VERSION = 2;
+export const TRACKER_SCHEMA_VERSION = 3;
 
 export interface Character {
     id: string;
@@ -18,6 +18,7 @@ export interface CharacterProperties {
     portraitImageId: string | null;
     isPlayerCharacter: boolean;
     isInEncounter?: boolean;
+    conditions: string[];
 }
 
 export interface CombatantSnapshot {
@@ -177,6 +178,7 @@ export function createCharacter(id: string = crypto.randomUUID()): Character {
             portraitImageId: null,
             isPlayerCharacter: false,
             isInEncounter: true,
+            conditions: [],
         },
     };
 }
@@ -244,6 +246,7 @@ export function normalizeTrackerDocument(value: TrackerDocument | LegacyTrackerS
                     character.properties.isPlayerCharacter ??
                     character.properties.hideName === false,
                 isInEncounter: character.properties.isInEncounter ?? true,
+                conditions: character.properties.conditions ?? [],
             },
         }));
     let activeEncounter: ActiveEncounter | undefined;
@@ -302,10 +305,9 @@ export function reduceTrackerEvent(state: TrackerState, event: TrackerEvent): Tr
     switch (event.type) {
         case "character-updated": {
             const updates = new Map(
-                [event.character, ...(event.additionalCharacters ?? [])].map((character) => [
-                    character.id,
-                    character,
-                ]),
+                [event.character, ...(event.additionalCharacters ?? [])]
+                    .map(normalizeCharacter)
+                    .map((character) => [character.id, character]),
             );
             const existingIds = new Set(state.characters.map((character) => character.id));
             const characters = [
@@ -671,18 +673,23 @@ function normalizeTrackerState(state: TrackerState): TrackerState {
     return {
         ...state,
         characters: ensureDraftCharacter(
-            (state.characters ?? []).map((character) => ({
-                ...character,
-                properties: {
-                    ...character.properties,
-                    isInEncounter: character.properties.isInEncounter ?? true,
-                },
-            })),
+            (state.characters ?? []).map(normalizeCharacter),
         ),
         sessions: state.sessions ?? [],
         round: state.round ?? 1,
         hasEncounterStarted: state.hasEncounterStarted ?? false,
         isDisplayed: state.isDisplayed ?? true,
         layoutSettings: state.layoutSettings ?? { ...DEFAULT_LAYOUT_SETTINGS },
+    };
+}
+
+function normalizeCharacter(character: Character): Character {
+    return {
+        ...character,
+        properties: {
+            ...character.properties,
+            isInEncounter: character.properties.isInEncounter ?? true,
+            conditions: character.properties.conditions ?? [],
+        },
     };
 }

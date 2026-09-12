@@ -12,6 +12,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useTrackerLayout } from "./tracker-layout";
 import { isLocalDev } from "../utils/env";
 import { isCharacterInEncounter } from "../store/tracker-domain";
+import RotatedConditionLegend from "./components/RotatedConditionLegend";
+import { getActiveConditions } from "./conditions";
 
 export function Tracker() {
     const tracker = useTracker();
@@ -35,6 +37,7 @@ function Content({ tracker }: { tracker: TrackerResult }) {
     const { state, connectionStatus } = tracker;
     const visible = state?.isDisplayed && state?.hasEncounterStarted;
     const encounterCharacters = state?.characters.filter(isCharacterInEncounter) ?? [];
+    const activeConditions = getActiveConditions(encounterCharacters);
     const layout = useTrackerLayout(encounterCharacters.length, state?.layoutSettings);
 
     // Widen the popover so extra portrait columns are fully visible.
@@ -90,6 +93,14 @@ function Content({ tracker }: { tracker: TrackerResult }) {
                     </>
                 )}
                 <ConnectionStatus status={connectionStatus} />
+                <AnimatePresence>
+                    {isLocalDev && visible && activeConditions.length > 0 && (
+                        <DebugConditionLegend
+                            key="debug-condition-legend"
+                            conditions={activeConditions}
+                        />
+                    )}
+                </AnimatePresence>
             </Container>
         </Viewport>
     );
@@ -151,10 +162,18 @@ const RoundNumber = styled(Typography)`
     line-height: 1;
 `;
 
+const DebugConditionLegend = styled(RotatedConditionLegend)`
+    position: fixed;
+    z-index: 30;
+    bottom: 8px;
+    right: 8px;
+    pointer-events: none;
+`;
+
 export const PopoverId = "obr-initiative-tracker-4d-tracker-popover";
 
 export function OpenTracker() {
-    OBR.popover.open({
+    return OBR.popover.open({
         id: PopoverId,
         url: `${import.meta.env.BASE_URL}/src/tracker/index.html`,
         width: 300,

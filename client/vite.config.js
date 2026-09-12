@@ -18,6 +18,7 @@ export default defineConfig({
             input: {
                 admin: resolve(__dirname, "src/admin/index.html"),
                 tracker: resolve(__dirname, "src/tracker/index.html"),
+                conditionLegend: resolve(__dirname, "src/condition-legend/index.html"),
                 background: resolve(__dirname, "src/background/index.html"),
             },
         },

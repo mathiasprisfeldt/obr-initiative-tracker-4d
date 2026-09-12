@@ -35,12 +35,14 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
         key: condition,
         label: conditionAppearances[index].abbreviation,
         color: conditionAppearances[index].color,
+        iconUrl: conditionAppearances[index].iconUrl,
     }));
     if (conditions.length > MAX_CONDITION_BADGES) {
         conditionMarkers.push({
             key: "additional-conditions",
             label: `+${conditions.length - (MAX_CONDITION_BADGES - 1)}`,
             color: "#455a64",
+            iconUrl: undefined,
         });
     }
     const turnParticleColors =
@@ -99,7 +101,11 @@ export default function CharacterAvatar({ character, hasTurn, ...rest }: Props) 
                                         exit={{ scale: 0.72 }}
                                         transition={{ duration: 0.24, ease: "easeOut" }}
                                     >
-                                        <PortraitConditionBadge color={marker.color} aria-hidden>
+                                        <PortraitConditionBadge
+                                            color={marker.color}
+                                            iconUrl={marker.iconUrl}
+                                            aria-hidden
+                                        >
                                             {marker.label}
                                         </PortraitConditionBadge>
                                     </BadgeScale>

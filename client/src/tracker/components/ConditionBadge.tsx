@@ -1,6 +1,34 @@
 import { styled } from "@mui/material";
+import type { HTMLAttributes } from "react";
 
-export const ConditionBadge = styled("span", {
+interface ConditionBadgeProps extends HTMLAttributes<HTMLSpanElement> {
+    color: string;
+    badgeSize?: "portrait" | "legend";
+    iconUrl?: string;
+    className?: string;
+}
+
+export function ConditionBadge({
+    children,
+    color,
+    badgeSize = "portrait",
+    iconUrl,
+    className,
+    ...rest
+}: ConditionBadgeProps) {
+    return (
+        <BadgeRoot
+            {...rest}
+            className={className}
+            color={color}
+            badgeSize={badgeSize}
+        >
+            {iconUrl ? <BadgeIcon src={iconUrl} alt="" /> : children}
+        </BadgeRoot>
+    );
+}
+
+const BadgeRoot = styled("span", {
     shouldForwardProp: (prop) => prop !== "color" && prop !== "badgeSize",
 })<{ color: string; badgeSize?: "portrait" | "legend" }>(({ color, badgeSize = "portrait" }) => {
     const size = badgeSize === "portrait" ? 32 : 28;
@@ -22,3 +50,10 @@ export const ConditionBadge = styled("span", {
         textShadow: "0 1px 3px rgba(0, 0, 0, 0.95)",
     };
 });
+
+const BadgeIcon = styled("img")`
+    width: 76%;
+    height: 76%;
+    object-fit: contain;
+    filter: invert(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+`;

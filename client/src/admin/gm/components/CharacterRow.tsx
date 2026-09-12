@@ -91,6 +91,8 @@ export default function CharacterRow({
         character.properties.isPlayerCharacter && onEncounterParticipationToggle,
     );
     const turnColor = isDraft || !inEncounter ? "disabled" : hasTurn ? "success" : "warning";
+    const conditions = character.properties.conditions ?? [];
+    const optionsTooltip = conditions.join(", ");
 
     useEffect(() => {
         setDraftName(character.properties.name);
@@ -292,25 +294,32 @@ export default function CharacterRow({
                     />
                 </Stack>
             </Popover>
-            <IconButton
-                id="context-menu-button"
-                disabled={isDraft}
-                tabIndex={-1}
-                aria-label={`More actions for ${character.properties.name}`}
-                aria-controls={isContextMenuOpen ? "basic-menu" : undefined}
-                aria-haspopup="true"
-                aria-expanded={isContextMenuOpen ? "true" : undefined}
-                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                    setContextMenu(event.currentTarget);
-                }}
+            <Tooltip
+                title={optionsTooltip}
+                placement="top"
+                arrow
+                disableFocusListener
+                disableInteractive
             >
-                <Badge
-                    color="secondary"
-                    badgeContent={character.properties.conditions?.length ?? 0}
+                <Box component="span" sx={{ display: "inline-flex" }}>
+                <IconButton
+                    id="context-menu-button"
+                    disabled={isDraft}
+                    tabIndex={-1}
+                    aria-label={`More actions for ${character.properties.name}`}
+                    aria-controls={isContextMenuOpen ? "basic-menu" : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={isContextMenuOpen ? "true" : undefined}
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                        setContextMenu(event.currentTarget);
+                    }}
                 >
-                    <MoreVertIcon />
-                </Badge>
-            </IconButton>
+                    <Badge color="secondary" badgeContent={conditions.length}>
+                        <MoreVertIcon />
+                    </Badge>
+                </IconButton>
+                </Box>
+            </Tooltip>
             <Menu
                 id="context-menu"
                 anchorEl={contextMenu}

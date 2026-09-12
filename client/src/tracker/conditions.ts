@@ -1,58 +1,81 @@
-export const DND_CONDITIONS = [
-    "Blinded",
-    "Charmed",
-    "Deafened",
-    "Exhaustion",
-    "Frightened",
-    "Grappled",
-    "Incapacitated",
-    "Invisible",
-    "Paralyzed",
-    "Petrified",
-    "Poisoned",
-    "Prone",
-    "Restrained",
-    "Stunned",
-    "Unconscious",
-] as const;
+const CONDITION_ICON_MODULES = import.meta.glob<string>("../assets/conditions/*.png", {
+    eager: true,
+    query: "?url",
+    import: "default",
+});
+
+const CONDITION_NAME_OVERRIDES: Record<string, string> = {
+    "Ancenstral Protectors": "Ancestral Protectors",
+    Exhausted: "Exhaustion",
+    Unconcious: "Unconscious",
+};
+
+interface ConditionPreset {
+    name: string;
+    iconUrl: string;
+}
+
+const CONDITION_PRESETS = Object.entries(CONDITION_ICON_MODULES)
+    .map(([path, iconUrl]): ConditionPreset => {
+        const filename = path.split("/").pop()?.replace(/\.png$/i, "") ?? path;
+        return {
+            name: CONDITION_NAME_OVERRIDES[filename] ?? filename,
+            iconUrl,
+        };
+    })
+    .sort((left, right) => left.name.localeCompare(right.name));
+
+const CONDITION_PRESETS_BY_NAME = new Map(
+    CONDITION_PRESETS.map((preset) => [preset.name.toLowerCase(), preset]),
+);
+
+export const DND_CONDITIONS: readonly string[] = CONDITION_PRESETS.map(({ name }) => name);
 
 export interface ConditionAppearance {
     abbreviation: string;
     color: string;
+    iconUrl?: string;
 }
 
-const CONDITION_APPEARANCES: Record<(typeof DND_CONDITIONS)[number], ConditionAppearance> = {
-    Blinded: { abbreviation: "BL", color: "#161618" },
-    Charmed: { abbreviation: "CH", color: "#743274" },
-    Deafened: { abbreviation: "DE", color: "#c27c3e" },
-    Exhaustion: { abbreviation: "EX", color: "#a71821" },
-    Frightened: { abbreviation: "FR", color: "#442e79" },
-    Grappled: { abbreviation: "GR", color: "#dab892" },
-    Incapacitated: { abbreviation: "IN", color: "#9ba04d" },
-    Invisible: { abbreviation: "IV", color: "#d8b864" },
-    Paralyzed: { abbreviation: "PA", color: "#969792" },
-    Petrified: { abbreviation: "PE", color: "#38373a" },
-    Poisoned: { abbreviation: "PO", color: "#31633b" },
-    Prone: { abbreviation: "PR", color: "#a1887f" },
-    Restrained: { abbreviation: "RE", color: "#522427" },
-    Stunned: { abbreviation: "ST", color: "#aea9cb" },
-    Unconscious: { abbreviation: "UN", color: "#805e44" },
+const CURATED_CONDITION_COLORS: Record<string, string> = {
+    Blinded: "#161618",
+    Charmed: "#743274",
+    Deafened: "#c27c3e",
+    Exhaustion: "#a71821",
+    Frightened: "#442e79",
+    Grappled: "#dab892",
+    Incapacitated: "#9ba04d",
+    Invisible: "#d8b864",
+    Paralyzed: "#969792",
+    Petrified: "#38373a",
+    Poisoned: "#31633b",
+    Prone: "#a1887f",
+    Restrained: "#522427",
+    Stunned: "#aea9cb",
+    Unconscious: "#805e44",
 };
 
 export function getConditionAppearance(condition: string): ConditionAppearance {
-    if (condition in CONDITION_APPEARANCES) {
-        return CONDITION_APPEARANCES[condition as keyof typeof CONDITION_APPEARANCES];
-    }
+    const trimmed = condition.trim();
+    const preset = CONDITION_PRESETS_BY_NAME.get(trimmed.toLowerCase());
+    return {
+        abbreviation: getConditionAbbreviation(preset?.name ?? trimmed),
+        color:
+            (preset ? CURATED_CONDITION_COLORS[preset.name] : undefined) ??
+            getCustomConditionColor(preset?.name ?? trimmed),
+        iconUrl: preset?.iconUrl,
+    };
+}
 
-    const abbreviation =
+function getConditionAbbreviation(condition: string): string {
+    return (
         condition
-            .trim()
             .split(/\s+/)
             .map((word) => word[0])
             .join("")
             .slice(0, 2)
-            .toUpperCase() || "?";
-    return { abbreviation, color: getCustomConditionColor(condition) };
+            .toUpperCase() || "?"
+    );
 }
 
 export function getCustomConditionColor(condition: string): string {

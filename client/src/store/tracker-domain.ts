@@ -249,10 +249,7 @@ export function normalizeTrackerDocument(value: TrackerDocument | LegacyTrackerS
                     character.properties.hideName === false,
                 isInEncounter: character.properties.isInEncounter ?? true,
                 conditions: character.properties.conditions ?? [],
-                notes:
-                    character.properties.notes ??
-                    (character.properties as { gmNotes?: string }).gmNotes ??
-                    "",
+                notes: character.properties.notes ?? "",
             },
         }));
     let activeEncounter: ActiveEncounter | undefined;
@@ -696,10 +693,7 @@ function normalizeCharacter(character: Character): Character {
             ...character.properties,
             isInEncounter: character.properties.isInEncounter ?? true,
             conditions: character.properties.conditions ?? [],
-            notes:
-                character.properties.notes ??
-                (character.properties as { gmNotes?: string }).gmNotes ??
-                "",
+            notes: character.properties.notes ?? "",
         },
     };
 }

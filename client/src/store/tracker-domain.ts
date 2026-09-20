@@ -3,7 +3,7 @@ import {
     type LayoutSettings,
 } from "../tracker/layout-settings";
 
-export const TRACKER_SCHEMA_VERSION = 3;
+export const TRACKER_SCHEMA_VERSION = 4;
 
 export interface Character {
     id: string;
@@ -19,6 +19,7 @@ export interface CharacterProperties {
     isPlayerCharacter: boolean;
     isInEncounter?: boolean;
     conditions: string[];
+    notes: string;
 }
 
 export interface CombatantSnapshot {
@@ -179,6 +180,7 @@ export function createCharacter(id: string = crypto.randomUUID()): Character {
             isPlayerCharacter: false,
             isInEncounter: true,
             conditions: [],
+            notes: "",
         },
     };
 }
@@ -247,6 +249,10 @@ export function normalizeTrackerDocument(value: TrackerDocument | LegacyTrackerS
                     character.properties.hideName === false,
                 isInEncounter: character.properties.isInEncounter ?? true,
                 conditions: character.properties.conditions ?? [],
+                notes:
+                    character.properties.notes ??
+                    (character.properties as { gmNotes?: string }).gmNotes ??
+                    "",
             },
         }));
     let activeEncounter: ActiveEncounter | undefined;
@@ -690,6 +696,10 @@ function normalizeCharacter(character: Character): Character {
             ...character.properties,
             isInEncounter: character.properties.isInEncounter ?? true,
             conditions: character.properties.conditions ?? [],
+            notes:
+                character.properties.notes ??
+                (character.properties as { gmNotes?: string }).gmNotes ??
+                "",
         },
     };
 }

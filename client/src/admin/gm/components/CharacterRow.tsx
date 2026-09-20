@@ -4,6 +4,9 @@ import {
     Badge,
     Box,
     Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
     IconButton,
     ListItemIcon,
     ListItemText,
@@ -27,6 +30,7 @@ import {
     PersonAddAlt1,
     SmartToy,
     Healing,
+    StickyNote2,
 } from "@mui/icons-material";
 import { DND_CONDITIONS } from "../../../tracker/conditions";
 
@@ -49,6 +53,7 @@ interface Props {
     onRevive?: () => void;
     onPortraitImageChange?: (imageId: string | null) => void;
     onConditionsChange?: (conditions: string[]) => void;
+    onNotesChange?: (notes: string) => void;
     onDelete?: () => void;
     onEncounterParticipationToggle?: () => void;
 }
@@ -72,6 +77,7 @@ export default function CharacterRow({
     onRevive,
     onPortraitImageChange,
     onConditionsChange,
+    onNotesChange,
     onDelete,
     onEncounterParticipationToggle,
 }: Props) {
@@ -80,18 +86,22 @@ export default function CharacterRow({
     const selectedPortraitNameRef = useRef<string | null>(null);
     const submittedNameRef = useRef<string | null>(null);
     const initiativeInputRef = useRef<HTMLInputElement>(null);
+    const conditionInputRef = useRef<HTMLInputElement>(null);
 
     const [contextMenu, setContextMenu] = useState<null | HTMLElement>(null);
     const isContextMenuOpen = Boolean(contextMenu);
     const [deleteHovered, setDeleteHovered] = useState(false);
     const [conditionsAnchor, setConditionsAnchor] = useState<HTMLElement | null>(null);
     const [conditionInput, setConditionInput] = useState("");
+    const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+    const [draftNotes, setDraftNotes] = useState(character.properties.notes);
 
     const togglesEncounterParticipation = Boolean(
         character.properties.isPlayerCharacter && onEncounterParticipationToggle,
     );
     const turnColor = isDraft || !inEncounter ? "disabled" : hasTurn ? "success" : "warning";
     const conditions = character.properties.conditions ?? [];
+    const hasNotes = character.properties.notes.trim() !== "";
     const optionsTooltip = conditions.join(", ");
 
     useEffect(() => {
@@ -100,6 +110,12 @@ export default function CharacterRow({
             submittedNameRef.current = null;
         }
     }, [character.properties.name]);
+
+    useEffect(() => {
+        if (!conditionsAnchor) return;
+        const frame = requestAnimationFrame(() => conditionInputRef.current?.focus());
+        return () => cancelAnimationFrame(frame);
+    }, [conditionsAnchor]);
 
     const submitName = () => {
         if (submittedNameRef.current === draftName) {
@@ -111,6 +127,21 @@ export default function CharacterRow({
             return;
         }
         if (draftName !== character.properties.name) onNameChange?.(draftName);
+    };
+
+    const openNotes = () => {
+        setDraftNotes(character.properties.notes);
+        setNotesDialogOpen(true);
+    };
+
+    const saveNotes = () => {
+        if (draftNotes !== character.properties.notes) onNotesChange?.(draftNotes);
+        setNotesDialogOpen(false);
+    };
+
+    const clearNotes = () => {
+        if (character.properties.notes) onNotesChange?.("");
+        setNotesDialogOpen(false);
     };
 
     return (
@@ -247,6 +278,45 @@ export default function CharacterRow({
                 value={character?.properties.portraitImageId}
                 onChange={onPortraitImageChange}
             />
+            <Dialog
+                open={notesDialogOpen}
+                onClose={() => setNotesDialogOpen(false)}
+                fullWidth
+                maxWidth="sm"
+            >
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        multiline
+                        minRows={8}
+                        label={`Notes for ${character.properties.name}`}
+                        placeholder="Add notes for this creature"
+                        value={draftNotes}
+                        onChange={(event) => setDraftNotes(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (
+                                event.key === "Enter" &&
+                                !event.shiftKey &&
+                                !event.nativeEvent.isComposing
+                            ) {
+                                event.preventDefault();
+                                saveNotes();
+                            }
+                        }}
+                        sx={{ mt: 1 }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button color="error" disabled={!draftNotes} onClick={clearNotes}>
+                        Clear
+                    </Button>
+                    <Button onClick={() => setNotesDialogOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={saveNotes}>
+                        Save
+                    </Button>
+                </DialogActions>
+            </Dialog>
             <Popover
                 open={Boolean(conditionsAnchor)}
                 anchorEl={conditionsAnchor}
@@ -276,6 +346,7 @@ export default function CharacterRow({
                             <TextField
                                 {...params}
                                 autoFocus
+                                inputRef={conditionInputRef}
                                 label="Conditions"
                                 placeholder="Select or type a condition"
                                 onKeyDown={(event) => {
@@ -315,7 +386,14 @@ export default function CharacterRow({
                     }}
                 >
                     <Badge color="secondary" badgeContent={conditions.length}>
-                        <MoreVertIcon />
+                        <Badge
+                            color="primary"
+                            badgeContent={<StickyNote2 sx={{ fontSize: 14 }} />}
+                            invisible={!hasNotes}
+                            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                        >
+                            <MoreVertIcon />
+                        </Badge>
                     </Badge>
                 </IconButton>
                 </Box>
@@ -350,12 +428,23 @@ export default function CharacterRow({
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
+                        openNotes();
+                        setContextMenu(null);
+                    }}
+                >
+                    <ListItemIcon>
+                        <StickyNote2 color={character.properties.notes.trim() ? "primary" : undefined} />
+                    </ListItemIcon>
+                    <ListItemText primary="Notes" />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
                         setConditionsAnchor(contextMenu);
                         setContextMenu(null);
                     }}
                 >
                     <ListItemIcon>
-                        <Healing />
+                        <Healing color={conditions.length ? "secondary" : undefined} />
                     </ListItemIcon>
                     <ListItemText
                         primary="Conditions"

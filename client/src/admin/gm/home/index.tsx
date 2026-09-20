@@ -373,6 +373,12 @@ function Content({ trackerStore }: { trackerStore: TrackerStore }) {
                                     conditions,
                                 })
                             }
+                            onNotesChange={(notes) =>
+                                updateCharacter(character.id, {
+                                    ...character.properties,
+                                    notes,
+                                })
+                            }
                         />
                     );
                 })}

@@ -410,7 +410,7 @@ export function reduceTrackerEvent(state: TrackerState, event: TrackerEvent): Tr
                         ? { ...session, encounters: [...session.encounters, event.encounter] }
                         : session,
                 ),
-                characters: ensureDraftCharacter(event.remainingCharacters),
+                characters: ensureDraftCharacter(event.remainingCharacters.map(normalizeCharacter)),
                 activeEncounter: undefined,
                 hasEncounterStarted: false,
                 currentCharacterId: undefined,

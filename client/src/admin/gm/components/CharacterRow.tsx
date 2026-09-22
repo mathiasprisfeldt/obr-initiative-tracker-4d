@@ -82,6 +82,8 @@ export default function CharacterRow({
     onEncounterParticipationToggle,
 }: Props) {
     const isDraft = character.properties.name === "";
+    // Older persisted encounter events can contain characters from before notes existed.
+    const notes = character.properties.notes ?? "";
     const [draftName, setDraftName] = useState(character.properties.name);
     const selectedPortraitNameRef = useRef<string | null>(null);
     const submittedNameRef = useRef<string | null>(null);
@@ -94,14 +96,14 @@ export default function CharacterRow({
     const [conditionsAnchor, setConditionsAnchor] = useState<HTMLElement | null>(null);
     const [conditionInput, setConditionInput] = useState("");
     const [notesDialogOpen, setNotesDialogOpen] = useState(false);
-    const [draftNotes, setDraftNotes] = useState(character.properties.notes);
+    const [draftNotes, setDraftNotes] = useState(notes);
 
     const togglesEncounterParticipation = Boolean(
         character.properties.isPlayerCharacter && onEncounterParticipationToggle,
     );
     const turnColor = isDraft || !inEncounter ? "disabled" : hasTurn ? "success" : "warning";
     const conditions = character.properties.conditions ?? [];
-    const hasNotes = character.properties.notes.trim() !== "";
+    const hasNotes = notes.trim() !== "";
     const optionsTooltip = conditions.join(", ");
 
     useEffect(() => {
@@ -130,17 +132,17 @@ export default function CharacterRow({
     };
 
     const openNotes = () => {
-        setDraftNotes(character.properties.notes);
+        setDraftNotes(notes);
         setNotesDialogOpen(true);
     };
 
     const saveNotes = () => {
-        if (draftNotes !== character.properties.notes) onNotesChange?.(draftNotes);
+        if (draftNotes !== notes) onNotesChange?.(draftNotes);
         setNotesDialogOpen(false);
     };
 
     const clearNotes = () => {
-        if (character.properties.notes) onNotesChange?.("");
+        if (notes) onNotesChange?.("");
         setNotesDialogOpen(false);
     };
 
@@ -433,7 +435,7 @@ export default function CharacterRow({
                     }}
                 >
                     <ListItemIcon>
-                        <StickyNote2 color={character.properties.notes.trim() ? "primary" : undefined} />
+                        <StickyNote2 color={notes.trim() ? "primary" : undefined} />
                     </ListItemIcon>
                     <ListItemText primary="Notes" />
                 </MenuItem>

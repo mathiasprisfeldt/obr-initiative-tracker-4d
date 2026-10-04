@@ -57,6 +57,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { LayoutSettingsPanel } from "../LayoutSettingsPanel";
 import { usePortraitImagePickerState } from "../../../character-portrait";
 import AvatarPlaceholder from "assets/avatar-placeholder.png";
+import { copyText } from "../../../utils/clipboard";
 
 export default function Tracker() {
     return <Content trackerStore={useTrackerStore()} />;
@@ -837,6 +838,7 @@ function CopySessionSummaryButton({
     activeCombatants?: CombatantSnapshot[];
 }) {
     const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+    const [manualSummary, setManualSummary] = useState<string | null>(null);
     const title =
         copyStatus === "copied"
             ? "Copied session summary"
@@ -845,28 +847,61 @@ function CopySessionSummaryButton({
               : "Copy session summary";
 
     return (
-        <Tooltip title={title}>
-            <IconButton
-                size="small"
-                aria-label={`Copy ${session.name} summary`}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    navigator.clipboard
-                        .writeText(
-                            buildSessionSummary(
-                                session,
-                                activeEvents,
-                                activeEncounterName,
-                                activeCombatants,
-                            ),
-                        )
-                        .then(() => setCopyStatus("copied"))
-                        .catch(() => setCopyStatus("error"));
-                }}
+        <>
+            <Tooltip title={title}>
+                <IconButton
+                    size="small"
+                    aria-label={`Copy ${session.name} summary`}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        const summary = buildSessionSummary(
+                            session,
+                            activeEvents,
+                            activeEncounterName,
+                            activeCombatants,
+                        );
+                        copyText(summary)
+                            .then(() => setCopyStatus("copied"))
+                            .catch(() => {
+                                setCopyStatus("error");
+                                setManualSummary(summary);
+                            });
+                    }}
+                >
+                    <ContentCopy fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Dialog
+                open={manualSummary !== null}
+                onClose={() => setManualSummary(null)}
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+                fullWidth
+                maxWidth="sm"
             >
-                <ContentCopy fontSize="small" />
-            </IconButton>
-        </Tooltip>
+                <DialogTitle>Copy session summary</DialogTitle>
+                <DialogContent dividers>
+                    <Stack spacing={2}>
+                        <Typography>
+                            Your browser blocked automatic copying. Select the summary
+                            below and copy it with your keyboard or the context menu.
+                        </Typography>
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            multiline
+                            minRows={6}
+                            maxRows={18}
+                            label="Session summary"
+                            value={manualSummary ?? ""}
+                            slotProps={{ input: { readOnly: true } }}
+                            onFocus={(event) => event.target.select()}
+                        />
+                        <Button onClick={() => setManualSummary(null)}>Close</Button>
+                    </Stack>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
 
